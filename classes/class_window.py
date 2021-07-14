@@ -1,15 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
 import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from func.func_ms import *
 from peewee import *
-import pandas as pd 
-import numpy as np
 import datetime as dt
 
 adres_job = ''
@@ -77,6 +74,31 @@ class WindowSearchFarher(Window_main):
             QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
+class WindowGenPassWord(Window_main):
+    '''Рабочее окно для данных из word.'''
+    def __init__(self, name: str):
+        super().__init__(name)
+
+    def gen_password(self):
+        '''Вызывает функции генерации паспортов'''
+        self.label_creat(str(dt.datetime.now()))
+        self.button_creat(self.open_file_result, 'Открыть файл CSV')
+        self.adres = enter_adres()
+        try:
+            df = ms_out_word(self.adres)
+            self.table_wiew = ResOut(df)
+            self.vb.addWidget(self.table_wiew)
+        except:
+            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+
+
+class WindowAbout(Window_main):
+    '''Рабочее окно для данных из word.'''
+    def __init__(self, name: str):
+        super().__init__(name)
+
+
+
 class WindowMSAusWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
@@ -110,6 +132,8 @@ class GeneralWindow(QMainWindow):
         self.window.label_creat(text)
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
+        self.window.button_creat(self.show_about_programm, 'О программе')
+        
         self.window.show()
 
     def show_window_MS(self) -> None:
@@ -118,8 +142,9 @@ class GeneralWindow(QMainWindow):
         text_1 = 'Подобрать отцов из имеющейся базы'
         self.window.label_creat(text_1)
         self.window.button_creat(self.show_window_MS_serch_father, 'Найти отца')
-        text_2 = 'Собрать паспорта на животных'
+        text_2 = 'Собрать генетические паспорта животных'
         self.window.label_creat(text_2)
+        self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать')
         text_3 = 'Выбрать данные из генетических паспортов'
         self.window.label_creat(text_3)
         self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
@@ -153,7 +178,31 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
+
+    def show_creat_pass_doc_gen(self) -> None:
+        '''Отрисовывает окно генерации паспортов.'''
+        self.window = WindowGenPassWord('Biotech Lab: Microsatellite analysis. Generation password')
+        text_1 = 'Собрать паспорта по описи и результатам генотипирования'
+        self.window.label_creat(text_1)
+        global adres_job
+        #adres_job = r'func\data\search_fatherh\bus_search.csv'
+
+        #self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
+
+        self.window.button_creat(self.show_window_biotech, 'На главную')
+        self.window.show()
     
+    def show_about_programm(self):
+        '''Отрисовывает окно о программе.'''
+        self.window = WindowAbout('Biotech Lab: about programm')
+        text_1 = (
+            'Версия 1.0.0\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
+            '\nГод разработки: 2021'
+        )
+        self.window.label_creat(text_1)
+        self.window.button_creat(self.show_window_biotech, 'На главную')
+        self.window.show()
+
     def show_window_ISSR(self) -> None:
         """Отрисовывает окно ISSR."""
         self.window = Window_main('Biotech Lab: ISSR analysis')

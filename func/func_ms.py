@@ -1,8 +1,6 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys
-import os
 import pandas as pd 
 import numpy as np
 from PyQt5.QtWidgets import *
