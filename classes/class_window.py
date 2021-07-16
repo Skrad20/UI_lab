@@ -78,15 +78,49 @@ class WindowGenPassWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
         super().__init__(name)
+        self.adres_invertory = r''
+        self.adres_genotyping = r''
+        self.df_error = pd.DataFrame()
+        self.len_df = 0
+        
 
-    def gen_password(self):
-        '''Вызывает функции генерации паспортов'''
+    def gen_password_invertory(self) -> None:
+        self.adres_invertory = enter_adres('Добавить опись')
+        
+        if self.adres_invertory != '':
+            self.label_creat('Данные по описи добавлены')
+
+    def gen_password_genotyping(self) -> None:
+        self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
+        if self.adres_genotyping != '':
+            self.label_creat('Данные по генотипированию добавлены')
+    
+    def gen_analit_password_creat(self):
+        self.df_error = creat_doc_pas_gen(self.adres_invertory, self.adres_genotyping)
+        self.len_df = len(self.df_error)
+
+    def example_inventiry(self):
+        '''Открывает  файл пример для описи.'''
+        df_example_inventiry = pd.read_csv(r'func\data\creat_pass_doc\inventory_example.csv', sep=';', decimal=',', encoding='cp1251')
+        table_wiew = ResOut(df_example_inventiry)
+        self.vb.addWidget(table_wiew)
+        #os.startfile(r'func\data\creat_pass_doc\inventory_example.csv')
+
+    def example_genotyping(self):
+        '''Открывает файл пример для генотипирования.'''
+        df_example_genotyping = pd.read_csv(r'func\data\creat_pass_doc\profils_example.csv', sep=';', decimal=',', encoding='cp1251')
+        table_wiew = ResOut(df_example_genotyping)
+        self.vb.addWidget(table_wiew)
+        #os.startfile(r'func\data\creat_pass_doc\profils_example.csv')
+
+    def gen_password(self) -> None:
+        '''Вызывает функции генерации паспортов.'''
         self.label_creat(str(dt.datetime.now()))
-        self.button_creat(self.open_file_result, 'Открыть файл CSV')
-        self.adres = enter_adres()
+        self.button_creat(self.open_file_result, 'Открыть файл с паспортами')
         try:
-            df = ms_out_word(self.adres)
-            self.table_wiew = ResOut(df)
+            self.gen_analit_password_creat()
+            self.label_creat('Количество ошибок' + str(self.len_df))
+            self.table_wiew = ResOut(self.df_error)
             self.vb.addWidget(self.table_wiew)
         except:
             QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
@@ -98,7 +132,6 @@ class WindowAbout(Window_main):
         super().__init__(name)
 
 
-
 class WindowMSAusWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
@@ -108,13 +141,14 @@ class WindowMSAusWord(Window_main):
         '''Вызывает функции отбора данных из word'''
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл CSV')
-        self.adres = enter_adres()
+        self.adres = enter_adres('выбрать документ')
         try:
             df = ms_out_word(self.adres)
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
         except:
             QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+
 
 class GeneralWindow(QMainWindow):
     """Управляет окнами программы."""
@@ -124,6 +158,12 @@ class GeneralWindow(QMainWindow):
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
+    
+    def initUI(self):
+        self.setGeometry(300, 300, 300, 220)
+        self.setWindowTitle('Icon')
+        self.setWindowIcon(QIcon(r'data\icon.jpg'))
+        self.show()
 
     def show_window_biotech(self) -> None:
         """Отрисовывает окно биотеха."""
@@ -144,7 +184,7 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS_serch_father, 'Найти отца')
         text_2 = 'Собрать генетические паспорта животных'
         self.window.label_creat(text_2)
-        self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать')
+        self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать паспорта')
         text_3 = 'Выбрать данные из генетических паспортов'
         self.window.label_creat(text_3)
         self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
@@ -185,9 +225,14 @@ class GeneralWindow(QMainWindow):
         text_1 = 'Собрать паспорта по описи и результатам генотипирования'
         self.window.label_creat(text_1)
         global adres_job
-        #adres_job = r'func\data\search_fatherh\bus_search.csv'
+        adres_job = r'func\data\creat_pass_doc\combined_file.docx'
+        self.window.button_creat(self.window.gen_password_invertory, 'Выбрать данные (опись)')
+        self.window.button_creat(self.window.example_inventiry, 'Пример описи')
+        self.window.button_creat(self.window.gen_password_genotyping, 'Выбрать данные (результаты генотипирования)')
+        self.window.button_creat(self.window.example_genotyping, 'Пример результатов генотипирования')
+        self.window.button_creat(self.window.gen_password, 'Обработать')
 
-        #self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
+
 
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
