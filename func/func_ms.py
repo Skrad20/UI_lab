@@ -115,3 +115,4 @@ def ms_out_word(adres) -> pd.DataFrame:
                 encoding = "cp1251"))
     
     return result
+
