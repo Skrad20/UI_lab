@@ -16,11 +16,24 @@ class Window_main(QWidget):
     def __init__(self, name: str):
         super(Window_main, self).__init__()
         self.name = name
-        self.setWindowTitle(name)
-        self.setMinimumWidth(200)
-        self.setMinimumHeight(200)
+        self.initUI(name)
         self.vb = QVBoxLayout(self)
         self.db = SqliteDatabase('db.sqlite3')
+
+    def initUI(self, name):
+        """Конструктор формы"""
+        self.setMinimumWidth(200)
+        self.setMinimumHeight(200)
+        self.setWindowTitle(name)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.center()
+
+    def center(self):
+        "Центрирует окно."
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
 
     def button_creat(self, func, label: str, class_func = None) -> None:
         """Создает кнопку в окне программы."""
@@ -74,6 +87,13 @@ class WindowSearchFarher(Window_main):
             QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
+class WindowTabl(Window_main):
+    """Окно с табличкой"""
+    def __init__(self, name: str):
+        super().__init__(name)
+    pass
+
+
 class WindowGenPassWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
@@ -85,22 +105,25 @@ class WindowGenPassWord(Window_main):
         
 
     def gen_password_invertory(self) -> None:
+        """Генерирует запись о добавленых данных"""
         self.adres_invertory = enter_adres('Добавить опись')
         
         if self.adres_invertory != '':
             self.label_creat('Данные по описи добавлены')
 
     def gen_password_genotyping(self) -> None:
+        """Генерирует запись о добавленых данных"""
         self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
         if self.adres_genotyping != '':
             self.label_creat('Данные по генотипированию добавлены')
     
     def gen_analit_password_creat(self):
+        """Прводит анализ полученных данных"""
         self.df_error = creat_doc_pas_gen(self.adres_invertory, self.adres_genotyping)
         self.len_df = len(self.df_error)
 
     def example_inventiry(self):
-        '''Открывает  файл пример для описи.'''
+        '''Открывает файл пример для описи.'''
         df_example_inventiry = pd.read_csv(r'func\data\creat_pass_doc\inventory_example.csv', sep=';', decimal=',', encoding='cp1251')
         table_wiew = ResOut(df_example_inventiry)
         self.vb.addWidget(table_wiew)
@@ -108,6 +131,7 @@ class WindowGenPassWord(Window_main):
 
     def example_genotyping(self):
         '''Открывает файл пример для генотипирования.'''
+        window = WindowTabl('Biotech Lab:')
         df_example_genotyping = pd.read_csv(r'func\data\creat_pass_doc\profils_example.csv', sep=';', decimal=',', encoding='cp1251')
         table_wiew = ResOut(df_example_genotyping)
         self.vb.addWidget(table_wiew)

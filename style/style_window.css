@@ -1,0 +1,20 @@
+
+QWidget { 
+    background-color: #748492; 
+}
+
+QPushButton {
+    font-size: 12px;
+    background-color: green;
+    font-family: 'Courier New', Courier, monospace;
+ }
+
+QLabel {
+    font-size: 14px;
+    color: #fff;
+    font-family: 'Courier New', Courier, monospace;
+}
+
+QTableWidget {
+    background-color: #fff; 
+}

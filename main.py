@@ -7,14 +7,23 @@ from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from peewee import *
 from classes.class_window import *
+from style.style_windows import *
 
 os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = r"venv\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
+
+try:
+    from PyQt5.QtWinExtras import QtWin
+    myappid = 'mycompany.myproduct.subproduct.version' 
+    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)                 
+except ImportError:
+    pass
+
 
 def main():
     app = QApplication(sys.argv)
     app.setStyle("Fusion")
+    app.setStyleSheet(style_upload())
     window = GeneralWindow()
-    window.setWindowIcon(QIcon(r'data\icon.jpg'))
     window.show_window_biotech()
     print(repr(window))
     sys.exit(app.exec_())
