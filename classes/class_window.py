@@ -118,6 +118,45 @@ class WindowTabl(QDialog):
         self.tabl = table
         self.vl = QVBoxLayout(self)
         self.pushButton = QPushButton(self)
+        self.pushButton_res = QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.btnClosed)
+        self.vl.addWidget(self.tabl)
+        self.vl.addWidget(self.pushButton)
+        self.setWindowTitle(name)
+        self.pushButton.setText("Закрыть окно")
+
+    def btnClosed(self):
+        self.close()
+
+    def open_file_res(self):
+        pass
+
+    def initUI(self, name):
+        """Конструктор формы"""
+        self.center()
+        self.setMinimumWidth(1000)
+        self.setMinimumHeight(500)
+        self.setWindowTitle(name)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.show()
+
+    def center(self):
+        """Центрирует окно"""
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.topLeft())
+
+
+class WindowResulWiew(QDialog):
+    '''Рабочее окно для вывода результатов'''
+    def __init__(self, table, name, parent=None ):
+        super(WindowResulWiew, self).__init__(parent)
+        self.initUI(name)
+        self.tabl = table
+        self.vl = QVBoxLayout(self)
+        self.pushButton = QPushButton(self)
         self.pushButton.setObjectName("pushButton")
         self.pushButton.clicked.connect(self.btnClosed)
         self.vl.addWidget(self.tabl)
@@ -136,7 +175,6 @@ class WindowTabl(QDialog):
         self.setWindowTitle(name)
         self.setWindowIcon(QIcon('data\icon.ico'))
         self.show()
-
 
     def center(self):
         """Центрирует окно"""
@@ -158,7 +196,6 @@ class WindowGenPassWord(Window_main):
     def gen_password_invertory(self) -> None:
         """Генерирует запись о добавленых данных"""
         self.adres_invertory = enter_adres('Добавить опись')
-        
         if self.adres_invertory != '':
             self.label_creat('Данные по описи добавлены')
 
