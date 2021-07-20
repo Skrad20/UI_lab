@@ -6,6 +6,7 @@ from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from func.func_ms import *
+from func.func_issr import *
 from peewee import *
 import datetime as dt
 
@@ -17,6 +18,7 @@ class Window_main(QWidget):
         super(Window_main, self).__init__()
         self.name = name
         self.initUI(name)
+        self.adres_res = ''
         self.vb = QVBoxLayout(self)
         self.db = SqliteDatabase('db.sqlite3')
 
@@ -28,7 +30,6 @@ class Window_main(QWidget):
         self.setWindowTitle(name)
         self.setWindowIcon(QIcon('data\icon.ico'))
         self.show()
-
 
     def center(self):
         """Центрирует окно"""
@@ -44,7 +45,6 @@ class Window_main(QWidget):
         self.button.clicked.connect(func)
         self.vb.addWidget(self.button)
     
-
     def button_creat_double(self, func_first, label_first: str, func_second, label_second: str, class_func = None) -> None:
         """Создает 2 кнопки в ряд в окне программы."""
         self.button_layout = QHBoxLayout()
@@ -80,6 +80,10 @@ class Window_main(QWidget):
     def open_file_result(self) -> None:
         '''Открывает файл по адресу, сохраняемому в глобальной переменной'''
         os.startfile(adres_job)
+    
+    def open_file_result_self(self) -> None:
+        '''Открывает файл по адресу, сохраняемому в переменной класса'''
+        os.startfile(self.adres_res)
 
     def __repr__(self) -> str:
         """"""
@@ -101,7 +105,7 @@ class WindowSearchFarher(Window_main):
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
         except:
-            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
 class WindowTabl(QDialog):
@@ -148,7 +152,6 @@ class WindowGenPassWord(Window_main):
         self.adres_genotyping = r''
         self.df_error = pd.DataFrame()
         self.len_df = 0
-        
 
     def gen_password_invertory(self) -> None:
         """Генерирует запись о добавленых данных"""
@@ -165,7 +168,8 @@ class WindowGenPassWord(Window_main):
     
     def gen_analit_password_creat(self):
         """Прводит анализ полученных данных"""
-        self.df_error = creat_doc_pas_gen(self.adres_invertory, self.adres_genotyping)
+        self.adres_res = save_file_for_word('Сохранить результаты')
+        self.df_error = creat_doc_pas_gen(self.adres_invertory, self.adres_genotyping, self.adres_res)
         self.len_df = len(self.df_error)
     
     def example_inventiry(self):
@@ -185,14 +189,14 @@ class WindowGenPassWord(Window_main):
     def gen_password(self) -> None:
         '''Вызывает функции генерации паспортов.'''
         self.label_creat(str(dt.datetime.now()))
-        self.button_creat(self.open_file_result, 'Открыть файл с паспортами')
+        self.button_creat(self.open_file_result_self, 'Открыть файл с паспортами')
         try:
             self.gen_analit_password_creat()
             self.label_creat('Количество ошибок' + str(self.len_df))
             self.table_wiew = ResOut(self.df_error)
             self.vb.addWidget(self.table_wiew)
         except:
-            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
 class WindowAbout(Window_main):
@@ -200,6 +204,36 @@ class WindowAbout(Window_main):
     def __init__(self, name: str):
         super().__init__(name)
 
+
+class WindowISSR(Window_main):
+    '''Рабочее окно для обработки ISSR.'''
+    def __init__(self, name: str):
+        super().__init__(name)
+    
+    def gen_issr(self) -> None:
+        '''Ввод результатов ISSR'''
+        self.adres_issr_in = enter_adres('Добавить данные по ISSR')
+        if self.adres_issr_in != '':
+            self.label_creat('Данные по ISSR добавлены')
+
+    def example_issr(self) -> None:
+        '''Вывод примера оформления'''
+        df_example_inventiry = pd.read_csv(r'func\data\issr\issr.txt', sep='\t', decimal=',', encoding='cp1251')
+        table_wiew = ResOut(df_example_inventiry)
+        dialog = WindowTabl(table_wiew, 'Biotech Lab: example ISSR', self)
+        dialog.exec_()
+
+    def analis_issr(self) -> None:
+        '''Анализ issr'''
+        self.res_df_issr = issr_analit_func(self.adres_issr_in)
+        try:
+            self.res_df_issr = issr_analit_func(self.adres_issr_in)
+        except:
+            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        self.adres_res = save_file(self.res_df_issr)
+        self.label_creat(str(dt.datetime.now()))
+        self.button_creat(self.open_file_result, 'Открыть файл с результатами')
+    
 
 class WindowMSAusWord(Window_main):
     '''Рабочее окно для данных из word.'''
@@ -211,12 +245,12 @@ class WindowMSAusWord(Window_main):
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл CSV')
         self.adres = enter_adres('выбрать документ')
-        try:
-            df = ms_out_word(self.adres)
-            self.table_wiew = ResOut(df)
-            self.vb.addWidget(self.table_wiew)
-        except:
-            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        #try:
+        df = ms_out_word(self.adres)
+        self.table_wiew = ResOut(df)
+        self.vb.addWidget(self.table_wiew)
+        #except:
+            #QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
 class GeneralWindow(QMainWindow):
@@ -320,8 +354,18 @@ class GeneralWindow(QMainWindow):
 
     def show_window_ISSR(self) -> None:
         """Отрисовывает окно ISSR."""
-        self.window = Window_main('Biotech Lab: ISSR analysis')
+        self.window = WindowISSR('Biotech Lab: ISSR analysis')
+        text_1 = 'Здесь можно обработать первичные данные по ISSR'
+        self.window.label_creat(text_1)
+        self.window.button_creat_double(
+            self.window.gen_issr, 'Результаты ISSR',
+            self.window.example_issr, 'Пример'
+        )
+        self.window.button_creat(self.window.analis_issr, 'Обработать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
+
+
+
         self.window.show()
     
     def open_file(self) -> None:

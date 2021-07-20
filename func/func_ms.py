@@ -17,14 +17,16 @@ import tkinter as tk
 import tkinter.simpledialog as simpledialog
 from tkinter import messagebox
 
-def combine_all_docx(filename_master, files_list:list, date) -> None:
+hosbut_gl = ''
+
+def combine_all_docx(filename_master, files_list:list, adres, date) -> None:
     number_sections=len(files_list)
     doc_m = Document_compose(filename_master)
     composer = Composer(doc_m)
     for i in range(0, number_sections):
         doc_temp = Document_compose(files_list[i])
         composer.append(doc_temp)
-    composer.save(r'func\data\creat_pass_doc\combined_file.docx')
+    composer.save(adres)
 
 def delit(row: dict, delitel: str, col: str) -> str:
     num  = row[col]
@@ -47,13 +49,33 @@ def enter_adres(name_str:str ='Open File') -> str:
                         'CSV (*.csv);; Text Files (*.txt)')[0]
     return adres
 
+def save_file(df_res:pd.DataFrame, name_str:str ='Save File') -> None:
+    """Возращает адрес файла."""
+    adres =  QFileDialog.getSaveFileName(None, 
+                        name_str, 
+                        './', 
+                        'CSV (*.csv);; Text Files (*.txt)')[0]
+    df_res.to_csv(adres, sep=";", decimal=',')
+    return adres
+
+def save_file_for_word(name_str:str ='Save File') -> None:
+    """Возращает адрес файла."""
+    adres =  QFileDialog.getSaveFileName(None, 
+                        name_str, 
+                        './', 
+                        'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)')[0]
+    return adres
+
 def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     """Выводит результаты в таблицу."""
     table = QTableWidget()
     table.setColumnCount(len(df_res.columns))
     table.setRowCount(len(df_res))
-    columns = df_res.columns
-    table.setHorizontalHeaderLabels(columns)   
+    try:
+        columns = df_res.columns
+        table.setHorizontalHeaderLabels(columns)
+    except:
+        pass   
     for column in range(len(df_res.columns)):
         for row in range(len(df_res)):
             item = QTableWidgetItem(str(df_res.iloc[row, column]))
@@ -93,8 +115,7 @@ def search_father(adres: str) -> pd.DataFrame:
 def ms_out_word(adres: str) -> pd.DataFrame:
     '''Переводит данные из word в csv.'''
     doc = (pd.read_csv(adres,
-                    sep='\t',
-                    error_bad_lines=False))
+                    sep='\t'))
     doc.columns = ['ms', 'ms_size', 'vater', 'mom']
     msatle = ['name', 'numer', 'vater', 'number_vater',
             'BM1818', 'BM1824',
@@ -149,7 +170,7 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     
     return result
 
-def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFrame:
+def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str, adres) -> pd.DataFrame:
     now = datetime.datetime.now()
     date = now.strftime("%d-%m-%Y")
     df = pd.read_csv(adres_invertory, sep=';', decimal=',', encoding='cp1251')
@@ -183,12 +204,12 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFram
     df =df.astype('str')
     series_faters_float = df['number_father'].astype('float')
     list_number_faters = list(df_faters.loc[:,'number'])
-    hosbut = ''
+
 
     def show_message():
         print(message.get())
-        global hosbut
-        hosbut = str(message.get())
+        global hosbut_gl
+        hosbut_gl = str(message.get())
         root.destroy()
 
     root = tk.Tk()
@@ -201,9 +222,12 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFram
     message_entry.place(relx=.5, rely=.3, anchor="c")
     message_button = tk.Button(text="Ввод", command=show_message)
     message_button.place(relx=.5, rely=.5, anchor="c")
-
-
     root.mainloop()
+
+    global hosbut_gl
+    hosut = hosbut_gl
+
+
     df['number_animal'] =pd.to_numeric(df['number_animal'], downcast='integer')
     df['number_proba'] =pd.to_numeric(df['number_proba'], downcast='integer')
     df['number_father'] =pd.to_numeric(df['number_father'], downcast='integer')
@@ -331,7 +355,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFram
                 
                 context = {'number_animal' : number_animal, 
                         'name_animal' : name_animal,
-                        'hosbut' : hosbut,
+                        'hosbut' : hosut,
                         'number_proba' : number_proba,
                         'number_father' : number_father,
                         'name_father':name_father, 
@@ -399,7 +423,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFram
                 TGLA53 = df_profil_only.loc[0, 'TGLA53']
                 context = {'number_animal' : number_animal, 
                         'name_animal' : name_animal,
-                        'hosbut' : hosbut,
+                        'hosbut' : hosut,
                         'number_proba' : number_proba,
                         'number_father' : number_father,
                         'name_father':name_father, 
@@ -435,7 +459,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str) -> pd.DataFram
 
     filename_master = files_list.pop(0)    
 
-    combine_all_docx(filename_master,files_list, date)
+    combine_all_docx(filename_master,files_list, adres, date)
     files_list.append(filename_master)
     for i in range(len(files_list)):
         if os.path.isfile(files_list[i]): 
