@@ -16,8 +16,22 @@ import datetime
 import tkinter as tk
 import tkinter.simpledialog as simpledialog
 from tkinter import messagebox
+import re
 
 hosbut_gl = ''
+
+def read_file(adres:str) -> pd.DataFrame:
+    adres_split = adres.split('.')
+    print(adres_split)
+    if adres_split[-1] == 'csv':
+        df_doc = (pd.read_csv(adres, sep=';', decimal=',', encoding='cp1251'))
+    elif adres_split[-1] == 'txt':
+        df_doc = (pd.read_csv(adres, sep='\t', decimal=',', encoding='utf-8'))
+    elif adres_split[-1] == 'xlsx':
+        df_doc = (pd.read_excel(adres))
+    else:
+        QMessageBox.critical(None, 'Ошибка ввода', 'Вы выбрали файл неверного формата')
+    return df_doc
 
 def combine_all_docx(filename_master, files_list:list, adres, date) -> None:
     number_sections=len(files_list)
@@ -46,7 +60,7 @@ def enter_adres(name_str:str ='Open File') -> str:
     adres =  QFileDialog.getOpenFileName(None, 
                         name_str, 
                         './', 
-                        'CSV (*.csv);; Text Files (*.txt)')[0]
+                        'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)')[0]
     return adres
 
 def save_file(df_res:pd.DataFrame, name_str:str ='Save File') -> None:
@@ -86,7 +100,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
 def search_father(adres: str) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = pd.read_csv(r'func\data\search_fatherh\Bulls.txt', sep='\t', decimal=',')
-    df_search = pd.read_csv(adres, sep=';', decimal=',')
+    df_search = read_file(adres)
     df_search = df_search.T
     df = df.fillna('-')
     df = df.replace('  ','')
@@ -114,8 +128,7 @@ def search_father(adres: str) -> pd.DataFrame:
 
 def ms_out_word(adres: str) -> pd.DataFrame:
     '''Переводит данные из word в csv.'''
-    doc = (pd.read_csv(adres,
-                    sep='\t'))
+    doc = read_file(adres)
     doc.columns = ['ms', 'ms_size', 'vater', 'mom']
     msatle = ['name', 'numer', 'vater', 'number_vater',
             'BM1818', 'BM1824',
@@ -173,7 +186,7 @@ def ms_out_word(adres: str) -> pd.DataFrame:
 def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str, adres) -> pd.DataFrame:
     now = datetime.datetime.now()
     date = now.strftime("%d-%m-%Y")
-    df = pd.read_csv(adres_invertory, sep=';', decimal=',', encoding='cp1251')
+    df = read_file(adres_invertory)
     df.columns= ['number_animal', 
              'name_animal', 
              'number_proba',
@@ -182,7 +195,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str, adres) -> pd.D
              'number_father',
              'name_father', ]
     df_faters = pd.read_csv(r'func\data\creat_pass_doc\faters.csv', sep=';', decimal=',', encoding='cp1251')
-    df_profil =  pd.read_csv(adres_genotyping, sep=';', decimal=',', encoding='cp1251')
+    df_profil = read_file(adres_genotyping)
     df_profil['num'] = df_profil.apply(delit, delitel='-', col = 'Sample Name', axis=1)
     df_profil['num'] = df_profil['num'].astype('int')
     df = df.fillna(0)
@@ -227,9 +240,8 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping:str, adres) -> pd.D
     global hosbut_gl
     hosut = hosbut_gl
 
-
     df['number_animal'] =pd.to_numeric(df['number_animal'], downcast='integer')
-    df['number_proba'] =pd.to_numeric(df['number_proba'], downcast='integer')
+    df['number_proba'] = pd.to_numeric(df['number_proba'], downcast='integer')
     df['number_father'] =pd.to_numeric(df['number_father'], downcast='integer')
     df['number_mutter'] =pd.to_numeric(df['number_mutter'], downcast='integer')
     locus_str_er = []

@@ -9,6 +9,7 @@ from func.func_ms import *
 from func.func_issr import *
 from peewee import *
 import datetime as dt
+import re 
 
 adres_job = ''
 
@@ -245,12 +246,12 @@ class WindowMSAusWord(Window_main):
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл CSV')
         self.adres = enter_adres('выбрать документ')
-        #try:
-        df = ms_out_word(self.adres)
-        self.table_wiew = ResOut(df)
-        self.vb.addWidget(self.table_wiew)
-        #except:
-            #QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        try:
+            df = ms_out_word(self.adres)
+            self.table_wiew = ResOut(df)
+            self.vb.addWidget(self.table_wiew)
+        except:
+            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
 
 
 class GeneralWindow(QMainWindow):

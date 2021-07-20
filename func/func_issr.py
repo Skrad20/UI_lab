@@ -1,5 +1,6 @@
 import pandas as pd
 from tqdm import tqdm
+from .func_ms import read_file
 tqdm.pandas()
 
 def ga_issr(row) -> str:
@@ -269,9 +270,7 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     """Анлиза данных issr"""
     # загрузка входных данных с раделителем по ячейкам и долевым ","
     #func\data\issr\issr.txt
-    df = (pd.read_csv(adres,
-                    sep='\t',
-                    decimal=','))
+    df = read_file(adres)
     # Изменяем названия столбцов для удобства
     df.set_axis(['animal', 'GA', 'animal_1', 'AG'], axis='columns', inplace=True)
     # убираем пкстые ячейки
