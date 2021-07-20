@@ -5,11 +5,12 @@ import os
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+from numpy import e
 from func.func_ms import *
 from func.func_issr import *
 from peewee import *
 import datetime as dt
-import re 
+
 
 adres_job = ''
 
@@ -105,8 +106,8 @@ class WindowSearchFarher(Window_main):
             df = search_father(self.adres)
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
-        except:
-            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
 
 
 class WindowTabl(QDialog):
@@ -196,8 +197,8 @@ class WindowGenPassWord(Window_main):
             self.label_creat('Количество ошибок' + str(self.len_df))
             self.table_wiew = ResOut(self.df_error)
             self.vb.addWidget(self.table_wiew)
-        except:
-            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        except  Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
 
 
 class WindowAbout(Window_main):
@@ -229,8 +230,8 @@ class WindowISSR(Window_main):
         self.res_df_issr = issr_analit_func(self.adres_issr_in)
         try:
             self.res_df_issr = issr_analit_func(self.adres_issr_in)
-        except:
-            QMessageBox.critical(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
         self.adres_res = save_file(self.res_df_issr)
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл с результатами')
@@ -250,8 +251,8 @@ class WindowMSAusWord(Window_main):
             df = ms_out_word(self.adres)
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
-        except:
-            QMessageBox.information(self, 'Ошибка ввода', 'Вы выбрали неверные данные')
+        except Exception as e:
+            QMessageBox.information(self, 'Ошибка ввода', f'Вы выбрали неверные данные: \n {e}')
 
 
 class GeneralWindow(QMainWindow):

@@ -22,7 +22,6 @@ hosbut_gl = ''
 
 def read_file(adres:str) -> pd.DataFrame:
     adres_split = adres.split('.')
-    print(adres_split)
     if adres_split[-1] == 'csv':
         df_doc = (pd.read_csv(adres, sep=';', decimal=',', encoding='cp1251'))
     elif adres_split[-1] == 'txt':
