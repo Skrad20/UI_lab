@@ -14,6 +14,7 @@ import datetime as dt
 
 adres_job = ''
 
+
 class Window_main(QWidget):
     """Рабочее окно программы."""
     def __init__(self, name: str):
@@ -92,6 +93,68 @@ class Window_main(QWidget):
         return self.name
 
 
+class MainDialog(QDialog):
+    """Окно доп вывода"""
+    def __init__(self, table, name, parent=None):
+        super(MainDialog, self).__init__(parent)
+        self.initUI(name)
+        self.tabl = table
+
+    def botton_closed(self):
+        self.close()
+
+    def initUI(self, name):
+        """Конструктор формы"""
+        self.center()
+        self.setMinimumWidth(1000)
+        self.setMinimumHeight(500)
+        self.setWindowTitle(name)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.show()
+
+    def center(self):
+        """Центрирует окно"""
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().topLeft()
+        qr.moveCenter(cp)
+        self.move(qr.center())
+
+
+class WindowTabl(MainDialog):
+    """Окно с табличкой"""
+    def __init__(self, table, name, parent):
+        super().__init__(table, name, parent=parent)
+        self.tabl = table
+        self.vl = QVBoxLayout(self)
+        self.pushButton = QPushButton(self)
+        self.pushButton_res = QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.botton_closed)
+        self.vl.addWidget(self.tabl)
+        self.vl.addWidget(self.pushButton)
+        self.pushButton.setText("Закрыть окно")
+
+
+class WindowResulWiew(MainDialog):
+    '''Рабочее окно для вывода результатов'''
+    def __init__(self, table, name, button, label, parent):
+        super().__init__(table, name, parent=parent)
+        self.tabl = table
+        self.button = button
+        self.vl = QVBoxLayout(self)
+        self.pushButton = QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.botton_closed)
+        self.label_start = QLabel(label)
+        self.label_date = QLabel(str(dt.datetime.now()))
+        self.vl.addWidget(self.label_date)
+        self.vl.addWidget(self.label_start)
+        self.vl.addWidget(self.tabl)
+        self.vl.addWidget(self.button)
+        self.vl.addWidget(self.pushButton)
+        self.pushButton.setText("Закрыть окно")
+
+
 class WindowSearchFarher(Window_main):
     '''Рабочее окно для поиска возможных отцов.'''
     def __init__(self, name: str):
@@ -99,89 +162,23 @@ class WindowSearchFarher(Window_main):
 
     def res_search_cow_father(self, class_func = None) -> None:
         '''Вызывает функции анализа и поиска отцов'''
-        self.label_creat(str(dt.datetime.now()))
-        self.button_creat(self.open_file_result, 'Открыть файл CSV')
         self.adres = enter_adres()
+        button_oprn_file = QPushButton()
+        button_oprn_file.setText('Открыть файл CSV')
+        button_oprn_file.clicked.connect(self.open_file_result)
         try:
             df = search_father(self.adres)
             self.table_wiew = ResOut(df)
-            self.vb.addWidget(self.table_wiew)
+            dialog = WindowResulWiew(
+                self.table_wiew, 
+                'Biotech Lab: Результаты анализа', 
+                button_oprn_file, 
+                '', 
+                self
+            )
+            dialog.exec_()
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
-
-
-class WindowTabl(QDialog):
-    """Окно с табличкой"""
-    def __init__(self, table, name, parent=None ):
-        super(WindowTabl, self).__init__(parent)
-        self.initUI(name)
-        self.tabl = table
-        self.vl = QVBoxLayout(self)
-        self.pushButton = QPushButton(self)
-        self.pushButton_res = QPushButton(self)
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.clicked.connect(self.btnClosed)
-        self.vl.addWidget(self.tabl)
-        self.vl.addWidget(self.pushButton)
-        self.setWindowTitle(name)
-        self.pushButton.setText("Закрыть окно")
-
-    def btnClosed(self):
-        self.close()
-
-    def open_file_res(self):
-        pass
-
-    def initUI(self, name):
-        """Конструктор формы"""
-        self.center()
-        self.setMinimumWidth(1000)
-        self.setMinimumHeight(500)
-        self.setWindowTitle(name)
-        self.setWindowIcon(QIcon('data\icon.ico'))
-        self.show()
-
-    def center(self):
-        """Центрирует окно"""
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
-
-
-class WindowResulWiew(QDialog):
-    '''Рабочее окно для вывода результатов'''
-    def __init__(self, table, name, parent=None ):
-        super(WindowResulWiew, self).__init__(parent)
-        self.initUI(name)
-        self.tabl = table
-        self.vl = QVBoxLayout(self)
-        self.pushButton = QPushButton(self)
-        self.pushButton.setObjectName("pushButton")
-        self.pushButton.clicked.connect(self.btnClosed)
-        self.vl.addWidget(self.tabl)
-        self.vl.addWidget(self.pushButton)
-        self.setWindowTitle(name)
-        self.pushButton.setText("Закрыть окно")
-
-    def btnClosed(self):
-        self.close()
-
-    def initUI(self, name):
-        """Конструктор формы"""
-        self.center()
-        self.setMinimumWidth(1000)
-        self.setMinimumHeight(500)
-        self.setWindowTitle(name)
-        self.setWindowIcon(QIcon('data\icon.ico'))
-        self.show()
-
-    def center(self):
-        """Центрирует окно"""
-        qr = self.frameGeometry()
-        cp = QDesktopWidget().availableGeometry().center()
-        qr.moveCenter(cp)
-        self.move(qr.topLeft())
 
 
 class WindowGenPassWord(Window_main):
@@ -204,36 +201,57 @@ class WindowGenPassWord(Window_main):
         self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
         if self.adres_genotyping != '':
             self.label_creat('Данные по генотипированию добавлены')
-    
-    def gen_analit_password_creat(self):
-        """Прводит анализ полученных данных"""
+
+    def gen_analit_password_creat(self) -> None:
+        """Проводит анализ полученных данных"""
+        self.hosbut = self.fenster_enter_date()
         self.adres_res = save_file_for_word('Сохранить результаты')
-        self.df_error = creat_doc_pas_gen(self.adres_invertory, self.adres_genotyping, self.adres_res)
+        self.df_error = creat_doc_pas_gen(
+            self.adres_invertory,
+            self.adres_genotyping,
+            self.adres_res,
+            self.hosbut,
+        )
         self.len_df = len(self.df_error)
-    
-    def example_inventiry(self):
+
+    def example_inventiry(self) -> None:
         '''Открывает файл пример для описи.'''
         df_example_inventiry = pd.read_csv(r'func\data\creat_pass_doc\inventory_example.csv', sep=';', decimal=',', encoding='cp1251')
         table_wiew = ResOut(df_example_inventiry)
         dialog = WindowTabl(table_wiew, 'Biotech Lab: example inventiry', self)
         dialog.exec_()
 
-    def example_genotyping(self):
+    def example_genotyping(self) -> None:
         '''Открывает файл пример для генотипирования.'''
         df_example_genotyping = pd.read_csv(r'func\data\creat_pass_doc\profils_example.csv', sep=';', decimal=',', encoding='cp1251')
         table_wiew = ResOut(df_example_genotyping)
         dialog = WindowTabl(table_wiew, 'Biotech Lab: example genotyping', self)
         dialog.exec_()
 
+    def fenster_enter_date(self) -> str:
+        '''Выводит окно ввода данных.'''
+        dialog = Form('Введите название хозяйства')
+        dialog.exec_()
+        hosbut = dialog.button_click()
+        return hosbut
+
     def gen_password(self) -> None:
         '''Вызывает функции генерации паспортов.'''
-        self.label_creat(str(dt.datetime.now()))
-        self.button_creat(self.open_file_result_self, 'Открыть файл с паспортами')
+        button_oprn_file = QPushButton()
+        button_oprn_file.setText('Открыть файл с паспортами')
+        button_oprn_file.clicked.connect(self.open_file_result_self)
         try:
             self.gen_analit_password_creat()
-            self.label_creat('Количество ошибок' + str(self.len_df))
-            self.table_wiew = ResOut(self.df_error)
-            self.vb.addWidget(self.table_wiew)
+            table_wiew = ResOut(self.df_error)
+            len_df_res = self.len_df
+            dialog = WindowResulWiew(
+                table_wiew,
+                'Biotech Lab: Результаты анализа',
+                button_oprn_file,
+                ('Количество ошибок ' + str(len_df_res)),
+                self
+            )
+            dialog.exec_()
         except  Exception as e:
             QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
 
@@ -267,29 +285,65 @@ class WindowISSR(Window_main):
         self.res_df_issr = issr_analit_func(self.adres_issr_in)
         try:
             self.res_df_issr = issr_analit_func(self.adres_issr_in)
+            self.adres_res = save_file(self.res_df_issr)
+            self.label_creat(str(dt.datetime.now()))
+            self.button_creat(self.open_file_result, 'Открыть файл с результатами')
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
-        self.adres_res = save_file(self.res_df_issr)
-        self.label_creat(str(dt.datetime.now()))
-        self.button_creat(self.open_file_result, 'Открыть файл с результатами')
-    
+
 
 class WindowMSAusWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
         super().__init__(name)
-    
+
     def res_ms_aus_word_in_csv(self):
         '''Вызывает функции отбора данных из word'''
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл CSV')
-        self.adres = enter_adres('выбрать документ')
+        self.adres = enter_adres('Выбрать документ')
         try:
             df = ms_out_word(self.adres)
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
         except Exception as e:
             QMessageBox.information(self, 'Ошибка ввода', f'Вы выбрали неверные данные: \n {e}')
+
+
+class Form(QDialog):
+    def __init__(self, name, parent=None) -> None:
+        super(Form, self).__init__(parent)
+        self.initUI(name)
+        self.le = QLineEdit()
+        self.pb = QPushButton()
+        self.pb.setText("Ввести название")
+        layout = QFormLayout()
+        layout.addWidget(self.le)
+        layout.addWidget(self.pb)
+        self.setLayout(layout)
+        self.pb.clicked.connect(self.button_click)
+        self.setWindowTitle("example")
+
+    def button_click(self) -> None:
+        '''Сохранение текста'''
+        self.text = self.le.text()
+        self.close()
+        return self.text
+
+    def initUI(self, name: str) -> None:
+        """Конструктор формы"""
+        self.center()
+        self.setFixedSize(400, 150)
+        self.setWindowTitle(name)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.show()
+
+    def center(self) -> None:
+        """Центрирует окно"""
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().topLeft()
+        qr.moveCenter(cp)
+        self.move(qr.center())
 
 
 class GeneralWindow(QMainWindow):
@@ -310,7 +364,7 @@ class GeneralWindow(QMainWindow):
     def show_window_biotech(self) -> None:
         """Отрисовывает окно биотеха."""
         self.window = Window_main('Biotech Lab')
-        text = 'Добро пожаловать!\n Здесь вы найдёте методы, которые помогут вам в анализе данных получаемых в лаборатории.'
+        text = 'Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных получаемых в лаборатории.'
         self.window.label_creat(text)
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
