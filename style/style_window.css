@@ -27,6 +27,24 @@ QLabel {
 
 QTableWidget {
     background-color: #fff; 
+    text-align: center;
+    
+}
+QHeaderView::section{
+    background-color: rgb(22, 135, 0);
+    color: white;
+    padding-left: 4px;
+    border: 1px solid #6c6c6c;
+}
+QHeaderView::section:hover {
+    background-color: rgb(2, 181, 2);
+    color: white;
+    padding-left: 4px;
+    border: 1px solid #6c6c6c;
+}
+QHeaderView::section:checked{
+    background-color: rgb(234, 255, 0);
+    color: black;
 }
 
 QScrollBar {
@@ -45,6 +63,8 @@ QScrollBar {
 
 QLineEdit {
     background: rgb(166, 222, 173);
+    border: 2px solid gray;
+    border-radius: 10px;
 }
 
 Form {

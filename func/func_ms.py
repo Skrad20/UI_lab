@@ -91,6 +91,7 @@ def save_file_for_word(name_str:str ='Save File') -> None:
 def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     """Выводит результаты в таблицу."""
     table = QTableWidget()
+    table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
     table.setColumnCount(len(df_res.columns))
     table.setRowCount(len(df_res))
     try:

@@ -316,7 +316,7 @@ class Form(QDialog):
         self.initUI(name)
         self.le = QLineEdit()
         self.pb = QPushButton()
-        self.pb.setText("Ввести название")
+        self.pb.setText("Ввести название хозяйства")
         layout = QFormLayout()
         layout.addWidget(self.le)
         layout.addWidget(self.pb)
