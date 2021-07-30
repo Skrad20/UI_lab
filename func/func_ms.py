@@ -29,7 +29,7 @@ def read_file(adres: str) -> pd.DataFrame:
         df_doc = (pd.read_excel(adres))
     else:
         QMessageBox.critical(
-            None, 
+            None,
             'Ошибка ввода', 'Вы выбрали файл неверного формата'
         )
     return df_doc
@@ -81,9 +81,9 @@ def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
 
 def save_file_for_word(name_str:str ='Save File') -> None:
     """Возращает адрес файла."""
-    adres = QFileDialog.getSaveFileName(None, 
-                        name_str, 
-                        './', 
+    adres = QFileDialog.getSaveFileName(None,
+                        name_str,
+                        './',
                         'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)')[0]
     return adres
 
@@ -98,7 +98,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
         columns = df_res.columns
         table.setHorizontalHeaderLabels(columns)
     except:
-        pass   
+        pass
     for column in range(len(df_res.columns)):
         for row in range(len(df_res)):
             item = QTableWidgetItem(str(df_res.iloc[row, column]))
@@ -124,8 +124,6 @@ def search_father(adres: str) -> pd.DataFrame:
     df_search = df_search.drop(0, axis=1)
     df_search.columns = df_search.loc[0, :]
     df_search = df_search.drop(0)
-    if len(df_search.columns) == len(df.columns):
-        return 'Ошибка в данных.'
     df_res = df.copy()
     for i in range(1, len(df_search.columns)):
         for j in range(len(df_res)):
@@ -137,7 +135,6 @@ def search_father(adres: str) -> pd.DataFrame:
                         df_res.iloc[j, i] = np.nan
     df_res = df_res.dropna()
     df_res.to_csv(r'func\data\search_fatherh\bus_search.csv', sep=';', decimal=',', encoding='cp1251')
-
     return df_res
 
 

@@ -170,10 +170,10 @@ class WindowSearchFarher(Window_main):
             df = search_father(self.adres)
             self.table_wiew = ResOut(df)
             dialog = WindowResulWiew(
-                self.table_wiew, 
-                'Biotech Lab: Результаты анализа', 
-                button_oprn_file, 
-                '', 
+                self.table_wiew,
+                'Biotech Lab: Результаты анализа',
+                button_oprn_file,
+                '',
                 self
             )
             dialog.exec_()
@@ -266,7 +266,7 @@ class WindowISSR(Window_main):
     '''Рабочее окно для обработки ISSR.'''
     def __init__(self, name: str):
         super().__init__(name)
-    
+
     def gen_issr(self) -> None:
         '''Ввод результатов ISSR'''
         self.adres_issr_in = enter_adres('Добавить данные по ISSR')
@@ -354,7 +354,7 @@ class GeneralWindow(QMainWindow):
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
-    
+
     def initUI(self):
         self.setGeometry(300, 300, 300, 220)
         self.setWindowTitle('Icon')
@@ -456,9 +456,6 @@ class GeneralWindow(QMainWindow):
         )
         self.window.button_creat(self.window.analis_issr, 'Обработать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
-
-
-
         self.window.show()
     
     def open_file(self) -> None:
