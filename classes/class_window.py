@@ -2,10 +2,12 @@
 # -*- coding: utf-8 -*-
 
 import os
+from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from numpy import e
+from pandas.core.frame import DataFrame
 from func.func_ms import *
 from func.func_issr import *
 from peewee import *
@@ -346,6 +348,79 @@ class Form(QDialog):
         self.move(qr.center())
 
 
+class TableDataEnter(QTableWidget):
+    def keyPressEvent(self, event):
+        if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
+
+            return
+        super(TableDataEnter, self).keyPressEvent(event)
+
+
+class WindowTableEnterData(MainDialog):
+    """Окно для для ввода даннных."""
+    def __init__(self, table, name, parent):
+        super().__init__(table, name, parent=parent)
+        self.vl = QVBoxLayout(self)
+        self.pushButton = QPushButton(self)
+        self.pushButton_res = QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.botton_closed)
+        self.save_button = QPushButton("Заполнить ячейки", self)
+        self.save_button.clicked.connect(self.get_data)
+        self.pushButton.setText("Закрыть окно")
+        self.vl.addWidget(self.save_button)
+        self.vl.addWidget(self.pushButton)
+        self.table_wiew = None
+
+    def on_fill(self):
+        self.table.setRowCount(int(self.spin.text()))
+        self.get_data()
+
+    def get_data(self):
+        if self.table_wiew != None:
+            self.vl.removeWidget(self.table_wiew)
+            self.vl.removeWidget(self.save_button_end)
+        table = QApplication.clipboard()
+        mime = table.mimeData()
+        data = mime.data('application/x-qt-windows-mime;value="Csv"')
+        data = str(data.data())[1:]
+        data = data.split(r'\r\n')
+        columns = data[0].split(';')
+        columns[0] = columns[0].replace("'", "")
+        self.df = pd.DataFrame(columns=columns, index=[x for x in range(len(data))])
+        for i in range(1, len(data)-1):
+            data_in = data[i].split(';')
+            for j in range(len(data_in)):
+                self.df.iloc[i-1, j] = data_in[j]
+        self.out_data()
+    
+    def out_data(self):
+        self.table_wiew = ResOut(self.df)
+        self.vl.addWidget(self.table_wiew)
+        self.save_button_end = QPushButton("Сохранить данные", self)
+        self.save_button_end.clicked.connect(self.save_data)
+        self.vl.addWidget(self.save_button_end)
+
+    def save_data(self):
+        self.df_res = DataFrame(columns=self.df.columns, index = self.df.index)
+        for i in range(self.table_wiew.rowCount()):
+            for j in range(self.table_wiew.columnCount()):
+                    if self.table_wiew.item(i,j).text() != 'nan':
+                        self.df_res.iloc[i, j] = self.table_wiew.item(i,j).text()
+        self.df_res = self.df_res.dropna(how='all')
+        print(self.df_res)
+
+
+class WindowTest(Window_main):
+    """Окно для тестирования функций."""
+    def __init__(self, name: str):
+        super().__init__(name)
+        
+    def show_enter_data_tabl(self):
+        dialog = WindowTableEnterData(None, 'Biotech Lab: example genotyping', self)
+        dialog.exec_()
+
+
 class GeneralWindow(QMainWindow):
     """Управляет окнами программы."""
     def __init__(self) -> None:
@@ -356,6 +431,7 @@ class GeneralWindow(QMainWindow):
         self.setCentralWidget(self.table_widget)
 
     def initUI(self):
+        """Конструктор геометрии."""
         self.setGeometry(300, 300, 300, 220)
         self.setWindowTitle('Icon')
         self.setWindowIcon(QIcon(r'data\icon.jpg'))
@@ -369,8 +445,18 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
-        
+        self.window.button_creat(self.show_window_tests, 'Тест')
         self.window.show()
+
+    def show_window_tests(self):
+        """Окно для тестирования новых функций"""
+        try:
+            self.window = WindowTest('Biothech Lab: testing')
+            
+            self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'Ошибка выполнения:\n {e}')
 
     def show_window_MS(self) -> None:
         """Отрисовывает окно анализа микросателлитов."""
