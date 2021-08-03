@@ -346,6 +346,68 @@ class Form(QDialog):
         self.move(qr.center())
 
 
+class WindowTableEnter(QDialog):
+    def __init__(self, name, parent=None) -> None:
+        super(WindowTableEnter, self).__init__(parent)
+        self.initUI(name)
+        self.tabl =QTableWidget()
+        self.tabl.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+        self.tabl.setColumnCount(5)
+        self.tabl.setRowCount(5)
+        self.vl = QVBoxLayout(self)
+        self.pushButton = QPushButton(self)
+        self.pushButton.clicked.connect(self.botton_closed)
+        self.pushButton.setText("Закрыть окно")
+        self.button = QPushButton(self)
+        self.button.clicked.connect(self.fill_table)
+        self.button.setText("Заполнить таблицу")
+        self.vl.addWidget(self.tabl)
+        self.vl.addWidget(self.button)
+        self.vl.addWidget(self.pushButton)
+        
+
+    def botton_closed(self):
+        self.get_column_data(1)
+        self.close()
+    
+    def initUI(self, name: str) -> None:
+        """Конструктор формы"""
+        self.center()
+        self.setFixedSize(500, 500)
+        self.setWindowTitle(name)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.show()
+
+    def center(self) -> None:
+        """Центрирует окно"""
+        qr = self.frameGeometry()
+        cp = QDesktopWidget().availableGeometry().center()
+        qr.moveCenter(cp)
+        self.move(qr.center())
+
+    def get_column_data(self, column):
+        '''Получает данные из таблицы.'''
+        self.data = []
+        try:
+            for i in range(self.tabl.rowCount()):
+                self.data.append(self.tabl.item(i, column).text())
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'Данные не вверны:\n {e}')
+        print(self.data)
+
+    def fill_table(self):
+        '''Сохраняет данные таблицы.'''
+        try:
+            for i, index in enumerate(self.tabl.selectedIndexes()):
+                item = QTableWidgetItem()
+                item.setText(str(i))
+                self.tabl.setItem(index.row(), index.column(), item)
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'Проверьте правильность ввода данных:\n {e}')
+        self.get_column_data(1)
+
+
+
 class GeneralWindow(QMainWindow):
     """Управляет окнами программы."""
     def __init__(self) -> None:
@@ -369,6 +431,7 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
+        self.window.button_creat(self.tests_wiew, 'Тестирование')
         
         self.window.show()
 
@@ -446,7 +509,7 @@ class GeneralWindow(QMainWindow):
         self.window.show()
 
     def show_window_ISSR(self) -> None:
-        """Отрисовывает окно ISSR."""
+        '''Отрисовывает окно ISSR.'''
         self.window = WindowISSR('Biotech Lab: ISSR analysis')
         text_1 = 'Здесь можно обработать первичные данные по ISSR'
         self.window.label_creat(text_1)
@@ -456,10 +519,13 @@ class GeneralWindow(QMainWindow):
         )
         self.window.button_creat(self.window.analis_issr, 'Обработать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
-
-
-
         self.window.show()
+    
+    def tests_wiew(self) -> None:
+        '''Запускает тестируемый код.'''
+        dialog = WindowTableEnter('Biotech Lab: example inventiry', self)
+        dialog.exec_()
+
     
     def open_file(self) -> None:
         """Сохраняет путь к файлу"""

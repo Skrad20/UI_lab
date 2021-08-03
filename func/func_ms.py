@@ -92,6 +92,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     """Выводит результаты в таблицу."""
     table = QTableWidget()
     table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
+    table.setEditTriggers(QAbstractItemView.NoEditTriggers)
     table.setColumnCount(len(df_res.columns))
     table.setRowCount(len(df_res))
     try:
