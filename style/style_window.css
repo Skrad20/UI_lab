@@ -70,3 +70,19 @@ QLineEdit {
 Form {
     padding: 100px 100px;
 }
+
+QCheckBox {
+    font-size: 22px;
+    font-family: 'Courier New', Courier, monospace;
+    color: #fff;
+}
+
+QCheckBox::indicator {
+    background-color: rgb(255, 255, 255);
+}
+
+QCheckBox::indicator:checked {
+    background-color: rgb(1, 53, 1);
+    border: 3px solid;
+    border-color: white;
+}

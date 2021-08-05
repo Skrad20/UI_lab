@@ -12,6 +12,7 @@ from func.func_ms import *
 from func.func_issr import *
 from peewee import *
 import datetime as dt
+import functools
 
 
 adres_job = ''
@@ -85,7 +86,7 @@ class Window_main(QWidget):
     def open_file_result(self) -> None:
         '''Открывает файл по адресу, сохраняемому в глобальной переменной'''
         os.startfile(adres_job)
-    
+
     def open_file_result_self(self) -> None:
         '''Открывает файл по адресу, сохраняемому в переменной класса'''
         os.startfile(self.adres_res)
@@ -161,6 +162,47 @@ class WindowSearchFarher(Window_main):
     '''Рабочее окно для поиска возможных отцов.'''
     def __init__(self, name: str):
         super().__init__(name)
+        
+        self.hosbut_all = {}
+        text_2 = 'Выберите хозяйства'
+        labe_text_2 = QLabel(text_2)
+        labe_text_2.setAlignment(Qt.AlignCenter)
+        self.vb.addWidget(labe_text_2)
+        hosbut = [
+            'Гледенское',
+            'Родина',
+            'Двина',
+            'Погореловское',
+            'Присухронское',
+            'Выбрать всех',
+        ]
+        hosbut_chek = {}
+        for name in hosbut:
+            hosbut_chek[name] = QCheckBox(name, self)
+            hosbut_chek[name].stateChanged.connect(lambda checked, res = name: self.check_answer(checked, res))
+        cp_layout1 = QGridLayout()
+        j = 0
+        x = 0
+        for i in range(len(hosbut)):
+            item = hosbut_chek[hosbut[i]]
+            cp_layout1.addWidget(item, j, x)
+            x += 1
+            if x > 2:
+                x = 0
+                j += 1
+        self.vb.addLayout(cp_layout1)
+        text_1 = 'Подобрать отцов из имеющейся базы'
+        labe_text = QLabel(text_1)
+        labe_text.setAlignment(Qt.AlignCenter)
+        self.vb.addWidget(labe_text)
+
+    def check_answer(self, state, res='s'):
+        if state == Qt.Checked:
+            self.hosbut_all[res] = True
+            print(self.hosbut_all)
+        else:
+            self.hosbut_all[res] = False
+            print(self.hosbut_all)
 
     def res_search_cow_father(self, class_func = None) -> None:
         '''Вызывает функции анализа и поиска отцов'''
@@ -493,8 +535,6 @@ class GeneralWindow(QMainWindow):
     def show_window_MS_serch_father(self) -> None:
         '''Отрисовывает окно поиска отцов.'''
         self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
-        text_1 = 'Подобрать отцов из имеющейся базы'
-        self.window.label_creat(text_1)
         global adres_job
         adres_job = r'func\data\search_fatherh\bus_search.csv'
         self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
