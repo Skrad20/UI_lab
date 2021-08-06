@@ -107,13 +107,41 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     return table
 
 
-def search_father(adres: str) -> pd.DataFrame:
-    """Поиск возможных отцов."""
+def split_hosbut_father(row):
+    row['хозяйство'] = row['хозяйство'].split(', ')
+
+
+def filer_father(hosbut: dict) -> pd.DataFrame:
     df = pd.read_csv(
-        r'func\data\search_fatherh\Bulls.txt',
+        r'func\data\search_fatherh\Bulls2.txt',
         sep='\t',
         decimal=','
     )
+    print(hosbut['Выбрать всех'])
+    if hosbut['Выбрать всех']:
+        return df.drop('хозяйство', axis=1)
+    df.apply(split_hosbut_father, axis=1)
+    list_hosbut = []
+    for key, item in hosbut.items():
+        if item:
+            if key != 'Выбрать всех':
+                list_hosbut.append(key)
+    list_res = []
+    for i in range(len(df)):
+        for j in range(len(df.iloc[i, 1])):
+            print(df.iloc[i, 1][j], df.iloc[i, 0], list_hosbut)
+            print(df.iloc[i, 1][j] in list_hosbut)
+            if df.iloc[i, 1][j] in list_hosbut:
+                list_res.append(df.iloc[i, :])
+    df_res = pd.DataFrame(data = list_res)
+    df = df_res.reset_index().drop('index', axis = 1)
+    df['хозяйство'] = df.pop('хозяйство')
+    return df
+
+
+def search_father(adres: str, filter: dict) -> pd.DataFrame:
+    """Поиск возможных отцов."""
+    df = filer_father(filter)
     df_search = read_file(adres)
     df_search = df_search.T
     df = df.fillna('-')

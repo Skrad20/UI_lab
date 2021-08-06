@@ -211,7 +211,7 @@ class WindowSearchFarher(Window_main):
         button_oprn_file.setText('Открыть файл CSV')
         button_oprn_file.clicked.connect(self.open_file_result)
         try:
-            df = search_father(self.adres)
+            df = search_father(self.adres, self.hosbut_all)
             self.table_wiew = ResOut(df)
             dialog = WindowResulWiew(
                 self.table_wiew,
