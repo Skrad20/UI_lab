@@ -6,7 +6,6 @@ QWidget {
     background-position: center;
     font-family: 'Courier New', Courier, monospace;
 }
-
 WindowTabl {
     padding: 200px 200px;
     margin: 0;
@@ -16,7 +15,6 @@ QPushButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #008000, stop: 1 #3caa3c);
     height: 25%;
     width: 25%;
-    padding: 20px 24px;
     font-size: 20px;
     border: 1px solid #000;
     border-radius:  5%;
@@ -24,7 +22,7 @@ QPushButton {
     position: relative;
     font-family: 'Courier New', Courier, monospace;
     font-weight: 300;
-    padding-top: 15px;
+    padding: 20px 24px;
     margin: 0;
 }
 
@@ -50,7 +48,7 @@ QTableWidget {
 }
 
 QTableWidget::item:selected {
-    background-color: rgb(22, 135, 0); 
+    background-color:  qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #013501, stop: 1 #04cc04);
     
 }
 
@@ -74,7 +72,7 @@ QHeaderView::section{
 }
 
 QHeaderView::section:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #015201, stop: 1 #02e802);
+    background-color: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #015201, stop: 1 #02e802);
     color: white;
     padding-left: 4px;
     border: 1px solid #6c6c6c;

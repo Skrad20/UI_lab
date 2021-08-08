@@ -133,7 +133,6 @@ class WindowTabl(MainDialog):
         self.vl = QVBoxLayout(self)
         self.pushButton = QPushButton(self)
         self.pushButton_res = QPushButton(self)
-        self.pushButton.setObjectName("pushButton")
         self.pushButton.clicked.connect(self.botton_closed)
         self.vl.addWidget(self.tabl)
         self.vl.addWidget(self.pushButton)
@@ -148,7 +147,6 @@ class WindowResulWiew(MainDialog):
         self.button = button
         self.vl = QVBoxLayout(self)
         self.pushButton = QPushButton(self)
-        self.pushButton.setObjectName("pushButton")
         self.pushButton.clicked.connect(self.botton_closed)
         self.label_start = QLabel(label)
         self.label_date = QLabel(str(dt.datetime.now()))
@@ -459,7 +457,7 @@ class WindowTest(Window_main):
     """Окно для тестирования функций."""
     def __init__(self, name: str):
         super().__init__(name)
-        
+
     def show_enter_data_tabl(self):
         dialog = WindowTableEnterData(None, 'Biotech Lab: example genotyping', self)
         dialog.exec_()
@@ -470,7 +468,7 @@ class GeneralWindow(QMainWindow):
     def __init__(self) -> None:
         super(GeneralWindow, self).__init__()
         self.setWindowTitle('MainWindow')
-        
+        self.setObjectName('Genera_window') 
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
@@ -485,7 +483,7 @@ class GeneralWindow(QMainWindow):
     def show_window_biotech(self) -> None:
         """Отрисовывает окно биотеха."""
         self.window = Window_main('Biotech Lab')
-        text = 'Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных получаемых в лаборатории.'
+        text = 'Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных, получаемых в лаборатории.'
         self.window.label_creat(text)
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
@@ -497,7 +495,7 @@ class GeneralWindow(QMainWindow):
         """Окно для тестирования новых функций"""
         try:
             self.window = WindowTest('Biothech Lab: testing')
-            
+            self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-image: url(data/nii.jpg)}')
             self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
             self.window.button_creat(self.show_window_biotech, 'На главную')
         except Exception as e:
