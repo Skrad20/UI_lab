@@ -50,7 +50,7 @@ class Window_main(QWidget):
         self.button.setText(label)
         self.button.clicked.connect(func)
         self.vb.addWidget(self.button)
-    
+
     def button_creat_double(self, func_first, label_first: str, func_second, label_second: str, class_func = None) -> None:
         """Создает 2 кнопки в ряд в окне программы."""
         self.button_layout = QHBoxLayout()
@@ -60,6 +60,8 @@ class Window_main(QWidget):
         self.button_2 = QPushButton()
         self.button_2.setText(label_second)
         self.button_2.clicked.connect(func_second)
+        self.button_1.setMinimumHeight(100)
+        self.button_2.setMinimumHeight(100)
         self.button_layout.addWidget(self.button_1)
         self.button_layout.addWidget(self.button_2)
         self.vb.addLayout(self.button_layout)
@@ -191,7 +193,7 @@ class WindowSearchFarher(Window_main):
                 x = 0
                 j += 1
         self.vb.addLayout(cp_layout1)
-        text_1 = 'Подобрать отцов из имеющейся базы'
+        text_1 = 'Подобрать отцов из выбранных хозяйств'
         labe_text = QLabel(text_1)
         labe_text.setAlignment(Qt.AlignCenter)
         self.vb.addWidget(labe_text)
@@ -468,6 +470,7 @@ class GeneralWindow(QMainWindow):
     def __init__(self) -> None:
         super(GeneralWindow, self).__init__()
         self.setWindowTitle('MainWindow')
+        
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
@@ -514,7 +517,7 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
-        
+
     def show_window_MS_aus_word(self) -> None:
         '''Отрисовывает окно отбора данных из  Word.'''
         self.window = WindowMSAusWord('Biotech Lab: Microsatellite analysis. Aus word')
@@ -553,13 +556,13 @@ class GeneralWindow(QMainWindow):
             self.window.example_inventiry, 'Пример'
         )
         self.window.button_creat_double(
-            self.window.gen_password_genotyping, r'Результаты генотипирования',
+            self.window.gen_password_genotyping, 'Результаты\nгенотипирования',
             self.window.example_genotyping, r'Пример'
         )
         self.window.button_creat(self.window.gen_password, 'Обработать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
-    
+
     def show_about_programm(self):
         '''Отрисовывает окно о программе.'''
         self.window = WindowAbout('Biotech Lab: about programm')
@@ -567,6 +570,13 @@ class GeneralWindow(QMainWindow):
             'Версия 1.0.0\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
             '\nГод разработки: 2021'
         )
+        pixmap = QPixmap(r'data/nii.jpg')
+        self.window.label = QLabel(self)
+        self.window.label.setPixmap(pixmap)
+        self.window.label.resize(pixmap.width(), pixmap.height())
+        self.window.label.setAlignment(Qt.AlignCenter)
+        self.window.resize(pixmap.width(), pixmap.height())
+        self.window.vb.addWidget(self.window.label)
         self.window.label_creat(text_1)
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
