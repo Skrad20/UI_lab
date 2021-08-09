@@ -1,19 +1,21 @@
 
-QWidget { 
-    background-color: rgb(74, 74, 74);
+QWidget {
+    background-color:qlineargradient(x1: 0, y1:0, x2:0, y2:1, stop:0 #636363, stop:1 #303030);
     opacity: 0.2;
     margin: 0;
     background-position: center;
     font-family: 'Courier New', Courier, monospace;
 }
+
 WindowTabl {
     padding: 200px 200px;
     margin: 0;
 }
 
 QPushButton {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #008000, stop: 1 #3caa3c);
     height: 25%;
+    color: #333;
+    background-color:  qlineargradient(x1: 0, y1:0, x2:1, y2:1, stop:0 white, stop: 0.3 #4dff4d, stop:1 #008000);
     width: 25%;
     font-size: 20px;
     border: 1px solid #000;
@@ -27,7 +29,7 @@ QPushButton {
 }
 
 .QPushButton:hover {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #013501, stop: 1 #008000);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #04cc04, stop: 1 #013501);
     color: #fff;
 }
 
@@ -37,32 +39,41 @@ QPushButton {
 
 QLabel {
     font-size: 24px;
+    background-color: rgba(1,1,1,0);
     color: #fff;
     font-family: 'Courier New', Courier, monospace;
     font-weight: 500;
 }
 
 QTableWidget {
-    background-color: #fff; 
+    background-color: rgba(1,1,1,0);
+    color: #fff;
+    border-bottom: 1px solid rgb(0,0,0);
+    border-left: 1px solid rgb(0,0,0);
+    text-align: center;
+}
+QTableView::item {
+    border-style: none;
+    border-bottom: 1px solid rgb(0,0,0);
+    border-left: 1px solid rgb(0,0,0);
     text-align: center;
 }
 
 QTableWidget::item:selected {
-    background-color:  qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #013501, stop: 1 #04cc04);
-    
+    background-color:  qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #04cc04, stop: 1 #039c03); 
 }
 
 QHeaderView::section:horizontal {
     color: #fff;
     border-style: solid;
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #013501, stop: 1 #008000);
- }
+}
 
  QHeaderView::section:vertical {
     color: #fff;
     border-style: solid;
     background-color: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #013501, stop: 1 #008000);
- }
+}
 
 QHeaderView::section{
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #168700, stop: 1 #28f000);
@@ -79,7 +90,7 @@ QHeaderView::section:hover {
 }
 
 QHeaderView::section:checked {
-    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #333333, stop: 1 #f7ff99);
+    background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #f7ff99, stop: 1 #333333);
     color: black;
 }
 

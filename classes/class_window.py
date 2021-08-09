@@ -495,7 +495,7 @@ class GeneralWindow(QMainWindow):
         """Окно для тестирования новых функций"""
         try:
             self.window = WindowTest('Biothech Lab: testing')
-            self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-image: url(data/nii.jpg)}')
+            self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
             self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
             self.window.button_creat(self.show_window_biotech, 'На главную')
         except Exception as e:
