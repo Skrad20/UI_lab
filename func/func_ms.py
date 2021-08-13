@@ -115,9 +115,9 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
     df = pd.read_csv(
         r'func\data\search_fatherh\Bulls2.txt',
         sep='\t',
-        decimal=','
+        decimal=',',
     )
-    print(hosbut['Выбрать всех'])
+    print(hosbut)
     if hosbut['Выбрать всех']:
         return df.drop('хозяйство', axis=1)
     df.apply(split_hosbut_father, axis=1)
@@ -143,6 +143,7 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = filer_father(filter)
     df_search = read_file(adres)
+    print(df_search)
     df_search = df_search.T
     df = df.fillna('-')
     df = df.replace('  ', '')

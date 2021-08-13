@@ -3,9 +3,11 @@ QWidget {
     background-color:qlineargradient(x1: 0, y1:0, x2:0, y2:1, stop:0 #636363, stop:1 #303030);
     opacity: 0.2;
     margin: 0;
+    padding: 0;
     background-position: center;
     font-family: 'Courier New', Courier, monospace;
 }
+
 
 WindowTabl {
     padding: 200px 200px;
@@ -37,12 +39,17 @@ QPushButton {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #002800, stop: 1 #00f500);
 }
 
+
 QLabel {
     font-size: 24px;
     background-color: rgba(1,1,1,0);
     color: #fff;
     font-family: 'Courier New', Courier, monospace;
     font-weight: 500;
+}
+
+.JpgNii {
+    background-color: rgba(1,1,1,0.5);
 }
 
 QTableWidget {
@@ -122,6 +129,7 @@ QCheckBox {
     font-size: 22px;
     font-family: 'Courier New', Courier, monospace;
     color: #fff;
+    background-color: rgba(1,1,1,0);
 }
 
 QCheckBox::indicator {
