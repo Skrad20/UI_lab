@@ -21,7 +21,7 @@ QPushButton {
     width: 25%;
     font-size: 20px;
     border: 1px solid #000;
-    border-radius:  5%;
+    border-radius: 5%;
     border-style: outset;
     position: relative;
     font-family: 'Courier New', Courier, monospace;
@@ -50,6 +50,13 @@ QLabel {
 
 .JpgNii {
     background-color: rgba(1,1,1,0.5);
+}
+
+QMessageBox {
+    background-color: rgba(1,1,1,1);
+    background-image: url(data/error.png);
+    background-position: top;
+    background-clip: border-box;
 }
 
 QTableWidget {

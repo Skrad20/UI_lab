@@ -1,7 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pandas as pd 
+import pandas as pd
 import numpy as np
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -9,7 +9,7 @@ from PyQt5.QtCore import *
 from docxtpl import DocxTemplate
 import copy
 import pandas as pd
-import os 
+import os
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
 import datetime
@@ -79,7 +79,7 @@ def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
     return adres
 
 
-def save_file_for_word(name_str:str ='Save File') -> None:
+def save_file_for_word(name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
     adres = QFileDialog.getSaveFileName(None,
                         name_str,
@@ -133,8 +133,8 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
             print(df.iloc[i, 1][j] in list_hosbut)
             if df.iloc[i, 1][j] in list_hosbut:
                 list_res.append(df.iloc[i, :])
-    df_res = pd.DataFrame(data = list_res)
-    df = df_res.reset_index().drop('index', axis = 1)
+    df_res = pd.DataFrame(data=list_res)
+    df = df_res.reset_index().drop('index', axis=1)
     df['хозяйство'] = df.pop('хозяйство')
     return df
 

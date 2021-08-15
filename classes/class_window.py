@@ -6,8 +6,8 @@ from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
-from numpy import e
 from pandas.core.frame import DataFrame
+from func.func_answer_error import answer_error
 from func.func_ms import *
 from func.func_issr import *
 from peewee import *
@@ -127,31 +127,35 @@ class MainDialog(QDialog):
         cp = QDesktopWidget().availableGeometry().topLeft()
         qr.moveCenter(cp)
         self.move(qr.center())
+        self.clipboard = []
 
     def eventFilter(self, source, event):
         '''Отслеживание событий вставки или копирования.'''
-        if event.type() == QEvent.KeyPress:
-            if event == QKeySequence.Copy:
-                self.copySelection()
-                return True
-            elif event == QKeySequence.Paste:
-                self.pasteSelection()
-                return True
+        try:
+            if event.type() == QEvent.KeyPress:
+                if event == QKeySequence.Copy:
+                    self.copySelection()
+                    return True
+                elif event == QKeySequence.Paste:
+                    self.pasteSelection()
+                    return True
 
-        elif event.type() == QEvent.ContextMenu:
-            menu = QMenu()
-            copyAction = menu.addAction('Copy')
-            copyAction.triggered.connect(self.copySelection)
-            pasteAction = menu.addAction('Paste')
-            pasteAction.triggered.connect(self.pasteSelection)
-            if not self.tableView.selectedIndexes():
-                copyAction.setEnabled(False)
-                pasteAction.setEnabled(False)
-            if not self.clipboard:
-                pasteAction.setEnabled(False)
-            menu.exec(event.globalPos())
-            return True
-        return super(MainDialog, self).eventFilter(source, event)
+            elif event.type() == QEvent.ContextMenu:
+                menu = QMenu()
+                copyAction = menu.addAction('Copy')
+                copyAction.triggered.connect(self.copySelection)
+                pasteAction = menu.addAction('Paste')
+                pasteAction.triggered.connect(self.pasteSelection)
+                if not self.tableView.selectedIndexes():
+                    copyAction.setEnabled(False)
+                    pasteAction.setEnabled(False)
+                if not self.clipboard:
+                    pasteAction.setEnabled(False)
+                menu.exec(event.globalPos())
+                return True
+            return super(MainDialog, self).eventFilter(source, event)
+        except Exception as e:
+            QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
 
     def copySelection(self):
         '''Копирование данных ctrl+С.'''
@@ -185,7 +189,10 @@ class MainDialog(QDialog):
         data = data.split('\r\n')
         columns = data[0].split(';')
         columns[0] = columns[0].replace("'", "")
-        self.df = pd.DataFrame(columns=columns, index=[x for x in range(len(data))])
+        self.df = pd.DataFrame(
+            columns=columns, 
+            index=[x for x in range(len(data))]
+        )
         for i in range(1, len(data)-1):
             data_in = data[i].split(';')
             for j in range(len(data_in)):
@@ -269,7 +276,7 @@ class WindowSearchFarher(Window_main):
         }
         for name in hosbut:
             hosbut_chek[name] = QCheckBox(name, self)
-            hosbut_chek[name].stateChanged.connect(lambda checked, res = name: self.check_answer(checked, res))
+            hosbut_chek[name].stateChanged.connect(lambda checked, res=name: self.check_answer(checked, res))
         cp_layout1 = QGridLayout()
         j = 0
         x = 0
@@ -313,7 +320,7 @@ class WindowSearchFarher(Window_main):
             )
             dialog.exec_()
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
 
     def data_result_in(self):
         self.window = WindowTableEnterDataSF(None, 'Biotech Lab: enter data', self.hosbut_all, self)
@@ -329,30 +336,105 @@ class WindowGenPassWord(Window_main):
         self.adres_genotyping = r''
         self.df_error = pd.DataFrame()
         self.len_df = 0
+        text_1 = 'Собрать паспорта по описи и результатам генотипирования'
+        self.label_creat(text_1)
+        global adres_job
+        adres_job = r'func\data\creat_pass_doc\combined_file.docx'
+        self.button_layout = QHBoxLayout()
+        self.button_1 = QPushButton()
+        self.button_1.setText('Выбрать опись')
+        self.button_1.clicked.connect(self.gen_password_invertory)
+        self.button_2 = QPushButton()
+        self.button_2.setText('Пример')
+        self.button_2.clicked.connect(self.example_inventiry)
+        self.button_1.setMinimumHeight(100)
+        self.button_2.setMinimumHeight(100)
+        self.button_layout.addWidget(self.button_1)
+        self.button_layout.addWidget(self.button_2)
+        self.vb.addLayout(self.button_layout)
+
+        self.button_layout_2 = QHBoxLayout()
+        self.button_3 = QPushButton()
+        self.button_3.setText('Результаты\nгенотипирования')
+        self.button_3.clicked.connect(self.gen_password_genotyping)
+        self.button_4 = QPushButton()
+        self.button_4.setText('Пример')
+        self.button_4.clicked.connect(self.example_genotyping)
+        self.button_3.setMinimumHeight(100)
+        self.button_4.setMinimumHeight(100)
+        self.button_layout_2.addWidget(self.button_3)
+        self.button_layout_2.addWidget(self.button_4)
+        self.vb.addLayout(self.button_layout_2)
+
+        self.button_layout_3 = QHBoxLayout()
+        self.button_5 = QPushButton()
+        self.button_5.setText('Ввести данные\nописей')
+        self.button_5.clicked.connect(self.add_data_in_table_invertory)
+        self.button_6 = QPushButton()
+        self.button_6.setText('Ввести данные\nпрофилей')
+        self.button_6.clicked.connect(self.add_data_in_table_profils)
+        self.button_5.setMinimumHeight(100)
+        self.button_6.setMinimumHeight(100)
+        self.button_layout_3.addWidget(self.button_5)
+        self.button_layout_3.addWidget(self.button_6)
+        self.vb.addLayout(self.button_layout_3)
+        self.button_creat(self.gen_password, 'Обработать')
 
     def gen_password_invertory(self) -> None:
         """Генерирует запись о добавленых данных"""
         self.adres_invertory = enter_adres('Добавить опись')
         if self.adres_invertory != '':
-            self.label_creat('Данные по описи добавлены')
+            #self.label_creat('Данные по описи добавлены')
+            self.button_1.setStyleSheet(
+                (
+                    'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                    'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+                )
+            )
 
-    def add_data_in_table_invertory(self):
+    def add_data_in_table_invertory(self) -> None:
+        '''Выводит окно для вставки данных описей в таблицу.'''
         self.adres_invertory = r'func\data\creat_pass_doc\inventory_aus_table.csv'
-        self.window = Wind_Table_GP_invertory(None, 'Biotech Lab: enter data invertory', self)
-        self.window.show()
-        self.window.exec_()
+        try:
+            self.window = Wind_Table_GP_invertory(None, 'Biotech Lab: enter data invertory', self)
+            self.window.show()
+            self.window.exec_()
+            self.button_5.setStyleSheet(
+                (
+                    'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                    'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+                )
+            )
+        except Exception as e:
+            QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
 
-    def add_data_in_table_profils(self):
-        self.adres_genotyping = r'func\data\creat_pass_doc\profils_aus_table.csv'
-        self.window = Wind_Table_GP_profils(None, 'Biotech Lab: enter data invertory', self)
-        self.window.show()
-        self.window.exec_()
+    def add_data_in_table_profils(self) -> None:
+        '''Выводит окно для вставки данных профилей в таблиц.'''
+        try:
+            self.adres_genotyping = r'func\data\creat_pass_doc\profils_aus_table.csv'
+            self.window = Wind_Table_GP_profils(None, 'Biotech Lab: enter data invertory', self)
+            self.window.show()
+            self.window.exec_()
+            self.button_6.setStyleSheet(
+                (
+                    'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                    'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+                )
+            )
+        except Exception as e:
+            QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
 
     def gen_password_genotyping(self) -> None:
         """Генерирует запись о добавленых данных"""
         self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
         if self.adres_genotyping != '':
-            self.label_creat('Данные по генотипированию добавлены')
+            #self.label_creat('Данные по генотипированию добавлены')
+            self.button_3.setStyleSheet(
+                    (
+                    'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                    'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+                )
+            )
 
     def gen_analit_password_creat(self) -> None:
         """Проводит анализ полученных данных"""
@@ -404,8 +486,8 @@ class WindowGenPassWord(Window_main):
                 self
             )
             dialog.exec_()
-        except  Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
 
 
 class WindowAbout(Window_main):
@@ -441,7 +523,7 @@ class WindowISSR(Window_main):
             self.label_creat(str(dt.datetime.now()))
             self.button_creat(self.open_file_result, 'Открыть файл с результатами')
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
 
 
 class WindowMSAusWord(Window_main):
@@ -459,7 +541,7 @@ class WindowMSAusWord(Window_main):
             self.table_wiew = ResOut(df)
             self.vb.addWidget(self.table_wiew)
         except Exception as e:
-            QMessageBox.information(self, 'Ошибка ввода', f'Вы выбрали неверные данные: \n {e}')
+            QMessageBox.information(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
 
 
 class Form(QDialog):
@@ -551,7 +633,8 @@ class WindowTableEnterDataSF(MainDialog):
         self.vl.addWidget(self.pushButton)
         self.table_wiew = None
 
-    def save_data(self):
+    def save_data(self) -> None:
+        '''Сохранение данных по потомкам.'''
         self.df_res = DataFrame(
             columns= [x for x in range(self.tableView.model().columnCount())], 
             index = [x for x in range(self.tableView.model().rowCount())])
@@ -585,7 +668,13 @@ class WindowTableEnterDataSF(MainDialog):
             )
             dialog.exec_()
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'Вы выбрали неверные данные:\n {e}')
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+        self.save_button.setStyleSheet(
+            (
+                'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #004524);}' +
+                'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+            )
+        )
 
 
 class Wind_Table_GP_invertory(MainDialog):
@@ -618,7 +707,7 @@ class Wind_Table_GP_invertory(MainDialog):
         self.vl.addWidget(self.pushButton)
         self.table_wiew = None
 
-    def save_data(self):
+    def save_data(self) -> None:
         '''Cохранение данных по описи'''
         self.df_res = DataFrame(
             columns= [x for x in range(self.tableView.model().columnCount())], 
@@ -637,7 +726,13 @@ class Wind_Table_GP_invertory(MainDialog):
             encoding='cp1251',
             index = False
         )
-        self.adres_job_res = r'func\data\creat_pass_doc\inventory_aus_table.csv',
+        self.adres_job_res = r'func\data\creat_pass_doc\inventory_aus_table.csv'
+        self.save_button.setStyleSheet(
+            (
+                'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+            )
+        )
 
 
 class Wind_Table_GP_profils(MainDialog):
@@ -694,7 +789,7 @@ class Wind_Table_GP_profils(MainDialog):
         self.vl.addWidget(self.pushButton)
         self.table_wiew = None
 
-    def save_data(self):
+    def save_data(self) -> None:
         '''Cохранение данных по описи'''
         self.df_res = DataFrame(
             columns= [x for x in range(self.tableView.model().columnCount())], 
@@ -712,6 +807,12 @@ class Wind_Table_GP_profils(MainDialog):
             decimal=',',
             encoding='cp1251',
             index = False
+        )
+        self.save_button.setStyleSheet(
+            (
+                'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #004524);}' +
+                'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+            )
         )
 
 
@@ -751,82 +852,77 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
-        self.window.button_creat(self.show_window_tests, 'Тест')
+        #self.window.button_creat(self.show_window_tests, 'Тест')
         self.window.show()
 
     def show_window_tests(self):
         """Окно для тестирования новых функций"""
+        QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
         try:
             self.window = WindowTest('Biothech Lab: testing')
             self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
+
+            
             self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
             self.window.button_creat(self.show_window_biotech, 'На главную')
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', f'Ошибка выполнения:\n {e}')
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_window_MS(self) -> None:
         """Отрисовывает окно анализа микросателлитов."""
-        self.window = Window_main('Biotech Lab: Microsatellite analysis')
-        text_1 = 'Подобрать отцов из имеющейся базы'
-        self.window.label_creat(text_1)
-        self.window.button_creat(self.show_window_MS_serch_father, 'Найти отца')
-        text_2 = 'Собрать генетические паспорта животных'
-        self.window.label_creat(text_2)
-        self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать паспорта')
-        text_3 = 'Выбрать данные из генетических паспортов'
-        self.window.label_creat(text_3)
-        self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = Window_main('Biotech Lab: Microsatellite analysis')
+            text_1 = 'Подобрать отцов из имеющейся базы'
+            self.window.label_creat(text_1)
+            self.window.button_creat(self.show_window_MS_serch_father, 'Найти отца')
+            text_2 = 'Собрать генетические паспорта животных'
+            self.window.label_creat(text_2)
+            self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать паспорта')
+            text_3 = 'Выбрать данные из генетических паспортов'
+            self.window.label_creat(text_3)
+            self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_window_MS_aus_word(self) -> None:
         '''Отрисовывает окно отбора данных из  Word.'''
-        self.window = WindowMSAusWord('Biotech Lab: Microsatellite analysis. Aus word')
-        text_1 = 'Здесь можно выбрать данные из готовых генетических паспортов'
-        self.window.label_creat(text_1)
-        text_2 = (
-            'Порядок действий: \n1) Данные из WORD нужно скопировать в EXCEL' + 
-            '\n2) Из EXCEl скопировать в блокнот и сохранить' + 
-            '\n3) Выбрать файл в программе и наслаждаться'
-        )
-        self.window.label_creat(text_2)
-        global adres_job
-        adres_job = r'func\data\ms_word\result_ms_word.csv'
-        self.window.button_creat(self.window.res_ms_aus_word_in_csv, 'Выбрать файл с данными')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = WindowMSAusWord('Biotech Lab: Microsatellite analysis. Aus word')
+            text_1 = 'Здесь можно выбрать данные из готовых генетических паспортов'
+            self.window.label_creat(text_1)
+            text_2 = (
+                'Порядок действий: \n1) Данные из WORD нужно скопировать в EXCEL' + 
+                '\n2) Из EXCEl скопировать в блокнот и сохранить' + 
+                '\n3) Выбрать файл в программе и наслаждаться'
+            )
+            self.window.label_creat(text_2)
+            global adres_job
+            adres_job = r'func\data\ms_word\result_ms_word.csv'
+            self.window.button_creat(self.window.res_ms_aus_word_in_csv, 'Выбрать файл с данными')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_window_MS_serch_father(self) -> None:
         '''Отрисовывает окно поиска отцов.'''
-        self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
-        global adres_job
-        adres_job = r'func\data\search_fatherh\bus_search.csv'
-        self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
-        self.window.button_creat(self.window.data_result_in, 'Внести данные в таблицу')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
+            global adres_job
+            adres_job = r'func\data\search_fatherh\bus_search.csv'
+            self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
+            self.window.button_creat(self.window.data_result_in, 'Внести данные в таблицу')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_creat_pass_doc_gen(self) -> None:
         '''Отрисовывает окно генерации паспортов.'''
         self.window = WindowGenPassWord('Biotech Lab: Microsatellite analysis. Generation password')
         self.window.setObjectName('WindowGenPassWord')
-        text_1 = 'Собрать паспорта по описи и результатам генотипирования'
-        self.window.label_creat(text_1)
-        global adres_job
-        adres_job = r'func\data\creat_pass_doc\combined_file.docx'
-        self.window.button_creat_double(
-            self.window.gen_password_invertory, 'Выбрать опись',
-            self.window.example_inventiry, 'Пример'
-        )
-        self.window.button_creat_double(
-            self.window.gen_password_genotyping, 'Результаты\nгенотипирования',
-            self.window.example_genotyping, r'Пример'
-        )
-        self.window.button_creat_double(
-            self.window.add_data_in_table_invertory, 'Ввести данные\nописей',
-            self.window.add_data_in_table_profils, 'Ввести данные\nпрофилей',
-        )
-        self.window.button_creat(self.window.gen_password, 'Обработать')
         self.window.button_creat(self.show_window_biotech, 'На главную')
         self.window.show()
 
@@ -834,7 +930,7 @@ class GeneralWindow(QMainWindow):
         '''Отрисовывает окно о программе.'''
         self.window = WindowAbout('Biotech Lab: about programm')
         text_1 = (
-            'Версия 1.0.0\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
+            'Версия 1.0.1\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
             '\nГод разработки: 2021'
         )
         pixmap = QPixmap(r'data/nii.jpg')
