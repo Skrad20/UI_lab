@@ -13,8 +13,8 @@ os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = r"venv\Lib\site-packages\PyQt5\Qt5\p
 
 try:
     from PyQt5.QtWinExtras import QtWin
-    myappid = 'mycompany.myproduct.subproduct.version' 
-    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)                 
+    myappid = 'mycompany.myproduct.subproduct.version'
+    QtWin.setCurrentProcessExplicitAppUserModelID(myappid)          
 except ImportError:
     pass
 
