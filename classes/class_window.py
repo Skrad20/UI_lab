@@ -265,11 +265,9 @@ class WindowSearchFarher(Window_main):
         labe_text_2.setAlignment(Qt.AlignCenter)
         self.vb.addWidget(labe_text_2)
         hosbut = [
-            'Гледенское',
-            'Родина',
-            'Двина',
-            'Погореловское',
+            'Устюгмолоко',
             'Присухронское',
+            'Заря',
             'Выбрать всех',
         ]
         hosbut_chek = {
@@ -494,6 +492,15 @@ class WindowAbout(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
         super().__init__(name)
+        self.initUI_self()
+
+    def initUI_self(self):
+        """Конструктор формы"""
+        self.center()
+        self.setMaximumWidth(500)
+        self.setMaximumHeight(500)
+        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.show()
 
 
 class WindowISSR(Window_main):
@@ -516,8 +523,9 @@ class WindowISSR(Window_main):
 
     def analis_issr(self) -> None:
         '''Анализ issr'''
-        self.res_df_issr = issr_analit_func(self.adres_issr_in)
         try:
+            
+            self.res_df_issr = issr_analit_func(self.adres_issr_in)
             self.res_df_issr = issr_analit_func(self.adres_issr_in)
             self.adres_res = save_file(self.res_df_issr)
             self.label_creat(str(dt.datetime.now()))
@@ -929,11 +937,12 @@ class GeneralWindow(QMainWindow):
     def show_about_programm(self):
         '''Отрисовывает окно о программе.'''
         self.window = WindowAbout('Biotech Lab: about programm')
+        self.window.setObjectName('WindowAbout')
         text_1 = (
             'Версия 1.0.1\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
             '\nГод разработки: 2021'
         )
-        pixmap = QPixmap(r'data/nii.jpg')
+        pixmap = QPixmap('data/nii.png')
         self.window.label = QLabel(self)
         self.window.label.setObjectName('JpgNii')
         self.window.label.setPixmap(pixmap)
@@ -947,16 +956,19 @@ class GeneralWindow(QMainWindow):
 
     def show_window_ISSR(self) -> None:
         '''Отрисовывает окно ISSR.'''
-        self.window = WindowISSR('Biotech Lab: ISSR analysis')
-        text_1 = 'Здесь можно обработать первичные данные по ISSR'
-        self.window.label_creat(text_1)
-        self.window.button_creat_double(
-            self.window.gen_issr, 'Результаты ISSR',
-            self.window.example_issr, 'Пример'
-        )
-        self.window.button_creat(self.window.analis_issr, 'Обработать')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = WindowISSR('Biotech Lab: ISSR analysis')
+            text_1 = 'Здесь можно обработать первичные данные по ISSR'
+            self.window.label_creat(text_1)
+            self.window.button_creat_double(
+                self.window.gen_issr, 'Результаты ISSR',
+                self.window.example_issr, 'Пример'
+            )
+            self.window.button_creat(self.window.analis_issr, 'Обработать')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def tests_wiew(self) -> None:
         '''Запускает тестируемый код.'''
