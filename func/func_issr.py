@@ -1,3 +1,6 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
+
 import pandas as pd
 from tqdm import tqdm
 from .func_ms import read_file
