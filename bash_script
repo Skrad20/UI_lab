@@ -1,0 +1,4 @@
+#!/bin/bash
+pwd
+python main.py
+echo 'Работа окончена'

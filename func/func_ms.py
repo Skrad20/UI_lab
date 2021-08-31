@@ -109,7 +109,8 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
 
 
 def split_hosbut_father(row):
-    row['хозяйство'] = row['хозяйство'].split(', ')
+    if type(row['хозяйство']) == str:
+        row['хозяйство'] = row['хозяйство'].split(', ')
 
 
 def filer_father(hosbut: dict) -> pd.DataFrame:
@@ -129,12 +130,18 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
                 list_hosbut.append(key)
     list_res = []
     for i in range(len(df)):
-        for j in range(len(df.iloc[i, 1])):
-            print(df.iloc[i, 1][j], df.iloc[i, 0], list_hosbut)
-            print(df.iloc[i, 1][j] in list_hosbut)
-            if df.iloc[i, 1][j] in list_hosbut:
+        if type(df.iloc[i, 1]) != float:
+            len_ = len(df.iloc[i, 1])
+            for j in range(len_):
+                print(df.iloc[i, 1][j], df.iloc[i, 0], list_hosbut)
+                print(df.iloc[i, 1][j] in list_hosbut)
+                if df.iloc[i, 1][j] in list_hosbut:
+                    list_res.append(df.iloc[i, :])
+        else:
+            if df.iloc[i, 1] in list_hosbut:
                 list_res.append(df.iloc[i, :])
     df_res = pd.DataFrame(data=list_res)
+    
     df = df_res.reset_index().drop('index', axis=1)
     df['хозяйство'] = df.pop('хозяйство')
     return df
@@ -143,26 +150,33 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
 def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = filer_father(filter)
+    #print('out filter\n',df)
     df_search = read_file(adres)
-    print(df_search)
+    #print('ou save', df_search)
     df_search = df_search.T
     df = df.fillna('-')
     df = df.replace('  ', '')
     df_search = df_search.fillna('-')
     df_search = df_search.reset_index()
-    df_search.iloc[1, 0] = df_search.iloc[0, 1]
-    df_search = df_search.drop(0, axis=1)
+    #df_search.iloc[1, 0] = df_search.iloc[0, 1]
+    #df_search = df_search.drop(0, axis=1)
     df_search.columns = df_search.loc[0, :]
     df_search = df_search.drop(0)
     df_res = df.copy()
+    print(df_search.info())
+    print(df_search)
+    print(df_res.info())
     for i in range(1, len(df_search.columns)):
         for j in range(len(df_res)):
             if df_search.iloc[0, i] != '-':
                 locus = df_search.iloc[0, i].split('/')
-                if df_res.iloc[j,i] != '-':
+                if df_res.iloc[j, i] != '-':
                     locus_base = df_res.iloc[j,i].split('/')
+                    print('l', locus)
+                    print('lb', locus_base)
                     if locus[0] != locus_base[0] and locus[1] != locus_base[0] and locus[0] != locus_base[1] and locus[1] != locus_base[1]:
                         df_res.iloc[j, i] = np.nan
+    print(df_res)                    
     df_res = df_res.dropna()
     df_res.to_csv(r'func\data\search_fatherh\bus_search.csv', sep=';', decimal=',', encoding='cp1251')
     return df_res

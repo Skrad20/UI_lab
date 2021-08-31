@@ -8,7 +8,7 @@ executables = [Executable(
     base='Win32GUI',
     icon='icon.ico')]
 
-include_files = ['func']
+include_files = ['func', 'data', 'style']
 
 options = {
     'build_exe': {

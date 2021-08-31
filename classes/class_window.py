@@ -266,7 +266,7 @@ class WindowSearchFarher(Window_main):
         self.vb.addWidget(labe_text_2)
         hosbut = [
             'Устюгмолоко',
-            'Присухронское',
+            'Присухонское',
             'Заря',
             'Выбрать всех',
         ]
