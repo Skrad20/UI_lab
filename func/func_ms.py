@@ -62,7 +62,7 @@ def ms_clutch(row: dict, col1: str, col2: str) -> str:
 
 def enter_adres(name_str: str = 'Open File') -> str:
     """Возращает адрес файла."""
-    adres =  QFileDialog.getOpenFileName(None,
+    adres = QFileDialog.getOpenFileName(None,
                         name_str,
                         './',
                         'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)')[0]
@@ -71,7 +71,7 @@ def enter_adres(name_str: str = 'Open File') -> str:
 
 def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
-    adres =  QFileDialog.getSaveFileName(None,
+    adres = QFileDialog.getSaveFileName(None,
                         name_str,
                         './',
                         'CSV (*.csv);; Text Files (*.txt)')[0]
@@ -115,9 +115,10 @@ def split_hosbut_father(row):
 
 def filer_father(hosbut: dict) -> pd.DataFrame:
     df = pd.read_csv(
-        r'func\data\search_fatherh\Bulls2.txt',
-        sep='\t',
+        r'func\data\search_fatherh\faters.csv',
+        sep=';',
         decimal=',',
+        encoding='cp1251'
     )
     print(hosbut)
     if hosbut['Выбрать всех']:
@@ -141,7 +142,6 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
             if df.iloc[i, 1] in list_hosbut:
                 list_res.append(df.iloc[i, :])
     df_res = pd.DataFrame(data=list_res)
-    
     df = df_res.reset_index().drop('index', axis=1)
     df['хозяйство'] = df.pop('хозяйство')
     return df

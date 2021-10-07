@@ -2,6 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import os
+import datetime as dt
 from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
@@ -11,8 +12,7 @@ from func.func_answer_error import answer_error
 from func.func_ms import *
 from func.func_issr import *
 from peewee import *
-import datetime as dt
-import functools
+from classes.class_bar import Progress_diaog
 
 
 adres_job = ''
@@ -833,6 +833,19 @@ class WindowTest(Window_main):
         dialog = Wind_Table_GP_invertory(None, 'Biotech Lab: example genotyping', self)
         dialog.exec_()
 
+    def itiat_progress_bar(self):
+        pr = Progress_diaog()
+        progress = QProgressDialog("Copying files...", "Abort Copy", 0, 10, self)
+        progress.setWindowModality()
+
+        for i in range(10):
+            progress.setValue(i)
+
+            if progress.wasCanceled():
+                break
+
+        progress.setValue(10)
+
 
 class GeneralWindow(QMainWindow):
     """Управляет окнами программы."""
@@ -860,21 +873,8 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
-        #self.window.button_creat(self.show_window_tests, 'Тест')
+        self.window.button_creat(self.show_window_tests, 'Тест')
         self.window.show()
-
-    def show_window_tests(self):
-        """Окно для тестирования новых функций"""
-        QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
-        try:
-            self.window = WindowTest('Biothech Lab: testing')
-            self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
-
-            
-            self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
-            self.window.button_creat(self.show_window_biotech, 'На главную')
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_window_MS(self) -> None:
         """Отрисовывает окно анализа микросателлитов."""
@@ -982,6 +982,17 @@ class GeneralWindow(QMainWindow):
                         'Open File', 
                         './', 
                         'Text Files (*.txt);; CSV (*.csv')[0]
+    def show_window_tests(self):
+        """Окно для тестирования новых функций"""
+        QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
+        try:
+            self.window = WindowTest('Biothech Lab: testing')
+            self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
+            self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
+            self.window.button_creat(self.window.itiat_progress_bar, 'Прогресс бар')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def __repr__(self) -> str:
         return  f'Переменные: {self.file_adres}'

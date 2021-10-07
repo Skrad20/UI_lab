@@ -363,4 +363,3 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     # Вывод результатов
     return result_end
     #save_file(result_end, 'Сохранить файл результатов анализа ISSR')
-
