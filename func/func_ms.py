@@ -286,7 +286,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     df_profil_end = df_profil.iloc[:,-15:]
     df_profil_end['num'] = df_profil['num']
     df = df.astype('str')
-    series_faters_float = df['number_father'].astype('float')
+    df['number_father'] = df['number_father'].astype('float')
     list_number_faters = list(df_faters.loc[:,'number'])
     df['number_animal'] = pd.to_numeric(df['number_animal'], downcast='integer')
     df['number_proba'] = pd.to_numeric(df['number_proba'], downcast='integer')
@@ -304,7 +304,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         df_fater_prof = df_faters.query('number == @fater_num').loc[:, 'BM1818': 'SPS113'].reset_index().drop('index', axis=1)
         for locus_f in df_fater_prof.columns:
             try:
-                value_fater_ms =  df_fater_prof.loc[0, locus_f]
+                value_fater_ms = df_fater_prof.loc[0, locus_f]
                 if value_fater_ms != '-':
                     if locus_f in df_animal_prof.columns:
                         try:
@@ -359,7 +359,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
             animal = ' '.join(animal_join)
             fater = ' '.join(fater_join)
             mutter = ' '.join(mutter_join)
-            
+
             if number_father in list_number_faters:
                 df_faters_only = (df_faters.query('number == @number_father').reset_index())
                 BM1818_fater = df_faters_only.loc[0, 'BM1818']
@@ -381,7 +381,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                 TGLA53_fater = df_faters_only.loc[0, 'TGLA53']
                 MGTG4B_fater = df_faters_only.loc[0, 'MGTG4B']
                 SPS113_fater = df_faters_only.loc[0, 'SPS113']
-                
+
                 BM1818 = df_profil_only.loc[0, 'BM1818']
                 BM1824 = df_profil_only.loc[0, 'BM1824']
                 BM2113 = df_profil_only.loc[0, 'BM2113']
