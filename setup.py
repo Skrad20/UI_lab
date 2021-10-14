@@ -3,7 +3,7 @@
 from cx_Freeze import setup, Executable
 
 executables = [Executable(
-    'main.py', 
+    'main.py',
     targetName='BioTech Lab.exe',
     base='Win32GUI',
     icon='icon.ico')]
@@ -14,6 +14,7 @@ options = {
     'build_exe': {
         'include_msvcr': True,
         'include_files': include_files,
+        'build_exe': 'build_windows',
     }
 }
 
