@@ -70,7 +70,7 @@ class Window_main(QWidget):
         self.button_layout.addWidget(self.button_2)
         self.vb.addLayout(self.button_layout)
 
-    def label_creat(self, label_str: str, class_func = None) -> None:
+    def label_creat(self, label_str: str, class_func=None) -> None:
         """Создает надпись в окне программы."""
         self.label = QLabel()
         self.label.setAlignment(Qt.AlignCenter)
@@ -78,11 +78,11 @@ class Window_main(QWidget):
         self.label.setWordWrap(True)
         self.vb.addWidget(self.label)
 
-    def fill_table_aus_base(self, class_func = None) -> None:
+    def fill_table_aus_base(self, class_func=None) -> None:
         """Заполняет таблицу из базы."""
         pass
 
-    def fill_table_hand(self, class_func = None) -> None:
+    def fill_table_hand(self, class_func=None) -> None:
         """Заполняет таблицу из вставки. Передает в базу."""
         self.table = QTableWidget()
         self.table.setRowCount(1)
@@ -184,20 +184,23 @@ class MainDialog(QDialog):
         '''Вставка данных ctrl+V.'''
         table = QApplication.clipboard()
         mime = table.mimeData()
-        data = mime.data('application/x-qt-windows-mime;value="Csv"')
-        data = str(data.data(), 'cp1251')[1:]
-        data = data.split('\r\n')
+        #data = mime.data('application/x-qt-windows-mime;value="Csv"')
+        data = mime.data('text/plain')
+
+        data = str(data.data(), 'cp1251')[0:]
+        data = data.split('\n')
+        print(data)
         columns = data[0].split(';')
         columns[0] = columns[0].replace("'", "")
         self.df = pd.DataFrame(
-            columns=columns, 
+            columns=columns,
             index=[x for x in range(len(data))]
         )
-        for i in range(1, len(data)-1):
+        for i in range(0, len(data)-1):
             data_in = data[i].split(';')
             for j in range(len(data_in)):
                 print(str(data_in[j]))
-                self.df.iloc[i-1, j] = data_in[j]
+                self.df.iloc[i, j] = data_in[j]
         self.df = self.df.dropna(how='all')
         self.df = self.df.dropna(how='all', axis='columns')
         current = self.tableView.currentIndex()
@@ -995,4 +998,4 @@ class GeneralWindow(QMainWindow):
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def __repr__(self) -> str:
-        return  f'Переменные: {self.file_adres}'
+        return  f'Запуск успешен. Переменные среды: {self.file_adres}'

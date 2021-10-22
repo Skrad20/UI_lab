@@ -20,6 +20,7 @@ import re
 
 
 def read_file(adres: str) -> pd.DataFrame:
+    '''Четние файла по полученному адресу'''
     adres_split = adres.split('.')
     if adres_split[-1] == 'csv':
         df_doc = (pd.read_csv(adres, sep=';', decimal=',', encoding='cp1251'))
@@ -36,6 +37,7 @@ def read_file(adres: str) -> pd.DataFrame:
 
 
 def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
+    '''Сбор документа для Word.'''
     number_sections = len(files_list)
     doc_m = Document_compose(filename_master)
     composer = Composer(doc_m)
@@ -46,6 +48,7 @@ def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
 
 
 def delit(row: dict, delitel: str, col: str) -> str:
+    '''Разделение строки по делителю.'''
     num  = row[col]
     print(num)
     num = num.split(delitel)
@@ -53,38 +56,45 @@ def delit(row: dict, delitel: str, col: str) -> str:
 
 
 def ms_clutch(row: dict, col1: str, col2: str) -> str:
+    '''Объединение строки через знак.'''
     ms1 = row[col1]
     ms2 = row[col2]
-    join_ms = [str(ms1),str(ms2)]
+    join_ms = [str(ms1), str(ms2)]
     ms0 = '/'.join(join_ms)
     return ms0
 
 
 def enter_adres(name_str: str = 'Open File') -> str:
     """Возращает адрес файла."""
-    adres = QFileDialog.getOpenFileName(None,
-                        name_str,
-                        './',
-                        'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)')[0]
+    adres = QFileDialog.getOpenFileName(
+        None,
+        name_str,
+        './',
+        'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)'
+    )[0]
     return adres
 
 
 def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
-    adres = QFileDialog.getSaveFileName(None,
-                        name_str,
-                        './',
-                        'CSV (*.csv);; Text Files (*.txt)')[0]
+    adres = QFileDialog.getSaveFileName(
+        None,
+        name_str,
+        './',
+        'CSV (*.csv);; Text Files (*.txt)'
+    )[0]
     df_res.to_csv(adres, sep=";", decimal=',')
     return adres
 
 
 def save_file_for_word(name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
-    adres = QFileDialog.getSaveFileName(None,
-                        name_str,
-                        './',
-                        'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)')[0]
+    adres = QFileDialog.getSaveFileName(
+        None,
+        name_str,
+        './',
+        'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)'
+    )[0]
     return adres
 
 
@@ -210,7 +220,7 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     result = result.reset_index()
 
     def name_select(data_in: pd.DataFrame, data_out: pd.DataFrame) -> None:
-        count= 0
+        count = 0
         for i in range(len(data_in)):
             if data_in.loc[i, 'ms'] == 'Локус':
                 count += 1
@@ -311,7 +321,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                             value_animal_ms = df_animal_prof.loc[0, locus_f]
                             value_fater_ms_loc = value_fater_ms.split('/')
                             value_animal_ms_loc = value_animal_ms.split('/')
-                            if (value_animal_ms_loc[0].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '') 
+                            if (value_animal_ms_loc[0].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
                                 and value_animal_ms_loc[0].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')):
@@ -339,7 +349,6 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     files_list = []
     for i in range(len(series_num)):
         doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_1.docx')
-
         if  series_num[i] in series_proba:
             num_anim = series_num[i]
             print(num_anim)
@@ -405,9 +414,9 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                     'number_proba': number_proba,
                     'number_father': number_father,
                     'name_father': name_father,
-                    'animal': animal ,
+                    'animal': animal,
                     'fater': fater,
-                    'mutter': mutter, 
+                    'mutter': mutter,
                     'BM1818_fater': BM1818_fater,
                     'BM1824_fater': BM1824_fater,
                     'BM2113_fater': BM2113_fater,
@@ -442,9 +451,8 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                     'TGLA126':TGLA126,
                     'TGLA227':TGLA227,
                     'TGLA53':TGLA53,
-                    'date': date 
+                    'date': date
                 }
-            
                 doc.render(context)
                 doc.save(str(i) + ' generated_doc.docx')
                 title = str(i) + ' generated_doc.docx'
@@ -466,12 +474,12 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                 TGLA126 = df_profil_only.loc[0, 'TGLA126']
                 TGLA227 = df_profil_only.loc[0, 'TGLA227']
                 TGLA53 = df_profil_only.loc[0, 'TGLA53']
-                context = {'number_animal' : number_animal, 
+                context = {'number_animal' : number_animal,
                         'name_animal' : name_animal,
                         'hosbut' : hosut,
                         'number_proba' : number_proba,
                         'number_father' : number_father,
-                        'name_father':name_father, 
+                        'name_father':name_father,
                         'animal':animal ,
                         'fater':fater,
                         'mutter':mutter,
