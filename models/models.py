@@ -3,8 +3,7 @@
 
 import datetime as dt
 import peewee as pw
-
-db = pw.SqliteDatabase('db.sqlite3')
+from setting import DB as db
 
 
 class Logs(pw.Model):
@@ -28,9 +27,8 @@ class BaseModelAnimal(pw.Model):
     number = pw.IntegerField(
         null=False,
         verbose_name='Инвертарный номер животного',
-        max_length=20,
     )
-    hosbut = pw.CharField(
+    farm = pw.CharField(
         verbose_name='Название хозяйства',
         max_length=100,
         null=True,
@@ -143,7 +141,6 @@ class InvertoryCows(pw.Model):
     number = pw.IntegerField(
         null=False,
         verbose_name='Инвертарный номер животного',
-        max_length=20,
     )
     name = pw.CharField(
         verbose_name='Кличка животного',
@@ -152,12 +149,10 @@ class InvertoryCows(pw.Model):
     )
     code_sample = pw.IntegerField(
         verbose_name='Код пробы',
-        max_length=20,
         null=True,
     )
     number_father = pw.IntegerField(
         verbose_name='Номер отца',
-        max_length=20,
         null=True,
     )
     name_father = pw.CharField(
@@ -167,7 +162,6 @@ class InvertoryCows(pw.Model):
     )
     number_muter = pw.IntegerField(
         verbose_name='Номер матери',
-        max_length=20,
         null=True,
     )
     name_muter = pw.CharField(
@@ -183,6 +177,163 @@ class InvertoryCows(pw.Model):
 
 
 class InvertoryCowsExample(InvertoryCows):
+    id = pw.AutoField()
+    number = pw.IntegerField(
+        null=False,
+        verbose_name='Инвертарный номер животного',
+    )
+    BM1818_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    BM1818_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    BM1824_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    BM1824_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    BM2113_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    BM2113_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CSRM60_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CSRM60_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CSSM66_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CSSM66_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CYP21_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    CYP21_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH10_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH10_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH225_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH225_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH3_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ETH3_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ILSTS6_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    ILSTS6_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    INRA023_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    INRA023_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    RM067_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    RM067_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    SPS115_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    SPS115_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA122_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA122_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA126_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA126_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA227_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA227_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA53_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    TGLA53_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    MGTG4B_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    MGTG4B_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    SPS113_2 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
+    SPS113_1 = pw.CharField(
+        default='-',
+        max_length=10,
+    )
 
     class Meta:
         verbose_name = 'Опись коров (пример)'

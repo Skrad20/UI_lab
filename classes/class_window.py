@@ -13,6 +13,9 @@ from func.func_ms import *
 from func.func_issr import *
 from peewee import *
 from classes.class_bar import Progress_diaog
+from setting import IS_TEST as is_test
+from setting import DB as db
+from models.models import Logs
 
 
 adres_job = ''
@@ -31,7 +34,9 @@ class Window_main(QWidget):
         self.hb = QHBoxLayout()
         self.gb = QGridLayout(self)
         self.count = 1
-        self.db = SqliteDatabase('db.sqlite3')
+        self.db = db
+        log_1 = Logs(name='Запуск основного окна')
+        log_1.save()
 
     def initUI(self, name):
         """Конструктор формы"""
@@ -321,6 +326,8 @@ class WindowSearchFarher(Window_main):
     '''Рабочее окно для поиска возможных отцов.'''
     def __init__(self, name: str):
         super().__init__(name)
+        log_2 = Logs(name='Поиск отцов')
+        log_2.save()
         self.hosbut_all = {
             'Выбрать всех': False
         }
@@ -394,6 +401,8 @@ class WindowGenPassWord(Window_main):
     '''Рабочее окно для данных из word.'''
     def __init__(self, name: str):
         super().__init__(name)
+        log_3 = Logs(name='Сбор паспортов')
+        log_3.save()
         self.adres_invertory = r''
         self.adres_genotyping = r''
         self.df_error = pd.DataFrame()
@@ -935,7 +944,8 @@ class GeneralWindow(QMainWindow):
         self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
-        self.window.button_creat(self.show_window_tests, 'Тест')
+        if is_test:
+            self.window.button_creat(self.show_window_tests, 'Тест')
         self.window.show()
 
     def show_window_MS(self) -> None:
