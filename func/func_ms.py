@@ -3,20 +3,17 @@
 
 import pandas as pd
 import numpy as np
+import pandas as pd
+import os
+import datetime
+
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from docxtpl import DocxTemplate
-import copy
-import pandas as pd
-import os
+from peewee import *
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
-import datetime
-import tkinter as tk
-import tkinter.simpledialog as simpledialog
-from tkinter import messagebox
-import re
 
 
 def read_file(adres: str) -> pd.DataFrame:
@@ -239,7 +236,7 @@ def ms_out_word(adres: str) -> pd.DataFrame:
                 except:
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
 
-    name_select(doc, result)    
+    name_select(doc, result)
 
     result = result.transpose()
     (result.to_csv(

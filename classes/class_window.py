@@ -28,6 +28,9 @@ class Window_main(QWidget):
         self.initUI(name)
         self.adres_res = ''
         self.vb = QVBoxLayout(self)
+        self.hb = QHBoxLayout()
+        self.gb = QGridLayout(self)
+        self.count = 1
         self.db = SqliteDatabase('db.sqlite3')
 
     def initUI(self, name):
@@ -46,14 +49,23 @@ class Window_main(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def button_creat(self, func, label: str, class_func = None) -> None:
+    def button_creat(self, func, label: str, class_func=None) -> None:
         """Создает кнопку в окне программы."""
         self.button = QPushButton()
         self.button.setText(label)
         self.button.clicked.connect(func)
         self.vb.addWidget(self.button)
+        self.count += self.count
+        print(self.count)
 
-    def button_creat_double(self, func_first, label_first: str, func_second, label_second: str, class_func = None) -> None:
+    def button_creat_double(
+            self,
+            func_first,
+            label_first: str,
+            func_second,
+            label_second: str,
+            class_func=None
+        ) -> None:
         """Создает 2 кнопки в ряд в окне программы."""
         self.button_layout = QHBoxLayout()
         self.button_1 = QPushButton()
@@ -168,11 +180,18 @@ class MainDialog(QDialog):
             columns.append(index.column())
         minRow = min(rows)
         minCol = min(columns)
+        res_clipboard = []
         for index in selected:
-            self.clipboard.append((index.row() - minRow, index.column() - minCol, index.data()))
+            res_clipboard.append((index.row() - minRow, index.column() - minCol, index.data()))
+        res_str = ''
+        for val in res_clipboard:
+            res_str += f'\n{val[2]}'
+        clipboard = QApplication.clipboard()
+        clipboard.setText(res_str)
+
         df_in = pd.DataFrame(columns=[x for x in range(300)], index=[x for x in range(50)])
-        for i in range(len(self.clipboard)):
-            data_copy = self.clipboard[i]
+        for i in range(len(res_clipboard)):
+            data_copy = res_clipboard[i]
             row = data_copy[0]
             col = data_copy[1]
             data_in_df = data_copy[2]
@@ -184,7 +203,6 @@ class MainDialog(QDialog):
         '''Вставка данных ctrl+V.'''
         table = QApplication.clipboard()
         mime = table.mimeData()
-        #data = mime.data('application/x-qt-windows-mime;value="Csv"')
         data = mime.data('text/plain')
 
         data = str(data.data(), 'cp1251')[0:]
@@ -243,6 +261,8 @@ class WindowResulWiew(MainDialog):
         super().__init__(table, name, parent=parent)
         self.tabl = table
         self.button = button
+        self.installEventFilter(self)
+        print(self.tabl)
         self.vl = QVBoxLayout(self)
         self.pushButton = QPushButton(self)
         self.pushButton.clicked.connect(self.botton_closed)
@@ -254,6 +274,47 @@ class WindowResulWiew(MainDialog):
         self.vl.addWidget(self.button)
         self.vl.addWidget(self.pushButton)
         self.pushButton.setText("Закрыть окно")
+
+    def eventFilter(self, source, event):
+        '''Отслеживание событий вставки или копирования.'''
+        try:
+            if event.type() == QEvent.KeyPress:
+                if event == QKeySequence.Copy:
+                    print('copy')
+                    self.copySelection()
+                    return True
+            elif event.type() == QEvent.ContextMenu:
+                menu = QMenu()
+                copyAction = menu.addAction('Copy')
+                copyAction.triggered.connect(self.copySelection)
+                if not self.tabl.selectedIndexes():
+                    copyAction.setEnabled(False)
+                menu.exec(event.globalPos())
+                return True
+            return False
+        except Exception as e:
+            QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
+        return False
+
+    def copySelection(self):
+        '''Копирование данных ctrl+С.'''
+        self.clipboard.clear()
+        selected = self.tabl.selectedIndexes()
+        rows = []
+        columns = []
+        for index in selected:
+            rows.append(index.row())
+            columns.append(index.column())
+        minRow = min(rows)
+        minCol = min(columns)
+        res_clipboard = []
+        for index in selected:
+            res_clipboard.append((index.row() - minRow, index.column() - minCol, index.data()))
+        res_str = ''
+        for val in res_clipboard:
+            res_str += f'\n{val[2]}'
+        clipboard = QApplication.clipboard()
+        clipboard.setText(res_str)
 
 
 class WindowSearchFarher(Window_main):
@@ -302,7 +363,7 @@ class WindowSearchFarher(Window_main):
             self.hosbut_all[res] = False
             print(self.hosbut_all)
 
-    def res_search_cow_father(self, class_func = None) -> None:
+    def res_search_cow_father(self, class_func=None) -> None:
         '''Вызывает функции анализа и поиска отцов'''
         self.adres = enter_adres()
         self.button_oprn_file = QPushButton()
@@ -385,7 +446,6 @@ class WindowGenPassWord(Window_main):
         """Генерирует запись о добавленых данных"""
         self.adres_invertory = enter_adres('Добавить опись')
         if self.adres_invertory != '':
-            #self.label_creat('Данные по описи добавлены')
             self.button_1.setStyleSheet(
                 (
                     'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
@@ -429,7 +489,6 @@ class WindowGenPassWord(Window_main):
         """Генерирует запись о добавленых данных"""
         self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
         if self.adres_genotyping != '':
-            #self.label_creat('Данные по генотипированию добавлены')
             self.button_3.setStyleSheet(
                     (
                     'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
@@ -600,7 +659,7 @@ class TableDataEnter(QTableWidget):
 
 
 class WindowTableEnterDataSF(MainDialog):
-    """Окно для для ввода даннных по потомку."""
+    """Окно для для ввода данных по потомку."""
     def __init__(self, table, name, hosbut_all, parent):
         super().__init__(table, name, parent=parent)
         self.hosbut_all = hosbut_all
@@ -631,7 +690,7 @@ class WindowTableEnterDataSF(MainDialog):
         ]
         self.model.setVerticalHeaderLabels(self.header_labels_vertical)
         self.tableView.setModel(self.model)
-        self.tableView.installEventFilter(self)     
+        self.tableView.installEventFilter(self)
         self.vl = QVBoxLayout(self)
         self.vl.addWidget(self.tableView)
         self.pushButton = QPushButton(self)
@@ -692,7 +751,7 @@ class Wind_Table_GP_invertory(MainDialog):
     '''Окно для ввода описи.'''
     def __init__(self, table, name, parent):
         super().__init__(table, name, parent=parent)
-        self.model = QStandardItemModel(150, 7)
+        self.model = QStandardItemModel(500, 7)
         self.tableView = QTableView()
         self.header_labels = [
             'Инвентарный номер',
@@ -750,7 +809,7 @@ class Wind_Table_GP_profils(MainDialog):
     '''Окно для ввода описи.'''
     def __init__(self, table, name, parent):
         super().__init__(table, name, parent=parent)
-        self.model = QStandardItemModel(150, 31)
+        self.model = QStandardItemModel(500, 31)
         self.tableView = QTableView()
         self.header_labels = [
             'Sample Name',

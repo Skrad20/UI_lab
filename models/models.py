@@ -166,7 +166,7 @@ class InvertoryCows(pw.Model):
         null=True,
     )
     number_muter = pw.IntegerField(
-        verbose_name='Номер vfnthb',
+        verbose_name='Номер матери',
         max_length=20,
         null=True,
     )
