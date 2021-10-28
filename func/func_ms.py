@@ -15,6 +15,8 @@ from peewee import *
 from docxcompose.composer import Composer
 from docx import Document as Document_compose
 
+from classes.class_progress import QProgressIndicator
+
 
 def read_file(adres: str) -> pd.DataFrame:
     '''Четние файла по полученному адресу'''

@@ -4,4 +4,4 @@ import peewee as pw
 
 DB = pw.SqliteDatabase('db.sqlite3')
 
-IS_TEST = False
+IS_TEST = True

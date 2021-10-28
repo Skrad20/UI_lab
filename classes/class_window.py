@@ -3,11 +3,14 @@
 
 import os
 import datetime as dt
+import time
+import sys
 from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 from pandas.core.frame import DataFrame
+from threading import Thread, Timer, Lock
 from func.func_answer_error import answer_error
 from func.func_ms import *
 from func.func_issr import *
@@ -16,11 +19,13 @@ from classes.class_bar import Progress_diaog
 from setting import IS_TEST as is_test
 from setting import DB as db
 from models.models import Logs
+from classes.class_progress import QProgressIndicator, TestProgressIndicator
 
 
 adres_job = ''
 data_job = ''
 adres_job_search_father= ''
+stop_thread = False
 
 
 class Window_main(QWidget):
@@ -31,8 +36,6 @@ class Window_main(QWidget):
         self.initUI(name)
         self.adres_res = ''
         self.vb = QVBoxLayout(self)
-        self.hb = QHBoxLayout()
-        self.gb = QGridLayout(self)
         self.count = 1
         self.db = db
         log_1 = Logs(name='Запуск основного окна')
@@ -896,9 +899,13 @@ class Wind_Table_GP_profils(MainDialog):
 
 
 class WindowTest(Window_main):
+    
+    started = pyqtSignal()
+    closed = pyqtSignal()
     """Окно для тестирования функций."""
     def __init__(self, name: str):
         super().__init__(name)
+        
 
     def show_enter_data_tabl(self):
         dialog = Wind_Table_GP_invertory(None, 'Biotech Lab: example genotyping', self)
@@ -916,6 +923,30 @@ class WindowTest(Window_main):
                 break
 
         progress.setValue(10)
+    
+    def threadfuncts(self):
+        print('Thread is')
+        self.lock = Lock()
+        
+        tread = Thread(target=self.sleepeee, daemon=True)
+        tread.start()
+        for i in range(100):
+            print(i)
+        self.lock.acquire()
+        global stop_thread
+        stop_thread = True
+        self.lock.release()
+
+    def sleepeee(self) -> None:
+        print('sleepeee is')
+        while True:
+            print("--> thread work")
+            self.lock.acquire()
+            if stop_thread is True:
+                break
+            self.lock.release()
+            TestProgressIndicator(stop_thread)
+        print("Stop infinit_worker()")
 
 
 class GeneralWindow(QMainWindow):
@@ -923,7 +954,7 @@ class GeneralWindow(QMainWindow):
     def __init__(self) -> None:
         super(GeneralWindow, self).__init__()
         self.setWindowTitle('MainWindow')
-        self.setObjectName('General_window') 
+        self.setObjectName('General_window')
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
@@ -937,11 +968,11 @@ class GeneralWindow(QMainWindow):
 
     def show_window_biotech(self) -> None:
         """Отрисовывает окно биотеха."""
-        self.window = Window_main('Biotech Lab')
+        self.window=Window_main('Biotech Lab')
         self.window.setObjectName('Biotech_window')
-        text = 'Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных, получаемых в лаборатории.'
+        text='Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных, получаемых в лаборатории.'
         self.window.label_creat(text)
-        self.window.button_creat(self.show_window_MS,'Микросателлитный анализ')
+        self.window.button_creat(self.show_window_MS, 'Микросателлитный анализ')
         self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
         self.window.button_creat(self.show_about_programm, 'О программе')
         if is_test:
@@ -1047,24 +1078,27 @@ class GeneralWindow(QMainWindow):
         dialog = WindowTableEnter('Biotech Lab: example inventiry', self)
         dialog.exec_()
 
-    
     def open_file(self) -> None:
         """Сохраняет путь к файлу"""
         self.file_adres = QFileDialog.getOpenFileName(self, 
                         'Open File', 
                         './', 
                         'Text Files (*.txt);; CSV (*.csv')[0]
+
     def show_window_tests(self):
         """Окно для тестирования новых функций"""
-        QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
+        #QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
         try:
             self.window = WindowTest('Biothech Lab: testing')
             self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
             self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
             self.window.button_creat(self.window.itiat_progress_bar, 'Прогресс бар')
+            self.window.button_creat(self.window.threadfuncts, 'sleepeee')
+
             self.window.button_creat(self.show_window_biotech, 'На главную')
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def __repr__(self) -> str:
         return  f'Запуск успешен. Переменные среды: {self.file_adres}'
+
