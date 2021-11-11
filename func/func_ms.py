@@ -121,6 +121,12 @@ def split_hosbut_father(row):
     if type(row['хозяйство']) == str:
         row['хозяйство'] = row['хозяйство'].split(', ')
 
+def is_float(s):
+    try:
+        float(s)
+        return True
+    except ValueError:
+        return False
 
 def filer_father(hosbut: dict) -> pd.DataFrame:
     df = pd.read_csv(
@@ -140,15 +146,15 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
                 list_hosbut.append(key)
     list_res = []
     for i in range(len(df)):
-        if type(df.iloc[i, 1]) != float:
-            len_ = len(df.iloc[i, 1])
+        if not is_float(df.iloc[i, 1]):
+            len_ = len(df.iloc[i, 2])
             for j in range(len_):
-                print(df.iloc[i, 1][j], df.iloc[i, 0], list_hosbut)
-                print(df.iloc[i, 1][j] in list_hosbut)
-                if df.iloc[i, 1][j] in list_hosbut:
+                print(df.iloc[i, 2][j], df.iloc[i, 1], list_hosbut)
+                print(df.iloc[i, 2][j] in list_hosbut)
+                if df.iloc[i, 2][j] in list_hosbut:
                     list_res.append(df.iloc[i, :])
         else:
-            if df.iloc[i, 1] in list_hosbut:
+            if df.iloc[i, 2] in list_hosbut:
                 list_res.append(df.iloc[i, :])
     df_res = pd.DataFrame(data=list_res)
     df = df_res.reset_index().drop('index', axis=1)
@@ -159,6 +165,7 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
 def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = filer_father(filter)
+    #print(df)
     #print('out filter\n',df)
     df_search = read_file(adres)
     #print('ou save', df_search)
@@ -172,22 +179,29 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
     df_search.columns = df_search.loc[0, :]
     df_search = df_search.drop(0)
     df_res = df.copy()
-    print(df_search.info())
-    print(df_search)
-    print(df_res.info())
-    for i in range(1, len(df_search.columns)):
+    #print(df_search.info())
+    #print(df_search)
+    #print(df_res.info())
+    for i in range(2, len(df_search.columns)):
         for j in range(len(df_res)):
-            if df_search.iloc[0, i] != '-':
-                locus = df_search.iloc[0, i].split('/')
+            if df_search.iloc[0, i-1] != '-':
+                locus = df_search.iloc[0, i-1].split('/')
                 if df_res.iloc[j, i] != '-':
-                    locus_base = df_res.iloc[j,i].split('/')
-                    print('l', locus)
-                    print('lb', locus_base)
+                    locus_base = df_res.iloc[j, i].split('/')
+                    #print(df_search.columns[i])
+                    #print(df_res.columns[i])
+                    #print('l', locus)
+                    #print('lb', locus_base)
                     if locus[0] != locus_base[0] and locus[1] != locus_base[0] and locus[0] != locus_base[1] and locus[1] != locus_base[1]:
                         df_res.iloc[j, i] = np.nan
-    print(df_res)                    
+    #print(df_res)
     df_res = df_res.dropna()
-    df_res.to_csv(r'func\data\search_fatherh\bus_search.csv', sep=';', decimal=',', encoding='cp1251')
+    df_res.to_csv(
+        r'func\data\search_fatherh\bus_search.csv',
+        sep=';',
+        decimal=',',
+        encoding='cp1251'
+    )
     return df_res
 
 

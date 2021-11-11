@@ -20,11 +20,15 @@ from setting import IS_TEST as is_test
 from setting import DB as db
 from models.models import Logs
 from classes.class_progress import QProgressIndicator, TestProgressIndicator
+from lists_name.list_name_row import (
+    list_name_row_add_father,
+    list_name_row_search_father
+)
 
 
 adres_job = ''
 data_job = ''
-adres_job_search_father= ''
+adres_job_search_father = ''
 stop_thread = False
 
 
@@ -36,7 +40,6 @@ class Window_main(QWidget):
         self.initUI(name)
         self.adres_res = ''
         self.vb = QVBoxLayout(self)
-        self.count = 1
         self.db = db
         log_1 = Logs(name='Запуск основного окна')
         log_1.save()
@@ -63,8 +66,6 @@ class Window_main(QWidget):
         self.button.setText(label)
         self.button.clicked.connect(func)
         self.vb.addWidget(self.button)
-        self.count += self.count
-        print(self.count)
 
     def button_creat_double(
             self,
@@ -73,7 +74,7 @@ class Window_main(QWidget):
             func_second,
             label_second: str,
             class_func=None
-        ) -> None:
+    ) -> None:
         """Создает 2 кнопки в ряд в окне программы."""
         self.button_layout = QHBoxLayout()
         self.button_1 = QPushButton()
@@ -679,27 +680,7 @@ class WindowTableEnterDataSF(MainDialog):
         self.tableView = QTableView()
         header_labels = ['Потомок']
         self.model.setHorizontalHeaderLabels(header_labels)
-        self.header_labels_vertical = [
-            'BM1818',
-            'BM1824',
-            'BM2113',
-            'CSRM60',
-            'CSSM66',
-            'CYP21',
-            'ETH10',
-            'ETH225',
-            'ETH3',
-            'ILSTS6',
-            'INRA023',
-            'RM067',
-            'SPS115',
-            'TGLA122',
-            'TGLA126',
-            'TGLA227',
-            'TGLA53',
-            'MGTG4B',
-            'SPS113',
-        ]
+        self.header_labels_vertical = list_name_row_search_father
         self.model.setVerticalHeaderLabels(self.header_labels_vertical)
         self.tableView.setModel(self.model)
         self.tableView.installEventFilter(self)
@@ -738,17 +719,114 @@ class WindowTableEnterDataSF(MainDialog):
         )
         global adres_job_search_father
         adres_job_search_father = r'func\data\search_fatherh\bus_search_in_table.csv'
-        try:
-            df = search_father(adres_job_search_father, self.hosbut_all)
-            self.table_wiew = ResOut(df)
-            dialog = WindowResulWiew(
-                self.table_wiew,
-                'Biotech Lab: Результаты анализа',
-                None,
-                '',
-                self
+        #try:
+        df = search_father(adres_job_search_father, self.hosbut_all)
+        self.table_wiew = ResOut(df)
+        dialog = WindowResulWiew(
+            self.table_wiew,
+            'Biotech Lab: Результаты анализа',
+            None,
+            '',
+            self
+        )
+        dialog.exec_()
+        #except Exception as e:
+        #    QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+        self.save_button.setStyleSheet(
+            (
+                'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #004524);}' +
+                'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
             )
-            dialog.exec_()
+        )
+
+
+class WindowAddFatter(Window_main):
+    '''Рабочее окно для добавления отцов.'''
+    def __init__(self, name: str):
+        super().__init__(name=None)
+        log_2 = Logs(name='Добавление отца')
+        log_2.save()
+       
+        text_1 = 'Внести отцов в базу'
+        labe_text = QLabel(text_1)
+        labe_text.setAlignment(Qt.AlignCenter)
+        self.vb.addWidget(labe_text)
+        
+    def data_result_in(self):
+        self.window = TableAddFather(None, 'Biotech Lab: enter data', None, self)
+        self.window.show()
+        self.window.exec_()
+
+
+class TableAddFather(MainDialog):
+    '''Окно для добавления отца.'''
+    
+    def __init__(self, table, name, hosbut_all, parent):
+        super().__init__(table, name, parent=parent)
+        self.model = QStandardItemModel(22, 1)
+        self.tableView = QTableView()
+        header_labels = ['Профиль']
+        self.model.setHorizontalHeaderLabels(header_labels)
+        self.header_labels_vertical = list_name_row_add_father
+        self.model.setVerticalHeaderLabels(self.header_labels_vertical)
+        self.tableView.setModel(self.model)
+        self.tableView.installEventFilter(self)
+        self.vl = QVBoxLayout(self)
+        self.vl.addWidget(self.tableView)
+        self.pushButton = QPushButton(self)
+        self.pushButton.setObjectName("pushButton")
+        self.pushButton.clicked.connect(self.botton_closed)
+        self.save_button = QPushButton("Сохранить", self)
+        try:
+            self.save_button.clicked.connect(self.save_data)
+        except  Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+        self.pushButton.setText("Закрыть окно")
+        self.vl.addWidget(self.save_button)
+        self.vl.addWidget(self.pushButton)
+        self.table_wiew = None
+
+    def save_data(self) -> None:
+        '''Сохранение данных по отцу.'''
+        self.df_res = DataFrame(
+            columns= [x for x in range(self.tableView.model().columnCount())], 
+            index = [x for x in range(self.tableView.model().rowCount())])
+        for i in range(self.tableView.model().rowCount()):
+            for j in range(self.tableView.model().columnCount()):
+                if self.tableView.model().index(i,j).data() != 'nan':
+                    self.df_res.iloc[i, j] = self.tableView.model().index(i,j).data()
+        self.df_res = self.df_res.dropna(how='all')
+        data_job = self.df_res
+        
+        data_job.index = self.header_labels_vertical
+        data_job.columns = ['Профиль']
+        data_job = data_job.T
+        if self.validate(data_job):
+            pass
+        try:
+            df = pd.read_csv(
+                './func/data/search_fatherh/faters.csv',
+                sep=';',
+                decimal=',',
+                encoding='cp1251'
+            )
+            len_df = len(df)
+            df.loc[len_df, :] = list(data_job.loc['Профиль', :])
+            df['Номер'] = df['Номер'].astype('int')
+            df.to_csv(
+                './func/data/search_fatherh/faters.csv',
+                encoding='cp1251',
+                sep=';',
+                decimal=','
+            )
+            df = df.rename(columns={'Имя':'Name', 'Номер':'number'})
+            df.index = df['number']
+            df.to_csv(
+                './func/data/creat_pass_doc/faters.csv', 
+                encoding='cp1251',
+                sep=';',
+                decimal=','
+            )
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
         self.save_button.setStyleSheet(
@@ -757,6 +835,20 @@ class WindowTableEnterDataSF(MainDialog):
                 'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
             )
         )
+
+    def validate(self, data_job: DataFrame):
+        df = pd.read_csv(
+            './func/data/search_fatherh/faters.csv',
+            sep=';',
+            decimal=',',
+            encoding='cp1251'
+        )
+        number_now = float(data_job.loc['Профиль', 'Инвертарный номер'])
+        list_numer = list(df['Номер'].fillna(0).astype('float'))
+        if number_now in list_numer:
+            QMessageBox.critical(self, 'Ошибка ввода', 'Такой бык уже записан')
+        return True
+        
 
 
 class Wind_Table_GP_invertory(MainDialog):
@@ -905,7 +997,6 @@ class WindowTest(Window_main):
     """Окно для тестирования функций."""
     def __init__(self, name: str):
         super().__init__(name)
-        
 
     def show_enter_data_tabl(self):
         dialog = Wind_Table_GP_invertory(None, 'Biotech Lab: example genotyping', self)
@@ -918,35 +1009,10 @@ class WindowTest(Window_main):
 
         for i in range(10):
             progress.setValue(i)
-
             if progress.wasCanceled():
                 break
 
         progress.setValue(10)
-    
-    def threadfuncts(self):
-        print('Thread is')
-        self.lock = Lock()
-        
-        tread = Thread(target=self.sleepeee, daemon=True)
-        tread.start()
-        for i in range(100):
-            print(i)
-        self.lock.acquire()
-        global stop_thread
-        stop_thread = True
-        self.lock.release()
-
-    def sleepeee(self) -> None:
-        print('sleepeee is')
-        while True:
-            print("--> thread work")
-            self.lock.acquire()
-            if stop_thread is True:
-                break
-            self.lock.release()
-            TestProgressIndicator(stop_thread)
-        print("Stop infinit_worker()")
 
 
 class GeneralWindow(QMainWindow):
@@ -992,11 +1058,24 @@ class GeneralWindow(QMainWindow):
             text_3 = 'Выбрать данные из генетических паспортов'
             self.window.label_creat(text_3)
             self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
+            text_4 = 'Добавить отца в базу по быкам.'
+            self.window.label_creat(text_4)
+            self.window.button_creat(self.add_vater, 'Добавить')
             self.window.button_creat(self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
+    def add_vater(self):
+        '''Добавление отца в базу по быкам.'''
+        #try:
+        self.window = WindowAddFatter('Biotech Lab: Microsatellite analysis. Add father')
+        self.window.button_creat(self.window.data_result_in, 'Внести данные отца')
+        self.window.button_creat(self.show_window_biotech, 'На главную')
+        self.window.show()
+        #except Exception as e:
+        #    QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
+    
     def show_window_MS_aus_word(self) -> None:
         '''Отрисовывает окно отбора данных из  Word.'''
         try:
@@ -1072,11 +1151,6 @@ class GeneralWindow(QMainWindow):
             self.window.show()
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
-    
-    def tests_wiew(self) -> None:
-        '''Запускает тестируемый код.'''
-        dialog = WindowTableEnter('Biotech Lab: example inventiry', self)
-        dialog.exec_()
 
     def open_file(self) -> None:
         """Сохраняет путь к файлу"""
@@ -1093,7 +1167,6 @@ class GeneralWindow(QMainWindow):
             self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
             self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
             self.window.button_creat(self.window.itiat_progress_bar, 'Прогресс бар')
-            self.window.button_creat(self.window.threadfuncts, 'sleepeee')
 
             self.window.button_creat(self.show_window_biotech, 'На главную')
         except Exception as e:
