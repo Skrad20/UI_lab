@@ -60,11 +60,13 @@ class Window_main(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def button_creat(self, func, label: str, class_func=None) -> None:
+    def button_creat(self, func, label: str, text: str = None, class_func=None) -> None:
         """Создает кнопку в окне программы."""
         self.button = QPushButton()
         self.button.setText(label)
         self.button.clicked.connect(func)
+        if text is not None:
+            self.button.setToolTip(F"<h3>{text}</h3>")
         self.vb.addWidget(self.button)
 
     def button_creat_double(
@@ -719,19 +721,19 @@ class WindowTableEnterDataSF(MainDialog):
         )
         global adres_job_search_father
         adres_job_search_father = r'func\data\search_fatherh\bus_search_in_table.csv'
-        #try:
-        df = search_father(adres_job_search_father, self.hosbut_all)
-        self.table_wiew = ResOut(df)
-        dialog = WindowResulWiew(
-            self.table_wiew,
-            'Biotech Lab: Результаты анализа',
-            None,
-            '',
-            self
-        )
-        dialog.exec_()
-        #except Exception as e:
-        #    QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+        try:
+            df = search_father(adres_job_search_father, self.hosbut_all)
+            self.table_wiew = ResOut(df)
+            dialog = WindowResulWiew(
+                self.table_wiew,
+                'Biotech Lab: Результаты анализа',
+                None,
+                '',
+                self
+            )
+            dialog.exec_()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
         self.save_button.setStyleSheet(
             (
                 'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #004524);}' +
@@ -1049,19 +1051,28 @@ class GeneralWindow(QMainWindow):
         """Отрисовывает окно анализа микросателлитов."""
         try:
             self.window = Window_main('Biotech Lab: Microsatellite analysis')
-            text_1 = 'Подобрать отцов из имеющейся базы'
-            self.window.label_creat(text_1)
-            self.window.button_creat(self.show_window_MS_serch_father, 'Найти отца')
-            text_2 = 'Собрать генетические паспорта животных'
-            self.window.label_creat(text_2)
-            self.window.button_creat(self.show_creat_pass_doc_gen, 'Собрать паспорта')
-            text_3 = 'Выбрать данные из генетических паспортов'
-            self.window.label_creat(text_3)
-            self.window.button_creat(self.show_window_MS_aus_word, 'Собрать')
-            text_4 = 'Добавить отца в базу по быкам.'
-            self.window.label_creat(text_4)
-            self.window.button_creat(self.add_vater, 'Добавить')
-            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.button_creat(
+                self.show_window_MS_serch_father,
+                'Подбор отца',
+                text='Здесь можно подбрать отца для КРС',
+            )
+            self.window.button_creat(
+                self.show_creat_pass_doc_gen,
+                'Собрать генетические паспорта',
+                text='Здесь можно собрать генетические паспорта по описи.',
+            )
+            self.window.button_creat(
+                self.show_window_MS_aus_word,
+                'Собрать данные из паспортов',
+                text='Здесь можно собрать данные из генетических паспорта.',
+            )
+            self.window.button_creat(
+                self.add_vater,
+                'Добавить отца в базу',
+                text='Здесь можно добавить отцов в базу быков.',
+            )
+            self.window.button_creat(
+                self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
