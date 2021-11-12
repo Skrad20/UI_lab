@@ -21,8 +21,9 @@ except ImportError:
 
 def main():
     try:
+        
         app = QApplication(sys.argv)
-        app.setStyle("Fusion")
+        app.setStyle("Breeze")
         app.setStyleSheet(style_upload())
         window = GeneralWindow()
         window.show_window_biotech()
@@ -30,6 +31,7 @@ def main():
     except Exception as e:
         QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
     sys.exit(app.exec_())
+    print('Вот и всё!')
 
 
 if __name__ == "__main__":

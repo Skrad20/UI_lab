@@ -9,6 +9,8 @@ from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
+
+from PyQt5 import uic
 from pandas.core.frame import DataFrame
 from threading import Thread, Timer, Lock
 from func.func_answer_error import answer_error
@@ -18,6 +20,7 @@ from peewee import *
 from classes.class_bar import Progress_diaog
 from setting import IS_TEST as is_test
 from setting import DB as db
+from setting import TRANSPARENCY as transparency
 from models.models import Logs
 from classes.class_progress import QProgressIndicator, TestProgressIndicator
 from lists_name.list_name_row import (
@@ -32,23 +35,366 @@ adres_job_search_father = ''
 stop_thread = False
 
 
+class TitleBar(QWidget):
+
+    # Сигнал минимизации окна
+    windowMinimumed = pyqtSignal()
+    # увеличить максимальный сигнал окна
+    windowMaximumed = pyqtSignal()
+    # сигнал восстановления окна
+    windowNormaled = pyqtSignal()
+    # сигнал закрытия окна
+    windowClosed = pyqtSignal()
+    # Окно мобильных
+    windowMoved = pyqtSignal(QPoint)
+    # Сигнал Своя Кнопка +++
+    signalButtonMy = pyqtSignal()
+
+
+    def __init__(self, *args, **kwargs):
+        super(TitleBar, self).__init__(*args, **kwargs)
+
+        # Поддержка настройки фона qss
+        self.setAttribute(Qt.WA_StyledBackground, True)
+        self.mPos     = None
+        self.iconSize = 20                       # Размер значка по умолчанию
+
+        # Установите цвет фона по умолчанию, иначе он будет прозрачным из-за влияния родительского окна
+        self.setAutoFillBackground(True)
+        palette = self.palette()
+        palette.setColor(palette.Window, QColor(240, 240, 240))
+        self.setPalette(palette)
+
+        # макет
+        layout = QHBoxLayout(self, spacing=0)
+        layout.setContentsMargins(0, 0, 0, 0)
+
+        # значок окна
+        self.iconLabel = QLabel(self)
+#         self.iconLabel.setScaledContents(True)
+        layout.addWidget(self.iconLabel)
+
+        # название окна
+        self.titleLabel = QLabel(self)
+        self.titleLabel.setMargin(2)
+        layout.addWidget(self.titleLabel)
+
+        # Средний телескопический бар
+        layout.addSpacerItem(QSpacerItem(
+            40, 20, QSizePolicy.Expanding, QSizePolicy.Minimum))
+
+        # Использовать шрифты Webdings для отображения значков
+        font = self.font() or QFont()
+        font.setFamily('Webdings')
+
+        # Свернуть кнопку
+        self.buttonMinimum = QPushButton(
+            '-',
+            self,
+            clicked=self.windowMinimumed.emit,
+            font=font,
+            objectName='buttonMinimum'
+        )
+        layout.addWidget(self.buttonMinimum)
+
+        # Кнопка Max / restore
+        self.buttonMaximum = QPushButton(
+            '+', self, clicked=self.showMaximized, font=font, objectName='buttonMaximum')
+        layout.addWidget(self.buttonMaximum)
+
+        # Кнопка закрытия
+        self.buttonClose = QPushButton(
+            'X', self, clicked=self.windowClosed.emit, font=font, objectName='buttonClose')
+        layout.addWidget(self.buttonClose)
+
+        # начальная высота
+        self.setHeight()
+
+    def showMaximized(self):
+        if self.buttonMaximum.text() == '1':
+            # Максимизировать
+            self.buttonMaximum.setText('2')
+            self.windowMaximumed.emit()
+        else:  # Восстановить
+            self.buttonMaximum.setText('1')
+            self.windowNormaled.emit()
+
+    def setHeight(self, height=38):
+        """ Установка высоты строки заголовка """
+        self.setMinimumHeight(height)
+        self.setMaximumHeight(height)
+        # Задайте размер правой кнопки  ?
+        self.buttonMinimum.setMinimumSize(height, height)
+        self.buttonMinimum.setMaximumSize(height, height)
+        self.buttonMaximum.setMinimumSize(height, height)
+        self.buttonMaximum.setMaximumSize(height, height)
+        self.buttonClose.setMinimumSize(height, height)
+        self.buttonClose.setMaximumSize(height, height)
+
+    def setTitle(self, title):
+        """ Установить заголовок """
+        self.titleLabel.setText(title)
+
+    def setIcon(self, icon):
+        """ настройки значокa """
+        self.iconLabel.setPixmap(icon.pixmap(self.iconSize, self.iconSize))
+
+    def setIconSize(self, size):
+        """ Установить размер значка """
+        self.iconSize = size
+
+    def enterEvent(self, event):
+        self.setCursor(Qt.ArrowCursor)
+        super(TitleBar, self).enterEvent(event)
+
+    def mouseDoubleClickEvent(self, event):
+        super(TitleBar, self).mouseDoubleClickEvent(event)
+        self.showMaximized()
+
+    def mousePressEvent(self, event):
+        """ Событие клика мыши """
+        if event.button() == Qt.LeftButton:
+            self.mPos = event.pos()
+        event.accept()
+
+    def mouseReleaseEvent(self, event):
+        ''' Событие отказов мыши '''
+        self.mPos = None
+        event.accept()
+
+    def mouseMoveEvent(self, event):
+        if event.buttons() == Qt.LeftButton and self.mPos:
+            self.windowMoved.emit(self.mapToGlobal(event.pos() - self.mPos))
+        event.accept()
+
+
+# Перечислить верхнюю левую, нижнюю правую и четыре неподвижные точки
+Left, Top, Right, Bottom, LeftTop, RightTop, LeftBottom, RightBottom = range(8)
+
+
 class Window_main(QWidget):
     """Рабочее окно программы."""
-    def __init__(self, name: str):
-        super(Window_main, self).__init__()
+    def __init__(self, name: str, *args, **kwargs):
+        super(Window_main, self).__init__(*args, **kwargs)
+        self.Margins = 5
+        self._pressed  = False
+        self.Direction = None
+
+        # Фон прозрачный
+        if transparency:
+            self.setAttribute(Qt.WA_TranslucentBackground, True)
+
+        # Нет границы
+        self.setWindowFlag(Qt.FramelessWindowHint)
+        # Отслеживание мыши
+        self.setMouseTracking(True)
+        # макет
+        self.vb = QVBoxLayout(self, spacing=0)
+        # Зарезервировать границы для изменения размера окна без полей
+        self.vb .setContentsMargins(
+            self.Margins, self.Margins, self.Margins, self.Margins)
+        # Панель заголовка
+        self.titleBar = TitleBar(self)
+        self.vb.addWidget(self.titleBar)
+
+        # слот сигнала
+        self.titleBar.windowMinimumed.connect(self.showMinimized)
+        self.titleBar.windowMaximumed.connect(self.showMaximized)
+        self.titleBar.windowNormaled.connect(self.showNormal)
+        self.titleBar.windowClosed.connect(self.close)
+        self.titleBar.windowMoved.connect(self.move)
+        self.windowTitleChanged.connect(self.titleBar.setTitle)
+        self.windowIconChanged.connect(self.titleBar.setIcon)
         self.name = name
         self.initUI(name)
         self.adres_res = ''
-        self.vb = QVBoxLayout(self)
         self.db = db
         log_1 = Logs(name='Запуск основного окна')
         log_1.save()
+        self.setWindowFlags(Qt.FramelessWindowHint)
+    
+    def setTitleBarHeight(self, height=38):
+        """ Установка высоты строки заголовка """
+        self.titleBar.setHeight(height)
+
+    def setIconSize(self, size):
+        """ Установка размера значка """
+        self.titleBar.setIconSize(size)
+
+    def setWidget(self, widget):
+        """ Настройте свои собственные элементы управления """
+        if hasattr(self, '_widget'):
+            return
+        self._widget = widget
+        # Установите цвет фона по умолчанию, иначе он будет прозрачным из-за влияния родительского окна
+        self._widget.setAutoFillBackground(True)
+        palette = self._widget.palette()
+        palette.setColor(palette.Window, QColor(240, 240, 240))
+        self._widget.setPalette(palette)
+        self._widget.installEventFilter(self)
+        self.layout().addWidget(self._widget)
+
+    def move(self, pos):
+        if self.windowState() == Qt.WindowMaximized or self.windowState() == Qt.WindowFullScreen:
+            # Максимизировать или полноэкранный режим не допускается
+            return
+        super(Window_main, self).move(pos)
+
+    def showMaximized(self):
+        """ Чтобы максимизировать, удалите верхнюю, нижнюю, левую и правую границы.
+            Если вы не удалите его, в пограничной области будут пробелы. """
+        super(Window_main, self).showMaximized()
+        self.layout().setContentsMargins(0, 0, 0, 0)
+
+    def showNormal(self):
+        """ Восстановить, сохранить верхнюю и нижнюю левую и правую границы, 
+            иначе нет границы, которую нельзя отрегулировать """
+        super(Window_main, self).showNormal()
+        self.layout().setContentsMargins(
+            self.Margins, self.Margins, self.Margins, self.Margins)
+
+    def eventFilter(self, obj, event):
+        """ Фильтр событий, используемый для решения мыши в других элементах 
+            управления и восстановления стандартного стиля мыши """
+        if isinstance(event, QEnterEvent):
+            self.setCursor(Qt.ArrowCursor)
+        return super(Window_main, self).eventFilter(obj, event)
+
+    def paintEvent(self, event):
+        """ Поскольку это полностью прозрачное фоновое окно, жесткая для поиска
+            граница с прозрачностью 1 рисуется в событии перерисовывания, чтобы отрегулировать размер окна. """
+        super(Window_main, self).paintEvent(event)
+        painter = QPainter(self)
+        painter.setPen(QPen(QColor(255, 255, 255, 1), 2 * self.Margins))
+        painter.drawRect(self.rect())
+
+    def mousePressEvent(self, event):
+        """ Событие клика мыши """
+        super(Window_main, self).mousePressEvent(event)
+        if event.button() == Qt.LeftButton:
+            self._mpos = event.pos()
+            self._pressed = True
+
+    def mouseReleaseEvent(self, event):
+        ''' Событие отказов мыши '''
+        super(Window_main, self).mouseReleaseEvent(event)
+        self._pressed = False
+        self.Direction = None
+
+    def mouseMoveEvent(self, event):
+        """ Событие перемещения мыши """
+        super(Window_main, self).mouseMoveEvent(event)
+        pos = event.pos()
+        xPos, yPos = pos.x(), pos.y()
+        wm, hm = self.width() - self.Margins, self.height() - self.Margins
+        if self.isMaximized() or self.isFullScreen():
+            self.Direction = None
+            self.setCursor(Qt.ArrowCursor)
+            return
+        if event.buttons() == Qt.LeftButton and self._pressed:
+            self._resizeWidget(pos)
+            return
+        if xPos <= self.Margins and yPos <= self.Margins:
+            # Верхний левый угол
+            self.Direction = LeftTop
+            self.setCursor(Qt.SizeFDiagCursor)
+        elif wm <= xPos <= self.width() and hm <= yPos <= self.height():
+            # Нижний правый угол
+            self.Direction = RightBottom
+            self.setCursor(Qt.SizeFDiagCursor)
+        elif wm <= xPos and yPos <= self.Margins:
+            # верхний правый угол
+            self.Direction = RightTop
+            self.setCursor(Qt.SizeBDiagCursor)
+        elif xPos <= self.Margins and hm <= yPos:
+            # Нижний левый угол
+            self.Direction = LeftBottom
+            self.setCursor(Qt.SizeBDiagCursor)
+        elif 0 <= xPos <= self.Margins and self.Margins <= yPos <= hm:
+            # Влево
+            self.Direction = Left
+            self.setCursor(Qt.SizeHorCursor)
+        elif wm <= xPos <= self.width() and self.Margins <= yPos <= hm:
+            # Право
+            self.Direction = Right
+            self.setCursor(Qt.SizeHorCursor)
+        elif self.Margins <= xPos <= wm and 0 <= yPos <= self.Margins:
+            # выше
+            self.Direction = Top
+            self.setCursor(Qt.SizeVerCursor)
+        elif self.Margins <= xPos <= wm and hm <= yPos <= self.height():
+            # ниже
+            self.Direction = Bottom
+            self.setCursor(Qt.SizeVerCursor)
+
+    def _resizeWidget(self, pos):
+        """ Отрегулируйте размер окна """
+        if self.Direction == None:
+            return
+        mpos = pos - self._mpos
+        xPos, yPos = mpos.x(), mpos.y()
+        geometry = self.geometry()
+        x, y, w, h = geometry.x(), geometry.y(), geometry.width(), geometry.height()
+        if self.Direction == LeftTop:          # Верхний левый угол
+            if w - xPos > self.minimumWidth():
+                x += xPos
+                w -= xPos
+            if h - yPos > self.minimumHeight():
+                y += yPos
+                h -= yPos
+        elif self.Direction == RightBottom:    # Нижний правый угол
+            if w + xPos > self.minimumWidth():
+                w += xPos
+                self._mpos = pos
+            if h + yPos > self.minimumHeight():
+                h += yPos
+                self._mpos = pos
+        elif self.Direction == RightTop:       # верхний правый угол
+            if h - yPos > self.minimumHeight():
+                y += yPos
+                h -= yPos
+            if w + xPos > self.minimumWidth():
+                w += xPos
+                self._mpos.setX(pos.x())
+        elif self.Direction == LeftBottom:     # Нижний левый угол
+            if w - xPos > self.minimumWidth():
+                x += xPos
+                w -= xPos
+            if h + yPos > self.minimumHeight():
+                h += yPos
+                self._mpos.setY(pos.y())
+        elif self.Direction == Left:            # Влево
+            if w - xPos > self.minimumWidth():
+                x += xPos
+                w -= xPos
+            else:
+                return
+        elif self.Direction == Right:           # Право
+            if w + xPos > self.minimumWidth():
+                w += xPos
+                self._mpos = pos
+            else:
+                return
+        elif self.Direction == Top:             # выше
+            if h - yPos > self.minimumHeight():
+                y += yPos
+                h -= yPos
+            else:
+                return
+        elif self.Direction == Bottom:          # ниже
+            if h + yPos > self.minimumHeight():
+                h += yPos
+                self._mpos = pos
+            else:
+                return
+        self.setGeometry(x, y, w, h)
 
     def initUI(self, name):
         """Конструктор формы"""
         self.center()
         self.setMinimumWidth(400)
         self.setMinimumHeight(550)
+        #self.adjustSize()
         self.setWindowTitle(name)
         self.setWindowIcon(QIcon('data\icon.ico'))
         self.show()
@@ -852,7 +1198,6 @@ class TableAddFather(MainDialog):
         return True
         
 
-
 class Wind_Table_GP_invertory(MainDialog):
     '''Окно для ввода описи.'''
     def __init__(self, table, name, parent):
@@ -992,29 +1337,18 @@ class Wind_Table_GP_profils(MainDialog):
         )
 
 
-class WindowTest(Window_main):
+class SecondWindow(QMainWindow):
+    def __init__(self, parent=None): 
+        super().__init__(parent)
+        uic.loadUi('./classes/t.ui', self)
     
-    started = pyqtSignal()
-    closed = pyqtSignal()
+
+class WindowTest(Window_main):
     """Окно для тестирования функций."""
     def __init__(self, name: str):
         super().__init__(name)
+        print('dfgdfgdf')
 
-    def show_enter_data_tabl(self):
-        dialog = Wind_Table_GP_invertory(None, 'Biotech Lab: example genotyping', self)
-        dialog.exec_()
-
-    def itiat_progress_bar(self):
-        pr = Progress_diaog()
-        progress = QProgressDialog("Copying files...", "Abort Copy", 0, 10, self)
-        progress.setWindowModality()
-
-        for i in range(10):
-            progress.setValue(i)
-            if progress.wasCanceled():
-                break
-
-        progress.setValue(10)
 
 
 class GeneralWindow(QMainWindow):
@@ -1026,6 +1360,12 @@ class GeneralWindow(QMainWindow):
         self.file_adres = ''
         self.table_widget = QTableWidget()
         self.setCentralWidget(self.table_widget)
+        #self.flashSplash()
+    
+    def flashSplash(self):
+        self.splash = QSplashScreen(QPixmap('./data/error.png'))
+        self.splash.show()
+        QTimer.singleShot(2000, self.splash.close)
 
     def initUI(self):
         """Конструктор геометрии."""
@@ -1040,8 +1380,16 @@ class GeneralWindow(QMainWindow):
         self.window.setObjectName('Biotech_window')
         text='Добро пожаловать!\n Здесь Вы найдёте методы, которые помогут Вам в анализе данных, получаемых в лаборатории.'
         self.window.label_creat(text)
-        self.window.button_creat(self.show_window_MS, 'Микросателлитный анализ')
-        self.window.button_creat(self.show_window_ISSR, 'Анализ ISSR')
+        self.window.button_creat(
+            self.show_window_MS, 
+            'Микросателлитный анализ',
+            text='Методы для микросателлитного анализа',
+        )
+        self.window.button_creat(
+            self.show_window_ISSR,
+            'Анализ ISSR',
+            text='Методы для ISSR анализа',
+        )
         self.window.button_creat(self.show_about_programm, 'О программе')
         if is_test:
             self.window.button_creat(self.show_window_tests, 'Тест')
@@ -1079,13 +1427,17 @@ class GeneralWindow(QMainWindow):
 
     def add_vater(self):
         '''Добавление отца в базу по быкам.'''
-        #try:
-        self.window = WindowAddFatter('Biotech Lab: Microsatellite analysis. Add father')
-        self.window.button_creat(self.window.data_result_in, 'Внести данные отца')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
-        #except Exception as e:
-        #    QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
+        try:
+            self.window = WindowAddFatter('Biotech Lab: Microsatellite analysis. Add father')
+            self.window.button_creat(
+                self.window.data_result_in,
+                'Внести данные отца',
+                text='Добавление микросателлитного профиля отца в базу быков.',
+            )
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def show_window_MS_aus_word(self) -> None:
         '''Отрисовывает окно отбора данных из  Word.'''
@@ -1101,7 +1453,11 @@ class GeneralWindow(QMainWindow):
             self.window.label_creat(text_2)
             global adres_job
             adres_job = r'func\data\ms_word\result_ms_word.csv'
-            self.window.button_creat(self.window.res_ms_aus_word_in_csv, 'Выбрать файл с данными')
+            self.window.button_creat(
+                self.window.res_ms_aus_word_in_csv,
+                'Выбрать файл с данными',
+                text='Добавление микросателлитного профиля отца в базу быков.',
+            )
             self.window.button_creat(self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
@@ -1113,8 +1469,16 @@ class GeneralWindow(QMainWindow):
             self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
             global adres_job
             adres_job = r'func\data\search_fatherh\bus_search.csv'
-            self.window.button_creat(self.window.res_search_cow_father, 'Выбрать файл с данными о потомке')
-            self.window.button_creat(self.window.data_result_in, 'Внести данные в таблицу')
+            self.window.button_creat(
+                self.window.res_search_cow_father,
+                'Выбрать файл с данными о потомке',
+                text='Выберите файл, в который записан микросателлитный профиль потомка.',
+            )
+            self.window.button_creat(
+                self.window.data_result_in,
+                'Внести данные в таблицу',
+                text='Введите данные микросателлитного профиля потомка.',
+            )
             self.window.button_creat(self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
@@ -1122,30 +1486,36 @@ class GeneralWindow(QMainWindow):
 
     def show_creat_pass_doc_gen(self) -> None:
         '''Отрисовывает окно генерации паспортов.'''
-        self.window = WindowGenPassWord('Biotech Lab: Microsatellite analysis. Generation password')
-        self.window.setObjectName('WindowGenPassWord')
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = WindowGenPassWord('Biotech Lab: Microsatellite analysis. Generation password')
+            self.window.setObjectName('WindowGenPassWord')
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_about_programm(self):
         '''Отрисовывает окно о программе.'''
-        self.window = WindowAbout('Biotech Lab: about programm')
-        self.window.setObjectName('WindowAbout')
-        text_1 = (
-            'Версия 1.0.1\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
-            '\nГод разработки: 2021'
-        )
-        pixmap = QPixmap('data/nii.png')
-        self.window.label = QLabel(self)
-        self.window.label.setObjectName('JpgNii')
-        self.window.label.setPixmap(pixmap)
-        self.window.label.resize(pixmap.width(), pixmap.height())
-        self.window.label.setAlignment(Qt.AlignCenter)
-        self.window.resize(pixmap.width(), pixmap.height())
-        self.window.vb.addWidget(self.window.label)
-        self.window.label_creat(text_1)
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
+        try:
+            self.window = WindowAbout('Biotech Lab: about programm')
+            self.window.setObjectName('WindowAbout')
+            text_1 = (
+                'Версия 1.0.1\n\nТехнологии: Python 3.7.0, Qt, Pandas, \nNumpy, Peewee, GitHub\n' +
+                '\nГод разработки: 2021'
+            )
+            pixmap = QPixmap('data/nii.png')
+            self.window.label = QLabel(self)
+            self.window.label.setObjectName('JpgNii')
+            self.window.label.setPixmap(pixmap)
+            self.window.label.resize(pixmap.width(), pixmap.height())
+            self.window.label.setAlignment(Qt.AlignCenter)
+            self.window.resize(pixmap.width(), pixmap.height())
+            self.window.vb.addWidget(self.window.label)
+            self.window.label_creat(text_1)
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_window_ISSR(self) -> None:
         '''Отрисовывает окно ISSR.'''
@@ -1157,7 +1527,11 @@ class GeneralWindow(QMainWindow):
                 self.window.gen_issr, 'Результаты ISSR',
                 self.window.example_issr, 'Пример'
             )
-            self.window.button_creat(self.window.analis_issr, 'Обработать')
+            self.window.button_creat(
+                self.window.analis_issr,
+                'Обработать', 
+                'Запустить анализ'
+            )
             self.window.button_creat(self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
@@ -1175,14 +1549,21 @@ class GeneralWindow(QMainWindow):
         #QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
         try:
             self.window = WindowTest('Biothech Lab: testing')
+            
+            text_1 = 'Здесь можно ничего не делать'
+            self.window.label_creat(text_1)
             self.window.setStyleSheet('QWidget {background-color: blue;} QPushButton {background-color: green}')
-            self.window.button_creat(self.window.show_enter_data_tabl, 'Открыть окно для ввода информации')
-            self.window.button_creat(self.window.itiat_progress_bar, 'Прогресс бар')
-
+            self.window.button_creat(self.open_second_window, 'Интрига')
             self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
     
     def __repr__(self) -> str:
         return  f'Запуск успешен. Переменные среды: {self.file_adres}'
+
+    def open_second_window(self):
+        self.window = SecondWindow(self)
+        self.window.show()
 
