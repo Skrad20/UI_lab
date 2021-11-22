@@ -1160,7 +1160,7 @@ class TableAddFather(MainDialog):
             )
             len_df = len(df)
             df.loc[len_df, :] = list(data_job.loc['Профиль', :])
-            df['Номер'] = df['Номер'].astype('int')
+            #df['Номер'] = df['Номер'].astype('int')
             df.to_csv(
                 './func/data/search_fatherh/faters.csv',
                 encoding='cp1251',

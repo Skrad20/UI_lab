@@ -19,7 +19,7 @@ from classes.class_progress import QProgressIndicator
 
 
 def read_file(adres: str) -> pd.DataFrame:
-    '''Четние файла по полученному адресу'''
+    '''Чтение файла по полученному адресу'''
     adres_split = adres.split('.')
     if adres_split[-1] == 'csv':
         df_doc = (pd.read_csv(adres, sep=';', decimal=',', encoding='cp1251'))
@@ -267,6 +267,7 @@ def ms_out_word(adres: str) -> pd.DataFrame:
 
 def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, hosut: str = 'Хозяйство') -> pd.DataFrame:
     now = datetime.datetime.now()
+    list_father_non = []
     date = now.strftime("%d-%m-%Y")
     df = read_file(adres_invertory)
     df.columns = [
@@ -310,7 +311,8 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     df_profil_end['num'] = df_profil['num']
     df = df.astype('str')
     df['number_father'] = df['number_father'].astype('float')
-    list_number_faters = list(df_faters.loc[:,'number'])
+    list_number_faters = list(df_faters.loc[:,'number'].astype('float'))
+    print(list_number_faters)
     df['number_animal'] = pd.to_numeric(df['number_animal'], downcast='integer')
     df['number_proba'] = pd.to_numeric(df['number_proba'], downcast='integer')
     df['number_father'] = pd.to_numeric(df['number_father'], downcast='integer')
@@ -519,10 +521,21 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                 doc.save(str(i) + ' generated_doc.docx')
                 title = str(i) + ' generated_doc.docx'
                 files_list.append(title)
+                list_father_non.append(str(number_father))
                 print(f'Нет быка: {number_father}, страница: {i+1}')
+                
         else:
             print(f'Нет животного: проба {int(series_num[i])}, номер , страница: {i+1}')
-
+    
+    
+    
+    non_father = pd.DataFrame({'Отцы':list(set(list_father_non))})
+    (non_father.to_csv(
+        r'func\data\creat_pass_doc\non_father.csv',
+        sep=";",
+        decimal=',',
+        encoding="cp1251")
+    )
     filename_master = files_list.pop(0)    
 
     combine_all_docx(filename_master,files_list, adres, date)
