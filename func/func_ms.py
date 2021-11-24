@@ -350,9 +350,9 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')):
                                 print(f'Не подходит локус {locus_f} у животного {animal_inve}')
-                                number.append(i)
+                                number.append(anmal_num)
                                 locus_str_er.append(locus_f)
-                                fater_er.append(animal_inve)
+                                fater_er.append(fater_num)
                                 animal.append(animal_inve)
                         except:
                             pass
@@ -361,7 +361,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     res_error = pd.DataFrame({
         'number': number,
         'locus': locus_str_er,
-        'fater': fater_num,
+        'fater': fater_er,
         'animal': animal,
     })
     (res_error.to_csv(
