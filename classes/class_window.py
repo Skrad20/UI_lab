@@ -687,12 +687,35 @@ class WindowSearchFarher(Window_main):
         labe_text_2 = QLabel(text_2)
         labe_text_2.setAlignment(Qt.AlignCenter)
         self.vb.addWidget(labe_text_2)
-        hosbut = [
-            'Устюгмолоко',
-            'Присухонское',
-            'Заря',
-            'Выбрать всех',
-        ]
+        farmers = set(pd.read_csv(
+            r'func\data\search_fatherh\faters.csv',
+            sep=';',
+            decimal=',',
+            encoding='cp1251'
+        )['хозяйство'])
+        list_farmers = list(farmers)
+        list_farmers_in = [] 
+        for i in range(len((list_farmers))):
+            try:
+                split_farm = list_farmers[i].split(', ')
+                for name in split_farm:
+                    name = name.replace(' ', '')
+                    list_farmers_in.append(name)
+            except:
+                pass
+        
+        farmers_end =[]
+        for farme in list_farmers_in:
+            if farme is np.nan:
+                pass
+            elif farme == 'nan':
+                pass
+            else:
+                farmers_end.append(farme)
+        
+        farmers_end.append('Выбрать всех')
+        farmers_end = list(set(farmers_end))
+        hosbut = farmers_end.copy()
         hosbut_chek = {
         }
         for name in hosbut:
