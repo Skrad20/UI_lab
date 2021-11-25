@@ -691,8 +691,10 @@ class WindowSearchFarher(Window_main):
             r'func\data\search_fatherh\faters.csv',
             sep=';',
             decimal=',',
-            encoding='cp1251'
+            encoding='cp1251',
+
         )['хозяйство'])
+        print(farmers)
         list_farmers = list(farmers)
         list_farmers_in = [] 
         for i in range(len((list_farmers))):
@@ -1488,24 +1490,24 @@ class GeneralWindow(QMainWindow):
 
     def show_window_MS_serch_father(self) -> None:
         '''Отрисовывает окно поиска отцов.'''
-        try:
-            self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
-            global adres_job
-            adres_job = r'func\data\search_fatherh\bus_search.csv'
-            self.window.button_creat(
-                self.window.res_search_cow_father,
-                'Выбрать файл с данными о потомке',
-                text='Выберите файл, в который записан микросателлитный профиль потомка.',
-            )
-            self.window.button_creat(
-                self.window.data_result_in,
-                'Внести данные в таблицу',
-                text='Введите данные микросателлитного профиля потомка.',
-            )
-            self.window.button_creat(self.show_window_biotech, 'На главную')
-            self.window.show()
-        except Exception as e:
-            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
+        #try:
+        self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
+        global adres_job
+        adres_job = r'func\data\search_fatherh\bus_search.csv'
+        self.window.button_creat(
+            self.window.res_search_cow_father,
+            'Выбрать файл с данными о потомке',
+            text='Выберите файл, в который записан микросателлитный профиль потомка.',
+        )
+        self.window.button_creat(
+            self.window.data_result_in,
+            'Внести данные в таблицу',
+            text='Введите данные микросателлитного профиля потомка.',
+        )
+        self.window.button_creat(self.show_window_biotech, 'На главную')
+        self.window.show()
+        #except Exception as e:
+        #    QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_creat_pass_doc_gen(self) -> None:
         '''Отрисовывает окно генерации паспортов.'''
