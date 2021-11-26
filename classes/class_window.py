@@ -955,12 +955,47 @@ class WindowISSR(Window_main):
     '''Рабочее окно для обработки ISSR.'''
     def __init__(self, name: str):
         super().__init__(name)
+        log = Logs(name='Сбор паспортов ISSR')
+        log.save()
+        
+        text_1 = 'Здесь можно обработать первичные данные по ISSR'
+        self.label_creat(text_1)
+
+        self.button_layout = QHBoxLayout()
+        self.button_1 = QPushButton()
+        self.button_1.setText('Результаты ISSR')
+        self.button_1.setToolTip(F"<h3>Выберите файл с результатми ISSR</h3>")
+        self.button_1.clicked.connect(self.gen_issr)
+
+        self.button_2 = QPushButton()
+        self.button_2.setText('Пример')
+        
+        self.button_2.setToolTip(F"<h3>Посмотрите пример оформления результатов</h3>")
+        self.button_2.clicked.connect(self.example_issr)
+
+        self.button_1.setMinimumHeight(100)
+        self.button_2.setMinimumHeight(100)
+
+        self.button_layout.addWidget(self.button_1)
+        self.button_layout.addWidget(self.button_2)
+        self.vb.addLayout(self.button_layout)
+
+        self.button_layout_2 = QHBoxLayout()
+        self.button_3 = QPushButton()
+        self.button_3.setText('Обработать')
+        self.button_3.clicked.connect(self.analis_issr)
+        self.vb.addWidget(self.button_3)
 
     def gen_issr(self) -> None:
         '''Ввод результатов ISSR'''
         self.adres_issr_in = enter_adres('Добавить данные по ISSR')
         if self.adres_issr_in != '':
-            self.label_creat('Данные по ISSR добавлены')
+            self.button_1.setStyleSheet(
+                    (
+                    'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #00140b);}' +
+                    'QPushButton:hover {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #468f42, stop: 1 #132712);}'
+                )
+            )
 
     def example_issr(self) -> None:
         '''Вывод примера оформления'''
@@ -972,11 +1007,10 @@ class WindowISSR(Window_main):
     def analis_issr(self) -> None:
         '''Анализ issr'''
         try:
-            
-            self.res_df_issr = issr_analit_func(self.adres_issr_in)
             self.res_df_issr = issr_analit_func(self.adres_issr_in)
             self.adres_res = save_file(self.res_df_issr)
-            self.label_creat(str(dt.datetime.now()))
+            global adres_job
+            adres_job = self.adres_res
             self.button_creat(self.open_file_result, 'Открыть файл с результатами')
         except Exception as e:
             QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
@@ -1490,24 +1524,24 @@ class GeneralWindow(QMainWindow):
 
     def show_window_MS_serch_father(self) -> None:
         '''Отрисовывает окно поиска отцов.'''
-        #try:
-        self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
-        global adres_job
-        adres_job = r'func\data\search_fatherh\bus_search.csv'
-        self.window.button_creat(
-            self.window.res_search_cow_father,
-            'Выбрать файл с данными о потомке',
-            text='Выберите файл, в который записан микросателлитный профиль потомка.',
-        )
-        self.window.button_creat(
-            self.window.data_result_in,
-            'Внести данные в таблицу',
-            text='Введите данные микросателлитного профиля потомка.',
-        )
-        self.window.button_creat(self.show_window_biotech, 'На главную')
-        self.window.show()
-        #except Exception as e:
-        #    QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
+        try:
+            self.window = WindowSearchFarher('Biotech Lab: Microsatellite analysis. Search father')
+            global adres_job
+            adres_job = r'func\data\search_fatherh\bus_search.csv'
+            self.window.button_creat(
+                self.window.res_search_cow_father,
+                'Выбрать файл с данными о потомке',
+                text='Выберите файл, в который записан микросателлитный профиль потомка.',
+            )
+            self.window.button_creat(
+                self.window.data_result_in,
+                'Внести данные в таблицу',
+                text='Введите данные микросателлитного профиля потомка.',
+            )
+            self.window.button_creat(self.show_window_biotech, 'На главную')
+            self.window.show()
+        except Exception as e:
+            QMessageBox.critical(self, 'Ошибка', f'{answer_error()} Подробности:\n {e}')
 
     def show_creat_pass_doc_gen(self) -> None:
         '''Отрисовывает окно генерации паспортов.'''
@@ -1546,17 +1580,6 @@ class GeneralWindow(QMainWindow):
         '''Отрисовывает окно ISSR.'''
         try:
             self.window = WindowISSR('Biotech Lab: ISSR analysis')
-            text_1 = 'Здесь можно обработать первичные данные по ISSR'
-            self.window.label_creat(text_1)
-            self.window.button_creat_double(
-                self.window.gen_issr, 'Результаты ISSR',
-                self.window.example_issr, 'Пример'
-            )
-            self.window.button_creat(
-                self.window.analis_issr,
-                'Обработать', 
-                'Запустить анализ'
-            )
             self.window.button_creat(self.show_window_biotech, 'На главную')
             self.window.show()
         except Exception as e:
@@ -1571,7 +1594,7 @@ class GeneralWindow(QMainWindow):
 
     def show_window_tests(self):
         """Окно для тестирования новых функций"""
-        #QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
+        QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n')
         try:
             self.window = WindowTest('Biothech Lab: testing')
             
