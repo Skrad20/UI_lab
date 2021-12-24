@@ -31,8 +31,6 @@ def main():
     except Exception as e:
         QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
     sys.exit(app.exec_())
-    print('Вот и всё!')
-
 
 if __name__ == "__main__":
     main()

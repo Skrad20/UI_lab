@@ -3,26 +3,20 @@
 
 import os
 import datetime as dt
-import time
-import sys
-from pprint import pprint
 from PyQt5.QtWidgets import *
 from PyQt5.QtGui import *
 from PyQt5.QtCore import *
 
 from PyQt5 import uic
 from pandas.core.frame import DataFrame
-from threading import Thread, Timer, Lock
 from func.func_answer_error import answer_error
 from func.func_ms import *
 from func.func_issr import *
 from peewee import *
-from classes.class_bar import Progress_diaog
 from setting import IS_TEST as is_test
 from setting import DB as db
 from setting import TRANSPARENCY as transparency
 from models.models import Logs
-from classes.class_progress import QProgressIndicator, TestProgressIndicator
 from lists_name.list_name_row import (
     list_name_row_add_father,
     list_name_row_search_father
@@ -50,16 +44,16 @@ class TitleBar(QWidget):
     # Сигнал Своя Кнопка +++
     signalButtonMy = pyqtSignal()
 
-
     def __init__(self, *args, **kwargs):
         super(TitleBar, self).__init__(*args, **kwargs)
 
         # Поддержка настройки фона qss
         self.setAttribute(Qt.WA_StyledBackground, True)
-        self.mPos     = None
-        self.iconSize = 20                       # Размер значка по умолчанию
+        self.mPos = None
+        self.iconSize = 20  # Размер значка по умолчанию
 
-        # Установите цвет фона по умолчанию, иначе он будет прозрачным из-за влияния родительского окна
+        # Установите цвет фона по умолчанию,
+        # иначе он будет прозрачным из-за влияния родительского окна
         self.setAutoFillBackground(True)
         palette = self.palette()
         palette.setColor(palette.Window, QColor(240, 240, 240))
@@ -99,12 +93,22 @@ class TitleBar(QWidget):
 
         # Кнопка Max / restore
         self.buttonMaximum = QPushButton(
-            '+', self, clicked=self.showMaximized, font=font, objectName='buttonMaximum')
+            '+',
+            self,
+            clicked=self.showMaximized,
+            font=font,
+            objectName='buttonMaximum'
+        )
         layout.addWidget(self.buttonMaximum)
 
         # Кнопка закрытия
         self.buttonClose = QPushButton(
-            'X', self, clicked=self.windowClosed.emit, font=font, objectName='buttonClose')
+            'X',
+            self,
+            clicked=self.windowClosed.emit,
+            font=font,
+            objectName='buttonClose'
+        )
         layout.addWidget(self.buttonClose)
 
         # начальная высота
@@ -212,7 +216,7 @@ class Window_main(QWidget):
         log_1 = Logs(name='Запуск основного окна')
         log_1.save()
         self.setWindowFlags(Qt.FramelessWindowHint)
-    
+
     def setTitleBarHeight(self, height=38):
         """ Установка высоты строки заголовка """
         self.titleBar.setHeight(height)
@@ -226,7 +230,8 @@ class Window_main(QWidget):
         if hasattr(self, '_widget'):
             return
         self._widget = widget
-        # Установите цвет фона по умолчанию, иначе он будет прозрачным из-за влияния родительского окна
+        # Установите цвет фона по умолчанию,
+        # иначе он будет прозрачным из-за влияния родительского окна
         self._widget.setAutoFillBackground(True)
         palette = self._widget.palette()
         palette.setColor(palette.Window, QColor(240, 240, 240))
@@ -247,22 +252,25 @@ class Window_main(QWidget):
         self.layout().setContentsMargins(0, 0, 0, 0)
 
     def showNormal(self):
-        """ Восстановить, сохранить верхнюю и нижнюю левую и правую границы, 
+        """ Восстановить, сохранить верхнюю и нижнюю левую и правую границы,
             иначе нет границы, которую нельзя отрегулировать """
         super(Window_main, self).showNormal()
         self.layout().setContentsMargins(
             self.Margins, self.Margins, self.Margins, self.Margins)
 
     def eventFilter(self, obj, event):
-        """ Фильтр событий, используемый для решения мыши в других элементах 
+        """ Фильтр событий, используемый для решения мыши в других элементах
             управления и восстановления стандартного стиля мыши """
         if isinstance(event, QEnterEvent):
             self.setCursor(Qt.ArrowCursor)
         return super(Window_main, self).eventFilter(obj, event)
 
     def paintEvent(self, event):
-        """ Поскольку это полностью прозрачное фоновое окно, жесткая для поиска
-            граница с прозрачностью 1 рисуется в событии перерисовывания, чтобы отрегулировать размер окна. """
+        """
+        Поскольку это полностью прозрачное фоновое окно, жесткая для поиска
+        граница с прозрачностью 1 рисуется в событии перерисовывания,
+        чтобы отрегулировать размер окна. 
+        """
         super(Window_main, self).paintEvent(event)
         painter = QPainter(self)
         painter.setPen(QPen(QColor(255, 255, 255, 1), 2 * self.Margins))
@@ -394,7 +402,6 @@ class Window_main(QWidget):
         self.center()
         self.setMinimumWidth(400)
         self.setMinimumHeight(550)
-        #self.adjustSize()
         self.setWindowTitle(name)
         self.setWindowIcon(QIcon('data\icon.ico'))
         self.show()
@@ -406,7 +413,13 @@ class Window_main(QWidget):
         qr.moveCenter(cp)
         self.move(qr.topLeft())
 
-    def button_creat(self, func, label: str, text: str = None, class_func=None) -> None:
+    def button_creat(
+            self,
+            func,
+            label: str,
+            text: str = None,
+            class_func=None
+        ) -> None:
         """Создает кнопку в окне программы."""
         self.button = QPushButton()
         self.button.setText(label)
