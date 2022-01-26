@@ -33,7 +33,9 @@ MANIFEST
 *.manifest
 *.spec
 *bulid
-
+*build*
+/build_windows
+/build_windows/
 
 # Installer logs
 pip-log.txt

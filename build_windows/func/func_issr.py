@@ -8,7 +8,6 @@ from .func_ms import read_file
 
 tqdm.pandas()
 
-
 def ga_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
     genotype = 'G'
@@ -131,7 +130,6 @@ def ga_issr(row) -> str:
         return ''.join(gt37)
     elif size_ga < 160:
         return '-'
-
 
 def ag_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
@@ -273,7 +271,6 @@ def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
         result_end_1 = result_end_1.append(num_otbor_transp)
     return result_end_1
 
-
 def issr_analit_func(adres: str) -> pd.DataFrame:
     """Анлиза данных issr"""
     # загрузка входных данных с раделителем по ячейкам и долевым ","
@@ -328,7 +325,7 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     ravn(ga)
     ravn(ag)
 
-    # Проверочная соединенная таблица
+    # Проверочная соединеная таблица
     tabl_ravn = ag.merge(ga, on='animal', how='outer')
     #(tabl_ravn.to_csv(r'C:\Users\Коптев\Desktop\pyton\ISSR\tabl.csv',
     #                sep=";",

@@ -32,7 +32,7 @@ def main():
         print(repr(window))
     except Exception as e:
         QMessageBox.critical(
-            self, 
+            self,
             'Что-то пошло не так',
             f'{answer_error()} Подробности:\n {e}'
         )
