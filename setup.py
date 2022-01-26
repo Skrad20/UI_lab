@@ -1,6 +1,6 @@
 # coding: utf-8
 
-from cx_Freeze import setup, Executable
+from cx_Freeze import Executable, setup
 
 executables = [Executable(
     'main.py',

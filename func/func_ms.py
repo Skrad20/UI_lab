@@ -1,21 +1,21 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pandas as pd
+import datetime
+import os
+
 import numpy as np
 import pandas as pd
-import os
-import datetime
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from docx import Document as Document_compose
+from docxcompose.composer import Composer
 from docxtpl import DocxTemplate
 from peewee import *
-from docxcompose.composer import Composer
-from docx import Document as Document_compose
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
-from classes.class_progress import QProgressIndicator
+from func.db_job import upload_data_db_for_searh_father
+from .parser_def import add_missing
 
 
 def read_file(adres: str) -> pd.DataFrame:
@@ -48,7 +48,7 @@ def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
 
 def delit(row: dict, delitel: str, col: str) -> str:
     '''Разделение строки по делителю.'''
-    num  = row[col]
+    num = row[col]
     print(num)
     num = num.split(delitel)
     return num[-1]
@@ -118,8 +118,9 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
 
 
 def split_hosbut_father(row):
-    if type(row['хозяйство']) == str:
-        row['хозяйство'] = row['хозяйство'].split(', ')
+    if type(row['farm']) == str:
+        row['farm'] = row['farm'].split(', ')
+
 
 def is_float(s):
     try:
@@ -128,16 +129,11 @@ def is_float(s):
     except ValueError:
         return False
 
+
 def filer_father(hosbut: dict) -> pd.DataFrame:
-    df = pd.read_csv(
-        r'func\data\search_fatherh\faters.csv',
-        sep=';',
-        decimal=',',
-        encoding='cp1251'
-    )
-    print(hosbut)
+    df = upload_data_db_for_searh_father()
     if hosbut['Выбрать всех']:
-        return df.drop('хозяйство', axis=1)
+        return df.drop('farm', axis=1)
     df.apply(split_hosbut_father, axis=1)
     list_hosbut = []
     for key, item in hosbut.items():
@@ -157,44 +153,38 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
             if df.iloc[i, 2] in list_hosbut:
                 list_res.append(df.iloc[i, :])
     df_res = pd.DataFrame(data=list_res)
-    df = df_res.reset_index().drop('index', axis=1)
-    df['хозяйство'] = df.pop('хозяйство')
+    df = df_res.reset_index(drop=True)
+    df['farm'] = df.pop('farm')
     return df
 
 
 def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = filer_father(filter)
-    #print(df)
-    #print('out filter\n',df)
+    print('1')
     df_search = read_file(adres)
-    #print('ou save', df_search)
     df_search = df_search.T
     df = df.fillna('-')
     df = df.replace('  ', '')
     df_search = df_search.fillna('-')
     df_search = df_search.reset_index()
-    #df_search.iloc[1, 0] = df_search.iloc[0, 1]
-    #df_search = df_search.drop(0, axis=1)
     df_search.columns = df_search.loc[0, :]
     df_search = df_search.drop(0)
     df_res = df.copy()
-    #print(df_search.info())
-    #print(df_search)
-    #print(df_res.info())
+    print(2)
+    print(df_search)
     for i in range(2, len(df_search.columns)):
         for j in range(len(df_res)):
             if df_search.iloc[0, i-1] != '-':
                 locus = df_search.iloc[0, i-1].split('/')
-                if df_res.iloc[j, i] != '-':
+                if df_res.iloc[j, i] != '-' and str(df_res.iloc[j, i]) != 'nan':
                     locus_base = df_res.iloc[j, i].split('/')
-                    #print(df_search.columns[i])
-                    #print(df_res.columns[i])
-                    #print('l', locus)
-                    #print('lb', locus_base)
-                    if locus[0] != locus_base[0] and locus[1] != locus_base[0] and locus[0] != locus_base[1] and locus[1] != locus_base[1]:
+                    if (locus[0] != locus_base[0] and
+                        locus[1] != locus_base[0] and
+                        locus[0] != locus_base[1] and
+                        locus[1] != locus_base[1]):
                         df_res.iloc[j, i] = np.nan
-    #print(df_res)
+    print(3)
     df_res = df_res.dropna()
     df_res.to_csv(
         r'func\data\search_fatherh\bus_search.csv',
@@ -209,17 +199,24 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     '''Переводит данные из word в csv.'''
     doc = read_file(adres)
     doc.columns = ['ms', 'ms_size', 'vater', 'mom']
-    msatle = ['name', 'numer', 'vater', 'number_vater',
-            'BM1818', 'BM1824',
-            'BM2113', 'CSRM60', 'CSSM66',
-            'CYP21', 'ETH10', 'ETH225',
-            'ETH3', 'ILSTS6', 'INRA023',
-            'RM067', 'SPS115', 'TGLA122',
-            'TGLA126', 'TGLA227', 'TGLA53',
-            'MGTG4B', 'SPS113']
+    msatle = [
+        'name', 'numer', 'vater', 'number_vater',
+        'BM1818', 'BM1824',
+        'BM2113', 'CSRM60', 'CSSM66',
+        'CYP21', 'ETH10', 'ETH225',
+        'ETH3', 'ILSTS6', 'INRA023',
+        'RM067', 'SPS115', 'TGLA122',
+        'TGLA126', 'TGLA227', 'TGLA53',
+        'MGTG4B', 'SPS113'
+    ]
     result = pd.DataFrame(columns=msatle)
 
-    def ms_select(data_in: pd.DataFrame, data_out: pd.DataFrame, ms: str, no: int) -> None:
+    def ms_select(
+        data_in: pd.DataFrame,
+        data_out: pd.DataFrame,
+        ms: str,
+        no: int
+    ) -> None:
         for i in range(len(data_in)):
             if data_in.loc[i, 'ms'] == ms:
                 res = data_in.loc[i, 'ms_size']
@@ -265,7 +262,13 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     return result
 
 
-def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, hosut: str = 'Хозяйство') -> pd.DataFrame:
+def creat_doc_pas_gen(
+    adres_invertory: str,
+    adres_genotyping: str,
+    adres: str,
+    hosut: str = 'Хозяйство'
+) -> pd.DataFrame:
+
     now = datetime.datetime.now()
     list_father_non = []
     date = now.strftime("%d-%m-%Y")
@@ -279,12 +282,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         'number_father',
         'name_father',
     ]
-    df_faters = pd.read_csv(
-        r'func\data\creat_pass_doc\faters.csv',
-        sep=';',
-        decimal=',',
-        encoding='cp1251'
-    )
+    df_faters = add_missing(df, hosut)
     df_profil = read_file(adres_genotyping)
     df_profil['num'] = df_profil.apply(
         delit,
@@ -306,17 +304,34 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         col_split = col1.split()[0]
         col_split = col_split.upper()
         col2 = df_profil.columns[j]
-        df_profil[col_split] = df_profil.apply(ms_clutch, col1=col1, col2=col2, axis=1)
-    df_profil_end = df_profil.iloc[:,-15:]
+        df_profil[col_split] = df_profil.apply(
+            ms_clutch,
+            col1=col1,
+            col2=col2,
+            axis=1
+        )
+    df_profil_end = df_profil.iloc[:, -15:]
     df_profil_end['num'] = df_profil['num']
     df = df.astype('str')
     df['number_father'] = df['number_father'].astype('float')
-    list_number_faters = list(df_faters.loc[:,'number'].astype('float'))
-    print(list_number_faters)
-    df['number_animal'] = pd.to_numeric(df['number_animal'], downcast='integer')
-    df['number_proba'] = pd.to_numeric(df['number_proba'], downcast='integer')
-    df['number_father'] = pd.to_numeric(df['number_father'], downcast='integer')
-    df['number_mutter'] = pd.to_numeric(df['number_mutter'], downcast='integer')
+    list_number_faters = list(df_faters.loc[:, 'number'].astype('float'))
+
+    df['number_animal'] = pd.to_numeric(
+        df['number_animal'],
+        downcast='integer'
+    )
+    df['number_proba'] = pd.to_numeric(
+        df['number_proba'],
+        downcast='integer'
+    )
+    df['number_father'] = pd.to_numeric(
+        df['number_father'],
+        downcast='integer'
+    )
+    df['number_mutter'] = pd.to_numeric(
+        df['number_mutter'],
+        downcast='integer'
+    )
     locus_str_er = []
     fater_er = []
     animal = []
@@ -325,8 +340,8 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         anmal_num = df.loc[i, 'number_proba']
         animal_inve = df.loc[i, 'number_animal']
         fater_num = df.loc[i, 'number_father']
-        df_animal_prof = df_profil.query('num == @anmal_num').loc[:, 'ETH3': 'ETH10'].reset_index().drop('index', axis=1)
-        df_fater_prof = df_faters.query('number == @fater_num').loc[:, 'BM1818': 'SPS113'].reset_index().drop('index', axis=1)
+        df_animal_prof = df_profil.query('num == @anmal_num').loc[:, 'ETH3': 'ETH10'].reset_index(drop=True)
+        df_fater_prof = df_faters.query('number == @fater_num').loc[:, 'BM1818': 'SPS113'].reset_index(drop=True)
         for locus_f in df_fater_prof.columns:
             try:
                 value_fater_ms = df_fater_prof.loc[0, locus_f]
@@ -355,18 +370,16 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         'fater': fater_num,
         'animal': animal,
     })
-    (res_error.to_csv(
+    res_error.to_csv(
         r'func\data\creat_pass_doc\res_error.csv',
         sep=";",
         decimal=',',
         encoding="cp1251")
-    )
     files_list = []
     for i in range(len(series_num)):
         doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_1.docx')
-        if  series_num[i] in series_proba:
+        if series_num[i] in series_proba:
             num_anim = series_num[i]
-            print(num_anim)
             df_info = df.query('number_proba == @num_anim').reset_index()
             df_profil_only = df_profil_end.query('num == @num_anim').reset_index()
             number_animal = df_info.loc[0, 'number_animal']
@@ -383,9 +396,8 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
             animal = ' '.join(animal_join)
             fater = ' '.join(fater_join)
             mutter = ' '.join(mutter_join)
-
             if number_father in list_number_faters:
-                df_faters_only = (df_faters.query('number == @number_father').reset_index())
+                df_faters_only = (df_faters.query('number == @number_father').reset_index(drop=True))
                 BM1818_fater = df_faters_only.loc[0, 'BM1818']
                 BM1824_fater = df_faters_only.loc[0, 'BM1824']
                 BM2113_fater = df_faters_only.loc[0, 'BM2113']
@@ -452,20 +464,20 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                     'MGTG4B_fater': MGTG4B_fater,
                     'SPS113_fater': SPS113_fater,
                     'BM1818': BM1818,
-                    'BM1824':BM1824,
-                    'BM2113':BM2113,
-                    'CSRM60':CSRM60,
-                    'CSSM66':CSSM66,
-                    'ETH10':ETH10,
-                    'ETH225':ETH225,
-                    'ETH3':ETH3,
-                    'ILSTS6':ILSTS6,
-                    'INRA023':INRA023,
-                    'SPS115':SPS115,
-                    'TGLA122':TGLA122,
-                    'TGLA126':TGLA126,
-                    'TGLA227':TGLA227,
-                    'TGLA53':TGLA53,
+                    'BM1824': BM1824,
+                    'BM2113': BM2113,
+                    'CSRM60': CSRM60,
+                    'CSSM66': CSSM66,
+                    'ETH10': ETH10,
+                    'ETH225': ETH225,
+                    'ETH3': ETH3,
+                    'ILSTS6': ILSTS6,
+                    'INRA023': INRA023,
+                    'SPS115': SPS115,
+                    'TGLA122': TGLA122,
+                    'TGLA126': TGLA126,
+                    'TGLA227': TGLA227,
+                    'TGLA53': TGLA53,
                     'date': date
                 }
                 doc.render(context)
@@ -489,60 +501,66 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                 TGLA126 = df_profil_only.loc[0, 'TGLA126']
                 TGLA227 = df_profil_only.loc[0, 'TGLA227']
                 TGLA53 = df_profil_only.loc[0, 'TGLA53']
-                context = {'number_animal' : number_animal,
-                        'name_animal' : name_animal,
-                        'hosbut' : hosut,
-                        'number_proba' : number_proba,
-                        'number_father' : number_father,
-                        'name_father':name_father,
-                        'animal':animal ,
-                        'fater':fater,
-                        'mutter':mutter,
-                        
-                        'BM1818': BM1818,
-                        'BM1824':BM1824,
-                        'BM2113':BM2113,
-                        'CSRM60':CSRM60,
-                        'CSSM66':CSSM66,
-                        'ETH10':ETH10,
-                        'ETH225':ETH225,
-                        'ETH3':ETH3,
-                        'ILSTS6':ILSTS6,
-                        'INRA023':INRA023,
-                        'SPS115':SPS115,
-                        'TGLA122':TGLA122,
-                        'TGLA126':TGLA126,
-                        'TGLA227':TGLA227,
-                        'TGLA53':TGLA53,        
-                        
-                        'date': date 
-                        }
+                context = {
+                    'number_animal': number_animal,
+                    'name_animal': name_animal,
+                    'hosbut': hosut,
+                    'number_proba': number_proba,
+                    'number_father': number_father,
+                    'name_father': name_father,
+                    'animal': animal,
+                    'fater': fater,
+                    'mutter': mutter,
+                    'BM1818': BM1818,
+                    'BM1824': BM1824,
+                    'BM2113': BM2113,
+                    'CSRM60': CSRM60,
+                    'CSSM66': CSSM66,
+                    'ETH10': ETH10,
+                    'ETH225': ETH225,
+                    'ETH3': ETH3,
+                    'ILSTS6': ILSTS6,
+                    'INRA023': INRA023,
+                    'SPS115': SPS115,
+                    'TGLA122': TGLA122,
+                    'TGLA126': TGLA126,
+                    'TGLA227': TGLA227,
+                    'TGLA53': TGLA53,
+                    'date': date
+                }
                 doc.render(context)
                 doc.save(str(i) + ' generated_doc.docx')
                 title = str(i) + ' generated_doc.docx'
                 files_list.append(title)
                 list_father_non.append(str(number_father))
                 print(f'Нет быка: {number_father}, страница: {i+1}')
-                
         else:
-            print(f'Нет животного: проба {int(series_num[i])}, номер , страница: {i+1}')
-    
-    
-    
-    non_father = pd.DataFrame({'Отцы':list(set(list_father_non))})
+            print(
+                f'Нет животного: проба {int(series_num[i])}, номер , страница: {i+1}'
+                )
+    non_father = pd.DataFrame({'Отцы': list(set(list_father_non))})
     (non_father.to_csv(
         r'func\data\creat_pass_doc\non_father.csv',
         sep=";",
         decimal=',',
         encoding="cp1251")
     )
-    filename_master = files_list.pop(0)    
+    filename_master = files_list.pop(0)
 
-    combine_all_docx(filename_master,files_list, adres, date)
+    combine_all_docx(filename_master, files_list, adres, date)
     files_list.append(filename_master)
     for i in range(len(files_list)):
-        if os.path.isfile(files_list[i]): 
+        if os.path.isfile(files_list[i]):
             os.remove(files_list[i])
-        else: 
+        else:
             print("File doesn't exists!")
     return res_error
+
+
+if __name__ == '__main__':
+    creat_doc_pas_gen(
+        adres_invertory=r"C:\Users\1\Dev\UI_lab\func\data\creat_pass_doc\inventory_example.csv",
+        adres_genotyping=r"C:\Users\1\Dev\UI_lab\func\data\creat_pass_doc\profils_example.csv",
+        adres=r"C:\Users\1\Dev\UI_lab\func\data\creat_pass_doc\test.docx",
+        hosut='клавиши'
+    )

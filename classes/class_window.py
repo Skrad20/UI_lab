@@ -1,33 +1,31 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os
 import datetime as dt
-import time
+import os
 import sys
+import time
 from pprint import pprint
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from threading import Lock, Thread, Timer
 
-from PyQt5 import uic
 from pandas.core.frame import DataFrame
-from threading import Thread, Timer, Lock
-from func.func_answer_error import answer_error
-from func.func_ms import *
-from func.func_issr import *
 from peewee import *
-from classes.class_bar import Progress_diaog
-from setting import IS_TEST as is_test
-from setting import DB as db
-from setting import TRANSPARENCY as transparency
-from models.models import Logs
-from classes.class_progress import QProgressIndicator, TestProgressIndicator
-from lists_name.list_name_row import (
-    list_name_row_add_father,
-    list_name_row_search_father
-)
+from PyQt5 import uic
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
+from classes.class_bar import Progress_diaog
+from classes.class_progress import QProgressIndicator, TestProgressIndicator
+from func.func_answer_error import answer_error
+from func.func_issr import *
+from func.func_ms import *
+from lists_name.list_name_row import (list_name_row_add_father,
+                                      list_name_row_search_father)
+from models.models import Logs
+from setting import DB as db
+from setting import IS_TEST as is_test
+from setting import TRANSPARENCY as transparency
 
 adres_job = ''
 data_job = ''
@@ -36,7 +34,6 @@ stop_thread = False
 
 
 class TitleBar(QWidget):
-
     # Сигнал минимизации окна
     windowMinimumed = pyqtSignal()
     # увеличить максимальный сигнал окна
@@ -49,7 +46,6 @@ class TitleBar(QWidget):
     windowMoved = pyqtSignal(QPoint)
     # Сигнал Своя Кнопка +++
     signalButtonMy = pyqtSignal()
-
 
     def __init__(self, *args, **kwargs):
         super(TitleBar, self).__init__(*args, **kwargs)

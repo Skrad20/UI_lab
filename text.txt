@@ -1,0 +1,5 @@
+Index(['Имя', 'Номер', 'хозяйство', 'BM1818', 'BM1824', 'BM2113', 'CSRM60',
+       'CSSM66', 'CYP21', 'ETH10', 'ETH225', 'ETH3', 'ILSTS6', 'INRA023',
+       'RM067', 'SPS115', 'TGLA122', 'TGLA126', 'TGLA227', 'TGLA53', 'MGTG4B',
+       'SPS113'],
+      dtype='object')

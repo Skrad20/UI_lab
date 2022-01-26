@@ -2,7 +2,9 @@
 # -*- coding: utf-8 -*-
 
 import datetime as dt
+
 import peewee as pw
+
 from setting import DB as db
 
 
@@ -27,15 +29,12 @@ class BaseModelAnimal(pw.Model):
     number = pw.IntegerField(
         null=False,
         verbose_name='Инвертарный номер животного',
+        unique=True,
     )
     farm = pw.CharField(
         verbose_name='Название хозяйства',
         max_length=100,
         null=True,
-    )
-    BM1818 = pw.CharField(
-        default='-',
-        max_length=10,
     )
     BM1818 = pw.CharField(
         default='-',
