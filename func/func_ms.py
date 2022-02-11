@@ -121,12 +121,14 @@ def split_hosbut_father(row):
     if type(row['хозяйство']) == str:
         row['хозяйство'] = row['хозяйство'].split(', ')
 
+
 def is_float(s):
     try:
         float(s)
         return True
     except ValueError:
         return False
+
 
 def filer_father(hosbut: dict) -> pd.DataFrame:
     df = pd.read_csv(
