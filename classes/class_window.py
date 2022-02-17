@@ -1,27 +1,39 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import os
 import datetime as dt
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+import os
+import sys
+import time
+from pprint import pprint
+from threading import Lock, Thread, Timer
 
-from PyQt5 import uic
 from pandas.core.frame import DataFrame
-from func.func_answer_error import answer_error
-from func.func_ms import *
-from func.func_issr import *
 from peewee import *
-from setting import IS_TEST as is_test
-from setting import DB as db
-from setting import TRANSPARENCY as transparency
-from models.models import Logs
-from lists_name.list_name_row import (
-    list_name_row_add_father,
-    list_name_row_search_father
+from PyQt5 import uic
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import (
+    QMessageBox, QWidget, QDialog,
+    QFileDialog, QMainWindow, QFormLayout,
+    QLineEdit, QDesktopWidget, QPushButton,
+    QSizePolicy, QSpacerItem, QVBoxLayout,
+    QLabel, QHBoxLayout, QCheckBox,
+    QGridLayout, QTableView, QApplication
 )
 
+from classes.class_bar import Progress_diaog
+from classes.class_progress import QProgressIndicator, TestProgressIndicator
+from func.func_answer_error import answer_error
+from func.func_issr import *
+from func.func_ms import *
+from func.db_job import save_bus_data_fater
+from lists_name.list_name_row import (list_name_row_add_father,
+                                      list_name_row_search_father)
+from models.models import Logs, BullFather
+from setting import DB as db
+from setting import IS_TEST as is_test
+from setting import TRANSPARENCY as transparency
 
 adres_job = ''
 data_job = ''
@@ -30,7 +42,6 @@ stop_thread = False
 
 
 class TitleBar(QWidget):
-
     # Сигнал минимизации окна
     windowMinimumed = pyqtSignal()
     # увеличить максимальный сигнал окна
@@ -1200,7 +1211,7 @@ class TableAddFather(MainDialog):
         try:
             self.save_button.clicked.connect(self.save_data)
         except  Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} \nclass_windows.py\nTableAddFather\nПодробности:\n {e}')
         self.pushButton.setText("Закрыть окно")
         self.vl.addWidget(self.save_button)
         self.vl.addWidget(self.pushButton)
@@ -1219,36 +1230,25 @@ class TableAddFather(MainDialog):
         data_job = self.df_res
         
         data_job.index = self.header_labels_vertical
-        data_job.columns = ['Профиль']
+        data_job.columns = [0]
         data_job = data_job.T
-        if self.validate(data_job):
-            pass
+        print(data_job)
         try:
-            df = pd.read_csv(
-                './func/data/search_fatherh/faters.csv',
-                sep=';',
-                decimal=',',
-                encoding='cp1251'
+            query = BullFather.select().where(
+                BullFather.number == data_job.loc[0, 'Инвертарный номер']
             )
-            len_df = len(df)
-            df.loc[len_df, :] = list(data_job.loc['Профиль', :])
-            #df['Номер'] = df['Номер'].astype('int')
-            df.to_csv(
-                './func/data/search_fatherh/faters.csv',
-                encoding='cp1251',
-                sep=';',
-                decimal=','
-            )
-            df = df.rename(columns={'Имя':'Name', 'Номер':'number'})
-            df.index = df['number']
-            df.to_csv(
-                './func/data/creat_pass_doc/faters.csv', 
-                encoding='cp1251',
-                sep=';',
-                decimal=','
-            )
+            if query.exists():
+                QMessageBox.information(self, 'Ответ', 'Такой бык уже существует!')
+            else:
+                save_bus_data_fater(data_job)
+                query = BullFather.select().where(
+                    BullFather.number == data_job.loc[0, 'Инвертарный номер']
+                )
+                if query.exists():
+                    QMessageBox.information(self, 'Ответ','Сохранено!')
+
         except Exception as e:
-            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} Подробности:\n {e}')
+            QMessageBox.critical(self, 'Ошибка ввода', f'{answer_error()} \nclass_window.py\n Подробности:\n {e}')
         self.save_button.setStyleSheet(
             (
                 'QPushButton {background-color: qlineargradient(x1: 0, y1: 0, x2: 1, y2: 1, stop: 0 #00e074, stop: 1 #004524);}' +

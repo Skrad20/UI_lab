@@ -1,11 +1,12 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import sys, time
-from PyQt5.QtWidgets import *
+import sys
+import time
+
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-
+from PyQt5.QtWidgets import *
 
 
 class Progress_diaog(QWidget):

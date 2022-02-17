@@ -1,19 +1,18 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
 
-import pandas as pd
+import datetime
+import os
+
 import numpy as np
 import pandas as pd
-import os
-import datetime
-
-from PyQt5.QtWidgets import *
-from PyQt5.QtGui import *
-from PyQt5.QtCore import *
+from docx import Document as Document_compose
+from docxcompose.composer import Composer
 from docxtpl import DocxTemplate
 from peewee import *
-from docxcompose.composer import Composer
-from docx import Document as Document_compose
+from PyQt5.QtCore import *
+from PyQt5.QtGui import *
+from PyQt5.QtWidgets import *
 
 from classes.class_progress import QProgressIndicator
 

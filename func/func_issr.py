@@ -3,8 +3,11 @@
 
 import pandas as pd
 from tqdm import tqdm
+
 from .func_ms import read_file
+
 tqdm.pandas()
+
 
 def ga_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
@@ -128,6 +131,7 @@ def ga_issr(row) -> str:
         return ''.join(gt37)
     elif size_ga < 160:
         return '-'
+
 
 def ag_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
@@ -268,6 +272,7 @@ def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
         num_otbor_transp = num_otbor_transp.reset_index()
         result_end_1 = result_end_1.append(num_otbor_transp)
     return result_end_1
+
 
 def issr_analit_func(adres: str) -> pd.DataFrame:
     """Анлиза данных issr"""

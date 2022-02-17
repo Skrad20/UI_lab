@@ -3,7 +3,9 @@
 
 import pandas as pd
 from tqdm import tqdm
+
 from .func_ms import read_file
+
 tqdm.pandas()
 
 def ga_issr(row) -> str:
