@@ -3,34 +3,39 @@
 
 import datetime as dt
 import os
-import sys
-import time
-from pprint import pprint
-from threading import Lock, Thread, Timer
 
 from pandas.core.frame import DataFrame
-from peewee import *
+import pandas as pd
+import numpy as np
 from PyQt5 import uic
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
+from PyQt5.QtCore import pyqtSignal, QPoint, QEvent, QTimer
+from PyQt5.QtGui import (
+    QColor, QPen, QPainter,
+    QIcon, QEnterEvent, QPixmap, QStandardItemModel, Qt, QFont
+)
 from PyQt5.QtWidgets import (
-    QMessageBox, QWidget, QDialog,
-    QFileDialog, QMainWindow, QFormLayout,
-    QLineEdit, QDesktopWidget, QPushButton,
-    QSizePolicy, QSpacerItem, QVBoxLayout,
-    QLabel, QHBoxLayout, QCheckBox,
-    QGridLayout, QTableView, QApplication
+    QApplication, QCheckBox, QDesktopWidget, QDialog,
+    QFileDialog, QFormLayout, QGridLayout,
+    QHBoxLayout, QLabel, QLineEdit, QMainWindow,
+    QMessageBox, QPushButton, QSizePolicy,
+    QSpacerItem, QTableView, QTableWidget, QVBoxLayout,
+    QWidget, QSplashScreen, QMenu
 )
 
-from classes.class_bar import Progress_diaog
-from classes.class_progress import QProgressIndicator, TestProgressIndicator
+from func.db_job import save_bus_data_fater
 from func.func_answer_error import answer_error
 from func.func_issr import *
-from func.func_ms import *
-from func.db_job import save_bus_data_fater
+from func.func_ms import (
+    enter_adres,
+    save_file_for_word,
+    creat_doc_pas_gen,
+    ResOut,
+    search_father,
+    ms_out_word
+)
 from lists_name.list_name_row import (list_name_row_add_father,
                                       list_name_row_search_father)
-from models.models import Logs, BullFather
+from models.models import BullFather, Logs
 from setting import DB as db
 from setting import IS_TEST as is_test
 from setting import TRANSPARENCY as transparency
@@ -192,7 +197,7 @@ class Window_main(QWidget):
     def __init__(self, name: str, *args, **kwargs):
         super(Window_main, self).__init__(*args, **kwargs)
         self.Margins = 5
-        self._pressed  = False
+        self._pressed = False
         self.Direction = None
 
         # Фон прозрачный
@@ -280,7 +285,7 @@ class Window_main(QWidget):
         """
         Поскольку это полностью прозрачное фоновое окно, жесткая для поиска
         граница с прозрачностью 1 рисуется в событии перерисовывания,
-        чтобы отрегулировать размер окна. 
+        чтобы отрегулировать размер окна.
         """
         super(Window_main, self).paintEvent(event)
         painter = QPainter(self)
@@ -348,7 +353,7 @@ class Window_main(QWidget):
 
     def _resizeWidget(self, pos):
         """ Отрегулируйте размер окна """
-        if self.Direction == None:
+        if self.Direction is None:
             return
         mpos = pos - self._mpos
         xPos, yPos = mpos.x(), mpos.y()
@@ -414,7 +419,7 @@ class Window_main(QWidget):
         self.setMinimumWidth(400)
         self.setMinimumHeight(550)
         self.setWindowTitle(name)
-        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.setWindowIcon(QIcon('data/icon.ico'))
         self.show()
 
     def center(self):
@@ -511,7 +516,7 @@ class MainDialog(QDialog):
         self.setMinimumWidth(1000)
         self.setMinimumHeight(500)
         self.setWindowTitle(name)
-        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.setWindowIcon(QIcon('data/icon.ico'))
         self.show()
 
     def center(self):
@@ -720,7 +725,7 @@ class WindowSearchFarher(Window_main):
         )['хозяйство'])
         print(farmers)
         list_farmers = list(farmers)
-        list_farmers_in = [] 
+        list_farmers_in = []
         for i in range(len((list_farmers))):
             try:
                 split_farm = list_farmers[i].split(', ')
@@ -729,8 +734,8 @@ class WindowSearchFarher(Window_main):
                     list_farmers_in.append(name)
             except:
                 pass
-        
-        farmers_end =[]
+
+        farmers_end = []
         for farme in list_farmers_in:
             if farme is np.nan:
                 pass
@@ -738,7 +743,7 @@ class WindowSearchFarher(Window_main):
                 pass
             else:
                 farmers_end.append(farme)
-        
+
         farmers_end.append('Выбрать всех')
         farmers_end = list(set(farmers_end))
         hosbut = farmers_end.copy()
@@ -893,11 +898,17 @@ class WindowGenPassWord(Window_main):
                 )
             )
         except Exception as e:
-            QMessageBox.critical(self, 'Что-то пошло не так', f'{answer_error()} Подробности:\n {e}')
+            QMessageBox.critical(
+                self,
+                'Что-то пошло не так',
+                f'{answer_error()} \nadd_data_in_table_profils\nПодробности:\n {e}'
+            )
 
     def gen_password_genotyping(self) -> None:
         """Генерирует запись о добавленых данных"""
-        self.adres_genotyping = enter_adres('Добавить данные по генотипированию')
+        self.adres_genotyping = enter_adres(
+            'Добавить данные по генотипированию'
+        )
         if self.adres_genotyping != '':
             self.button_3.setStyleSheet(
                     (
@@ -971,7 +982,7 @@ class WindowAbout(Window_main):
         self.center()
         self.setMaximumWidth(500)
         self.setMaximumHeight(500)
-        self.setWindowIcon(QIcon('data\icon.ico'))
+        self.setWindowIcon(QIcon('data/icon.ico'))
         self.show()
 
 
@@ -981,7 +992,6 @@ class WindowISSR(Window_main):
         super().__init__(name)
         log = Logs(name='Сбор паспортов ISSR')
         log.save()
-        
         text_1 = 'Здесь можно обработать первичные данные по ISSR'
         self.label_creat(text_1)
 
@@ -993,7 +1003,6 @@ class WindowISSR(Window_main):
 
         self.button_2 = QPushButton()
         self.button_2.setText('Пример')
-        
         self.button_2.setToolTip(F"<h3>Посмотрите пример оформления результатов</h3>")
         self.button_2.clicked.connect(self.example_issr)
 
@@ -1130,8 +1139,8 @@ class WindowTableEnterDataSF(MainDialog):
     def save_data(self) -> None:
         '''Сохранение данных по потомкам.'''
         self.df_res = DataFrame(
-            columns= [x for x in range(self.tableView.model().columnCount())], 
-            index = [x for x in range(self.tableView.model().rowCount())])
+            columns=[x for x in range(self.tableView.model().columnCount())],
+            index=[x for x in range(self.tableView.model().rowCount())])
         for i in range(self.tableView.model().rowCount()):
             for j in range(self.tableView.model().columnCount()):
                 if self.tableView.model().index(i,j).data() != 'nan':
@@ -1385,12 +1394,12 @@ class Wind_Table_GP_profils(MainDialog):
     def save_data(self) -> None:
         '''Cохранение данных по описи'''
         self.df_res = DataFrame(
-            columns= [x for x in range(self.tableView.model().columnCount())], 
-            index = [x for x in range(self.tableView.model().rowCount())])
+            columns=[x for x in range(self.tableView.model().columnCount())], 
+            index=[x for x in range(self.tableView.model().rowCount())])
         for i in range(self.tableView.model().rowCount()):
             for j in range(self.tableView.model().columnCount()):
-                if self.tableView.model().index(i,j).data() != 'nan':
-                    self.df_res.iloc[i, j] = self.tableView.model().index(i,j).data()
+                if self.tableView.model().index(i, j).data() != 'nan':
+                    self.df_res.iloc[i, j] = self.tableView.model().index(i, j).data()
         self.df_res = self.df_res.dropna(how='all')
         data_job = self.df_res
         data_job.columns = self.header_labels

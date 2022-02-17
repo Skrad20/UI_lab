@@ -1,10 +1,11 @@
 from webbrowser import get
+
 import pandas as pd
 from PyQt5.QtWidgets import QMessageBox
 
+from func.func_answer_error import answer_error
 from models.models import BullFather, ProfilsCows
 from setting import DB as db
-from func.func_answer_error import answer_error
 
 
 def save_bus_data(dt_in: dict) -> None:

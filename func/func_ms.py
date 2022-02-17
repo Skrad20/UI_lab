@@ -12,14 +12,13 @@ from docxtpl import DocxTemplate
 from peewee import *
 from PyQt5.QtCore import *
 from PyQt5.QtGui import *
-from PyQt5.QtWidgets import QMessageBox, QTableWidget, QFileDialog, QAbstractItemView, QAbstractScrollArea, QTableWidgetItem
-from func.func_answer_error import answer_error
+from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
+                             QFileDialog, QMessageBox, QTableWidget,
+                             QTableWidgetItem)
 
-from func.db_job import (
-    upload_data_db_for_searh_father,
-    save_bus_data,
-    upload_bus_data
-)
+from func.db_job import (save_bus_data, upload_bus_data,
+                         upload_data_db_for_searh_father)
+from func.func_answer_error import answer_error
 
 from .parser_def import add_missing
 

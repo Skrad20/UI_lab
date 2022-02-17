@@ -1,14 +1,13 @@
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
-
-from models.models import BullFather
-from setting import DB as db
 from PyQt5.QtWidgets import QMessageBox
 
-from .db_job import upload_data_db_for_creat_pass
 from func.func_answer_error import answer_error
+from models.models import BullFather
+from setting import DB as db
 
+from .db_job import upload_data_db_for_creat_pass
 
 
 def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
