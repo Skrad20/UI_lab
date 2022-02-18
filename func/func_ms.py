@@ -409,179 +409,97 @@ def creat_doc_pas_gen(
             decimal=',',
             encoding="cp1251")
         files_list = []
-        for i in range(len(series_num)):
-            doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_2.docx')
-            if series_num[i] in series_proba:
-                num_anim = series_num[i]
-                df_info = df.query('number_proba == @num_anim').reset_index()
-                df_profil_only = df_profil_end.query(
-                    'num == @num_anim'
-                ).reset_index()
-                number_animal = df_info.loc[0, 'number_animal']
-                name_animal = df_info.loc[0, 'name_animal']
-                number_proba = df_info.loc[0, 'number_proba']
-                number_father = df_info.loc[0, 'number_father']
-                name_father = df_info.loc[0, 'name_father']
-                number_mutter = df_info.loc[0, 'number_mutter']
-                name_mutter = df_info.loc[0, 'name_mutter']
-                animal_join = [name_animal, str(number_animal)]
-                fater_join = [name_father, str(number_father)]
-                mutter_join = [name_mutter, str(number_mutter)]
+        try:
+            for i in range(len(series_num)):
+                doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_2.docx')
+                if series_num[i] in series_proba:
+                    num_anim = series_num[i]
+                    df_info = df.query(
+                        'number_proba == @num_anim'
+                    ).reset_index()
+                    df_profil_only = df_profil_end.query(
+                        'num == @num_anim'
+                    ).reset_index()
+                    number_animal = df_info.loc[0, 'number_animal']
+                    name_animal = df_info.loc[0, 'name_animal']
+                    number_proba = df_info.loc[0, 'number_proba']
+                    number_father = df_info.loc[0, 'number_father']
+                    name_father = df_info.loc[0, 'name_father']
+                    number_mutter = df_info.loc[0, 'number_mutter']
+                    name_mutter = df_info.loc[0, 'name_mutter']
+                    animal_join = [name_animal, str(number_animal)]
+                    fater_join = [name_father, str(number_father)]
+                    mutter_join = [name_mutter, str(number_mutter)]
+                    dict_profil_only = df_profil_only.loc[0, :].to_dict()
+                    animal = ' '.join(animal_join)
+                    fater = ' '.join(fater_join)
+                    mutter = ' '.join(mutter_join)
+                    if number_father in list_number_faters:
+                        df_faters_only = (df_faters.query(
+                            'number == @number_father'
+                        ).reset_index(drop=True))
+                        dict_faters_only = df_faters_only.loc[0, :].to_dict()
+                        dict_faters_new = {}
+                        for key, val in dict_faters_only.items():
+                            dict_faters_new[key+"_fater"] = val
+                        print(dict_faters_new)
+                        context = {
+                            'number_animal': number_animal,
+                            'name_animal': name_animal,
+                            'hosbut': hosut,
+                            'number_proba': number_proba,
+                            'number_father': number_father,
+                            'name_father': name_father,
+                            'animal': animal,
+                            'fater': fater,
+                            'mutter': mutter,
+                            'date': date
+                        }
+                        context = {**context, **dict_faters_new}
+                        context = {**context, **dict_profil_only}
+                        save_bus_data(context)
+                        dict_mutter = upload_bus_data(mutter)
+                        context = {**context, **dict_mutter}
+                        doc.render(context)
+                        doc.save(str(i) + ' generated_doc.docx')
+                        title = str(i) + ' generated_doc.docx'
+                        files_list.append(title)
 
-                animal = ' '.join(animal_join)
-                fater = ' '.join(fater_join)
-                mutter = ' '.join(mutter_join)
-                if number_father in list_number_faters:
-                    df_faters_only = (df_faters.query(
-                        'number == @number_father'
-                    ).reset_index(drop=True))
-                    BM1818_fater = df_faters_only.loc[0, 'BM1818']
-                    BM1824_fater = df_faters_only.loc[0, 'BM1824']
-                    BM2113_fater = df_faters_only.loc[0, 'BM2113']
-                    CSRM60_fater = df_faters_only.loc[0, 'CSRM60']
-                    CSSM66_fater = df_faters_only.loc[0, 'CSSM66']
-                    CYP21_fater = df_faters_only.loc[0, 'CYP21']
-                    ETH10_fater = df_faters_only.loc[0, 'ETH10']
-                    ETH225_fater = df_faters_only.loc[0, 'ETH225']
-                    ETH3_fater = df_faters_only.loc[0, 'ETH3']
-                    ILSTS6_fater = df_faters_only.loc[0, 'ILSTS6']
-                    INRA023_fater = df_faters_only.loc[0, 'INRA023']
-                    RM067_fater = df_faters_only.loc[0, 'RM067']
-                    SPS115_fater = df_faters_only.loc[0, 'SPS115']
-                    TGLA122_fater = df_faters_only.loc[0, 'TGLA122']
-                    TGLA126_fater = df_faters_only.loc[0, 'TGLA126']
-                    TGLA227_fater = df_faters_only.loc[0, 'TGLA227']
-                    TGLA53_fater = df_faters_only.loc[0, 'TGLA53']
-                    MGTG4B_fater = df_faters_only.loc[0, 'MGTG4B']
-                    SPS113_fater = df_faters_only.loc[0, 'SPS113']
-
-                    BM1818 = df_profil_only.loc[0, 'BM1818']
-                    BM1824 = df_profil_only.loc[0, 'BM1824']
-                    BM2113 = df_profil_only.loc[0, 'BM2113']
-                    CSRM60 = df_profil_only.loc[0, 'CSRM60']
-                    CSSM66 = df_profil_only.loc[0, 'CSSM66']
-                    ETH10 = df_profil_only.loc[0, 'ETH10']
-                    ETH225 = df_profil_only.loc[0, 'ETH225']
-                    ETH3 = df_profil_only.loc[0, 'ETH3']
-                    ILSTS6 = df_profil_only.loc[0, 'ILSTS6']
-                    INRA023 = df_profil_only.loc[0, 'INRA23']
-                    SPS115 = df_profil_only.loc[0, 'SPS115']
-                    TGLA122 = df_profil_only.loc[0, 'TGLA122']
-                    TGLA126 = df_profil_only.loc[0, 'TGLA126']
-                    TGLA227 = df_profil_only.loc[0, 'TGLA227']
-                    TGLA53 = df_profil_only.loc[0, 'TGLA53']
-
-                    context = {
-                        'number_animal': number_animal,
-                        'name_animal': name_animal,
-                        'hosbut': hosut,
-                        'number_proba': number_proba,
-                        'number_father': number_father,
-                        'name_father': name_father,
-                        'animal': animal,
-                        'fater': fater,
-                        'mutter': mutter,
-                        'BM1818_fater': BM1818_fater,
-                        'BM1824_fater': BM1824_fater,
-                        'BM2113_fater': BM2113_fater,
-                        'CSRM60_fater': CSRM60_fater,
-                        'CSSM66_fater': CSSM66_fater,
-                        'CYP21_fater': CYP21_fater,
-                        'ETH10_fater': ETH10_fater,
-                        'ETH225_fater': ETH225_fater,
-                        'ETH3_fater': ETH3_fater,
-                        'ILSTS6_fater': ILSTS6_fater,
-                        'INRA023_fater': INRA023_fater,
-                        'RM067_fater': RM067_fater,
-                        'SPS115_fater': SPS115_fater,
-                        'TGLA122_fater': TGLA122_fater,
-                        'TGLA126_fater': TGLA126_fater,
-                        'TGLA227_fater': TGLA227_fater,
-                        'TGLA53_fater': TGLA53_fater,
-                        'MGTG4B_fater': MGTG4B_fater,
-                        'SPS113_fater': SPS113_fater,
-                        'BM1818': BM1818,
-                        'BM1824': BM1824,
-                        'BM2113': BM2113,
-                        'CSRM60': CSRM60,
-                        'CSSM66': CSSM66,
-                        'ETH10': ETH10,
-                        'ETH225': ETH225,
-                        'ETH3': ETH3,
-                        'ILSTS6': ILSTS6,
-                        'INRA023': INRA023,
-                        'SPS115': SPS115,
-                        'TGLA122': TGLA122,
-                        'TGLA126': TGLA126,
-                        'TGLA227': TGLA227,
-                        'TGLA53': TGLA53,
-                        'date': date
-                    }
-                    save_bus_data(context)
-                    dict_mutter = upload_bus_data(mutter)
-                    context = {**context, **dict_mutter}
-                    doc.render(context)
-                    doc.save(str(i) + ' generated_doc.docx')
-                    title = str(i) + ' generated_doc.docx'
-                    files_list.append(title)
-
+                    else:
+                        context = {
+                            'number_animal': number_animal,
+                            'name_animal': name_animal,
+                            'hosbut': hosut,
+                            'number_proba': number_proba,
+                            'number_father': number_father,
+                            'name_father': name_father,
+                            'animal': animal,
+                            'fater': fater,
+                            'mutter': mutter,
+                            'date': date
+                        }
+                        context = {**context, **dict_profil_only}
+                        save_bus_data(context)
+                        dict_mutter = upload_bus_data(mutter)
+                        context = {**context, **dict_mutter}
+                        doc.render(context)
+                        doc.save(str(i) + ' generated_doc.docx')
+                        title = str(i) + ' generated_doc.docx'
+                        files_list.append(title)
+                        list_father_non.append(str(number_father))
+                        print(f'Нет быка: {number_father}, страница: {i+1}')
                 else:
-                    BM1818 = df_profil_only.loc[0, 'BM1818']
-                    BM1824 = df_profil_only.loc[0, 'BM1824']
-                    BM2113 = df_profil_only.loc[0, 'BM2113']
-                    CSRM60 = df_profil_only.loc[0, 'CSRM60']
-                    CSSM66 = df_profil_only.loc[0, 'CSSM66']
-                    ETH10 = df_profil_only.loc[0, 'ETH10']
-                    ETH225 = df_profil_only.loc[0, 'ETH225']
-                    ETH3 = df_profil_only.loc[0, 'ETH3']
-                    ILSTS6 = df_profil_only.loc[0, 'ILSTS6']
-                    INRA023 = df_profil_only.loc[0, 'INRA23']
-                    SPS115 = df_profil_only.loc[0, 'SPS115']
-                    TGLA122 = df_profil_only.loc[0, 'TGLA122']
-                    TGLA126 = df_profil_only.loc[0, 'TGLA126']
-                    TGLA227 = df_profil_only.loc[0, 'TGLA227']
-                    TGLA53 = df_profil_only.loc[0, 'TGLA53']
-                    context = {
-                        'number_animal': number_animal,
-                        'name_animal': name_animal,
-                        'hosbut': hosut,
-                        'number_proba': number_proba,
-                        'number_father': number_father,
-                        'name_father': name_father,
-                        'animal': animal,
-                        'fater': fater,
-                        'mutter': mutter,
-                        'BM1818': BM1818,
-                        'BM1824': BM1824,
-                        'BM2113': BM2113,
-                        'CSRM60': CSRM60,
-                        'CSSM66': CSSM66,
-                        'ETH10': ETH10,
-                        'ETH225': ETH225,
-                        'ETH3': ETH3,
-                        'ILSTS6': ILSTS6,
-                        'INRA023': INRA023,
-                        'SPS115': SPS115,
-                        'TGLA122': TGLA122,
-                        'TGLA126': TGLA126,
-                        'TGLA227': TGLA227,
-                        'TGLA53': TGLA53,
-                        'date': date
-                    }
-                    save_bus_data(context)
-                    dict_mutter = upload_bus_data(mutter)
-                    context = {**context, **dict_mutter}
-                    doc.render(context)
-                    doc.save(str(i) + ' generated_doc.docx')
-                    title = str(i) + ' generated_doc.docx'
-                    files_list.append(title)
-                    list_father_non.append(str(number_father))
-                    print(f'Нет быка: {number_father}, страница: {i+1}')
-            else:
-                print(
-                    f'Нет животного: проба {int(series_num[i])},' +
-                    f' номер {num_anim}, страница: {i+1}'
-                )
+                    print(
+                        f'Нет животного: проба {int(series_num[i])},' +
+                        f' номер {num_anim}, страница: {i+1}'
+                    )
+        except Exception as e:
+            name = '\nfunc_ms.py\ncreat_doc_pas_gen\ngenerate password\n'
+            QMessageBox.critical(
+                None,
+                'Ошибка ввода',
+                f'{answer_error()}{name}Подробности:\n {e}'
+            )
         non_father = pd.DataFrame({'Отцы': list(set(list_father_non))})
         non_father.to_csv(
             r'func\data\creat_pass_doc\non_father.csv',
@@ -604,4 +522,4 @@ def creat_doc_pas_gen(
             None,
             'Ошибка ввода',
             (f'{answer_error()}{name}Подробности:\n {e}')
-            )
+        )
