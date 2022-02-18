@@ -149,7 +149,7 @@ def ag_issr(row) -> str:
         gt2 = [genotype, '3']
         return ''.join(gt2)
     elif 1700 <= size_ga < 1800:
-        gt3 = [genotype,'4']
+        gt3 = [genotype, '4']
         return ''.join(gt3)
     elif 1600 <= size_ga < 1700:
         gt4 = [genotype, '5']
@@ -256,12 +256,14 @@ def ag_issr(row) -> str:
     elif size_ga < 160:
         return '-'
 
+
 def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
     """функция для транспонирования таблицы"""
     result_end_1 = pd.DataFrame()
     b = len(index_zahl)
     for i in range(b):
         a = index_zahl.loc[i, 'num']
+        print(a)
         num_otbor = df.query('animal == @a')
         num_otbor = num_otbor.reset_index()
         num_otbor_n_i = pd.DataFrame()
@@ -277,10 +279,13 @@ def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
 def issr_analit_func(adres: str) -> pd.DataFrame:
     """Анлиза данных issr"""
     # загрузка входных данных с раделителем по ячейкам и долевым ","
-    #func\data\issr\issr.txt
     df = read_file(adres)
     # Изменяем названия столбцов для удобства
-    df.set_axis(['animal', 'GA', 'animal_1', 'AG'], axis='columns', inplace=True)
+    df.set_axis(
+        ['animal', 'GA', 'animal_1', 'AG'],
+        axis='columns',
+        inplace=True
+    )
     # убираем пкстые ячейки
     df['animal'] = df['animal'].fillna(0)
     df['animal_1'] = df['animal_1'].fillna(0)
@@ -298,7 +303,7 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     df['GA'] = df['GA'].astype('float64')
     df['AG'] = df['AG'].astype('float64')
 
-    # убираем пропуски 
+    # убираем пропуски
     df['GA'] = df['GA'].fillna(0)
     df['AG'] = df['AG'].fillna(0)
     # создаем новые датафреймы с необходимыми столбцами
@@ -310,8 +315,8 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     ga['animal'] = df['animal']
     ga['genotype'] = df['GA']
 
-    # функция выравнивания даннх по номерам. Проходим по циклом по всему ДФ 
-    # если строка равна нулю то она получает значение предыдущей с префиксом 
+    # функция выравнивания даннх по номерам. Проходим по циклом по всему ДФ
+    # если строка равна нулю то она получает значение предыдущей с префиксом
     # Если нет то остается имеющееся значение
 
     def ravn(data):
@@ -330,9 +335,6 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
 
     # Проверочная соединенная таблица
     tabl_ravn = ag.merge(ga, on='animal', how='outer')
-    #(tabl_ravn.to_csv(r'C:\Users\Коптев\Desktop\pyton\ISSR\tabl.csv',
-    #                sep=";",
-    #                decimal=','))
 
     # вводим изменения для последующей работы в выравненкю и соединению таблицу
 
@@ -367,4 +369,3 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     result_end = data_transpose(result, index_zahl)
     # Вывод результатов
     return result_end
-    #save_file(result_end, 'Сохранить файл результатов анализа ISSR')

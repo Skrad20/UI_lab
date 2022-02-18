@@ -9,9 +9,6 @@ import pandas as pd
 from docx import Document as Document_compose
 from docxcompose.composer import Composer
 from docxtpl import DocxTemplate
-from peewee import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
 from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QFileDialog, QMessageBox, QTableWidget,
                              QTableWidgetItem)
@@ -112,8 +109,8 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     try:
         columns = df_res.columns
         table.setHorizontalHeaderLabels(columns)
-    except:
-        pass
+    except Exception as e:
+        print(e)
     for column in range(len(df_res.columns)):
         for row in range(len(df_res)):
             item = QTableWidgetItem(str(df_res.iloc[row, column]))
@@ -246,12 +243,14 @@ def ms_out_word(adres: str) -> pd.DataFrame:
                 try:
                     data_out.loc[nom_date_out, 'numer'] = res_name[1]
                     data_out.loc[nom_date_out, 'name'] = res_name[0]
-                except:
+                except Exception as e:
+                    print(e)
                     data_out.loc[nom_date_out, 'numer'] = res_name[0]
                 try:
                     data_out.loc[nom_date_out, 'vater'] = res_vater[0]
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[1]
-                except:
+                except Exception as e:
+                    print(e)
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
 
     name_select(doc, result)
@@ -297,7 +296,11 @@ def creat_doc_pas_gen(
                 axis=1
             )
         except Exception as e:
-            QMessageBox.critical(None, 'Ошибка ввода', f'{answer_error()} \func_ms.py\delit in creat_doc_pas_gen\nПодробности:\n {e}')
+            name = "\nfunc_ms.py|delit in creat_doc_pas_gen\n"
+            QMessageBox.critical(
+                None,
+                'Ошибка ввода',
+                f'{answer_error()} {name}Подробности:\n {e}')
         df_profil['num'] = df_profil['num'].astype('int')
         df = df.fillna(0)
         series_num = list(df_profil['num'])
@@ -348,32 +351,52 @@ def creat_doc_pas_gen(
             anmal_num = df.loc[i, 'number_proba']
             animal_inve = df.loc[i, 'number_animal']
             fater_num = df.loc[i, 'number_father']
-            df_animal_prof = df_profil.query('num == @anmal_num').loc[:, 'ETH3': 'ETH10'].reset_index(drop=True)
-            df_fater_prof = df_faters.query('number == @fater_num').loc[:, 'BM1818': 'SPS113'].reset_index(drop=True)
+            df_animal_prof = df_profil.query(
+                'num == @anmal_num'
+                ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True)
+            df_fater_prof = df_faters.query(
+                'number == @fater_num'
+                ).loc[:, 'BM1818': 'SPS113'].reset_index(drop=True)
             for locus_f in df_fater_prof.columns:
                 try:
                     value_fater_ms = df_fater_prof.loc[0, locus_f]
                     if value_fater_ms != '-':
                         if locus_f in df_animal_prof.columns:
                             try:
-                                value_animal_ms = df_animal_prof.loc[0, locus_f]
+                                value_animal_ms = df_animal_prof.loc[
+                                    0,
+                                    locus_f
+                                ]
                                 value_fater_ms_loc = value_fater_ms.split('/')
-                                value_animal_ms_loc = value_animal_ms.split('/')
+                                value_animal_ms_loc = value_animal_ms.split(
+                                    '/'
+                                )
                                 if (
-                                    value_animal_ms_loc[0].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
-                                    and value_animal_ms_loc[0].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')
-                                    and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
-                                    and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')
+                                    value_animal_ms_loc[0].replace(
+                                        ' ', ''
+                                    ) != value_fater_ms_loc[0].replace(' ', '')
+                                    and value_animal_ms_loc[0].replace(
+                                        ' ', ''
+                                    ) != value_fater_ms_loc[1].replace(' ', '')
+                                    and value_animal_ms_loc[1].replace(
+                                        ' ', ''
+                                    ) != value_fater_ms_loc[0].replace(' ', '')
+                                    and value_animal_ms_loc[1].replace(
+                                        ' ', ''
+                                    ) != value_fater_ms_loc[1].replace(' ', '')
                                 ):
-                                    print(f'Не подходит локус {locus_f} у животного {animal_inve}')
+                                    print(
+                                        f'Не подходит локус {locus_f}' +
+                                        f' у животного {animal_inve}'
+                                    )
                                     number.append(i)
                                     locus_str_er.append(locus_f)
                                     fater_er.append(animal_inve)
                                     animal.append(animal_inve)
-                            except:
-                                pass
-                except:
-                    pass
+                            except Exception as e:
+                                print(e, anmal_num)
+                except Exception as e:
+                    print(e)
         res_error = pd.DataFrame({
             'number': number,
             'locus': locus_str_er,
@@ -391,7 +414,9 @@ def creat_doc_pas_gen(
             if series_num[i] in series_proba:
                 num_anim = series_num[i]
                 df_info = df.query('number_proba == @num_anim').reset_index()
-                df_profil_only = df_profil_end.query('num == @num_anim').reset_index()
+                df_profil_only = df_profil_end.query(
+                    'num == @num_anim'
+                ).reset_index()
                 number_animal = df_info.loc[0, 'number_animal']
                 name_animal = df_info.loc[0, 'name_animal']
                 number_proba = df_info.loc[0, 'number_proba']
@@ -407,7 +432,9 @@ def creat_doc_pas_gen(
                 fater = ' '.join(fater_join)
                 mutter = ' '.join(mutter_join)
                 if number_father in list_number_faters:
-                    df_faters_only = (df_faters.query('number == @number_father').reset_index(drop=True))
+                    df_faters_only = (df_faters.query(
+                        'number == @number_father'
+                    ).reset_index(drop=True))
                     BM1818_fater = df_faters_only.loc[0, 'BM1818']
                     BM1824_fater = df_faters_only.loc[0, 'BM1824']
                     BM2113_fater = df_faters_only.loc[0, 'BM2113']
@@ -552,7 +579,8 @@ def creat_doc_pas_gen(
                     print(f'Нет быка: {number_father}, страница: {i+1}')
             else:
                 print(
-                    f'Нет животного: проба {int(series_num[i])}, номер , страница: {i+1}'
+                    f'Нет животного: проба {int(series_num[i])},' +
+                    f' номер {num_anim}, страница: {i+1}'
                 )
         non_father = pd.DataFrame({'Отцы': list(set(list_father_non))})
         non_father.to_csv(
@@ -571,8 +599,9 @@ def creat_doc_pas_gen(
                 print("File doesn't exists!")
         return res_error
     except Exception as e:
+        name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '
         QMessageBox.critical(
             None,
             'Ошибка ввода',
-            (f'{answer_error()}\nfunc_ms.py\ncreat_doc_pas_gen\n Подробности:\n {e}')
+            (f'{answer_error()}{name}Подробности:\n {e}')
             )

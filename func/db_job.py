@@ -1,46 +1,44 @@
-from webbrowser import get
-
 import pandas as pd
 from PyQt5.QtWidgets import QMessageBox
 
 from func.func_answer_error import answer_error
 from models.models import BullFather, ProfilsCows
-from setting import DB as db
 
 
 def save_bus_data(dt_in: dict) -> None:
     """Сохраняет данные по коровам в базу"""
     try:
         pc = ProfilsCows(
-            name=dt_in.get("name_animal",'-'),
-            number=dt_in.get("number_animal",'-'),
-            farm=dt_in.get("hosbut",'-'),
-            BM1818=dt_in.get("BM1818",'-'),
-            BM1824=dt_in.get("BM1824",'-'),
-            BM2113=dt_in.get("BM2113",'-'),
-            CSRM60=dt_in.get("CSRM60",'-'),
-            CSSM66=dt_in.get("CSSM66",'-'),
-            CYP21=dt_in.get("CYP21",'-'),
-            ETH10=dt_in.get("ETH10",'-'),
-            ETH225=dt_in.get("ETH225",'-'),
-            ETH3=dt_in.get("ETH3",'-'),
-            ILSTS6=dt_in.get("ILSTS6",'-'),
-            INRA023=dt_in.get("INRA023",'-'),
-            RM067=dt_in.get("RM067",'-'),
-            SPS115=dt_in.get("SPS115",'-'),
-            TGLA122=dt_in.get("TGLA122",'-'),
-            TGLA126=dt_in.get("TGLA126",'-'),
-            TGLA227=dt_in.get("TGLA227",'-'),
-            TGLA53=dt_in.get("TGLA53",'-'),
-            MGTG4B=dt_in.get("MGTG4B",'-'),
-            SPS113=dt_in.get("SPS113",'-'),
+            name=dt_in.get("name_animal", '-'),
+            number=dt_in.get("number_animal", '-'),
+            farm=dt_in.get("hosbut", '-'),
+            BM1818=dt_in.get("BM1818", '-'),
+            BM1824=dt_in.get("BM1824", '-'),
+            BM2113=dt_in.get("BM2113", '-'),
+            CSRM60=dt_in.get("CSRM60", '-'),
+            CSSM66=dt_in.get("CSSM66", '-'),
+            CYP21=dt_in.get("CYP21", '-'),
+            ETH10=dt_in.get("ETH10", '-'),
+            ETH225=dt_in.get("ETH225", '-'),
+            ETH3=dt_in.get("ETH3", '-'),
+            ILSTS6=dt_in.get("ILSTS6", '-'),
+            INRA023=dt_in.get("INRA023", '-'),
+            RM067=dt_in.get("RM067", '-'),
+            SPS115=dt_in.get("SPS115", '-'),
+            TGLA122=dt_in.get("TGLA122", '-'),
+            TGLA126=dt_in.get("TGLA126", '-'),
+            TGLA227=dt_in.get("TGLA227", '-'),
+            TGLA53=dt_in.get("TGLA53", '-'),
+            MGTG4B=dt_in.get("MGTG4B", '-'),
+            SPS113=dt_in.get("SPS113", '-'),
         )
         pc.save()
     except Exception as e:
+        name = '\ndb_job.py\nsave_bus_data\n'
         QMessageBox.critical(
             None,
             'Ошибка ввода',
-            (f'{answer_error()}\ndb_job.py\nsave_bus_data\n Подробности:\n {e}')
+            f'{answer_error()} {name} Подробности:\n {e}'
         )
 
 
@@ -73,10 +71,11 @@ def save_bus_data_fater(data_job: pd.DataFrame) -> None:
         )
         pc.save()
     except Exception as e:
+        name = '\ndb_job.py\nsave_bus_data_fater\n '
         QMessageBox.critical(
             None,
             'Ошибка ввода',
-            (f'{answer_error()}\ndb_job.py\nsave_bus_data_fater\n Подробности:\n {e}')
+            (f'{answer_error()} {name}Подробности:\n {e}')
             )
 
 
