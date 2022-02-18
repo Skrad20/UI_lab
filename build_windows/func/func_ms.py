@@ -67,7 +67,7 @@ def enter_adres(name_str: str = 'Open File') -> str:
     adres = QFileDialog.getOpenFileName(
         None,
         name_str,
-        'C:/Users/Коптев/Desktop/',
+        './',
         'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)'
     )[0]
     return adres
@@ -155,18 +155,16 @@ def filer_father(hosbut: dict) -> pd.DataFrame:
         else:
             if df.iloc[i, 2] in list_hosbut:
                 list_res.append(df.iloc[i, :])
-    if len(list_res) > 0:
-        df_res = pd.DataFrame(data=list_res)
-        df = df_res.reset_index().drop('index', axis=1)
-        df['хозяйство'] = df.pop('хозяйство')
-        return df
-    else:
-        QMessageBox.information(None, 'Ошибка ввода', f'Нет подходящих отцов')
+    df_res = pd.DataFrame(data=list_res)
+    df = df_res.reset_index().drop('index', axis=1)
+    df['хозяйство'] = df.pop('хозяйство')
+    return df
 
 
 def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
     df = filer_father(filter)
+    #print(df)
     #print('out filter\n',df)
     df_search = read_file(adres)
     #print('ou save', df_search)
@@ -189,13 +187,12 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
                 locus = df_search.iloc[0, i-1].split('/')
                 if df_res.iloc[j, i] != '-':
                     locus_base = df_res.iloc[j, i].split('/')
-                    #print(df_search.columns[i-1])
+                    #print(df_search.columns[i])
                     #print(df_res.columns[i])
-                    print('l', locus)
-                    print('lb', locus_base)
-                    if len(locus_base) > 1 and len(locus) > 1:
-                        if locus[0] != locus_base[0] and locus[1] != locus_base[0] and locus[0] != locus_base[1] and locus[1] != locus_base[1]:
-                            df_res.iloc[j, i] = np.nan
+                    #print('l', locus)
+                    #print('lb', locus_base)
+                    if locus[0] != locus_base[0] and locus[1] != locus_base[0] and locus[0] != locus_base[1] and locus[1] != locus_base[1]:
+                        df_res.iloc[j, i] = np.nan
     #print(df_res)
     df_res = df_res.dropna()
     df_res.to_csv(
@@ -309,11 +306,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         col_split = col_split.upper()
         col2 = df_profil.columns[j]
         df_profil[col_split] = df_profil.apply(ms_clutch, col1=col1, col2=col2, axis=1)
-    if 'INRA023' in list(df_profil.columns):
-        df_profil = df_profil.rename(columns={'INRA023': 'INRA23'})
-    if 'INRA023' in list(df_faters.columns):
-        df_faters = df_faters.rename(columns={'INRA023': 'INRA23'})
-    df_profil_end = df_profil.iloc[:, -15:]
+    df_profil_end = df_profil.iloc[:,-15:]
     df_profil_end['num'] = df_profil['num']
     df = df.astype('str')
     df['number_father'] = df['number_father'].astype('float')
@@ -332,8 +325,6 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
         animal_inve = df.loc[i, 'number_animal']
         fater_num = df.loc[i, 'number_father']
         df_animal_prof = df_profil.query('num == @anmal_num').loc[:, 'ETH3': 'ETH10'].reset_index().drop('index', axis=1)
-        df_animal_prof = df_profil.query('num == @anmal_num').reset_index().drop('index', axis=1)
-
         df_fater_prof = df_faters.query('number == @fater_num').loc[:, 'BM1818': 'SPS113'].reset_index().drop('index', axis=1)
         for locus_f in df_fater_prof.columns:
             try:
@@ -349,9 +340,9 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[0].replace(' ', '')
                                 and value_animal_ms_loc[1].replace(' ', '') != value_fater_ms_loc[1].replace(' ', '')):
                                 print(f'Не подходит локус {locus_f} у животного {animal_inve}')
-                                number.append(anmal_num)
+                                number.append(i)
                                 locus_str_er.append(locus_f)
-                                fater_er.append(fater_num)
+                                fater_er.append(animal_inve)
                                 animal.append(animal_inve)
                         except:
                             pass
@@ -360,7 +351,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     res_error = pd.DataFrame({
         'number': number,
         'locus': locus_str_er,
-        'fater': fater_er,
+        'fater': fater_num,
         'animal': animal,
     })
     (res_error.to_csv(
@@ -372,7 +363,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     files_list = []
     for i in range(len(series_num)):
         doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_1.docx')
-        if series_num[i] in series_proba:
+        if  series_num[i] in series_proba:
             num_anim = series_num[i]
             print(num_anim)
             df_info = df.query('number_proba == @num_anim').reset_index()
@@ -381,7 +372,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
             name_animal = df_info.loc[0, 'name_animal']
             number_proba = df_info.loc[0, 'number_proba']
             number_father = df_info.loc[0, 'number_father']
-            name_father = df_info.loc[0, 'name_father']
+            name_father = df_info.loc[0,'name_father']
             number_mutter = df_info.loc[0, 'number_mutter']
             name_mutter = df_info.loc[0, 'name_mutter']
             animal_join = [name_animal, str(number_animal)]
@@ -404,7 +395,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                 ETH225_fater = df_faters_only.loc[0, 'ETH225']
                 ETH3_fater = df_faters_only.loc[0, 'ETH3']
                 ILSTS6_fater = df_faters_only.loc[0, 'ILSTS6']
-                INRA023_fater = df_faters_only.loc[0, 'INRA23']
+                INRA023_fater = df_faters_only.loc[0, 'INRA023']
                 RM067_fater = df_faters_only.loc[0, 'RM067']
                 SPS115_fater = df_faters_only.loc[0, 'SPS115']
                 TGLA122_fater = df_faters_only.loc[0, 'TGLA122']
@@ -506,6 +497,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
                         'animal':animal ,
                         'fater':fater,
                         'mutter':mutter,
+                        
                         'BM1818': BM1818,
                         'BM1824':BM1824,
                         'BM2113':BM2113,
@@ -548,7 +540,7 @@ def creat_doc_pas_gen(adres_invertory: str, adres_genotyping: str, adres: str, h
     combine_all_docx(filename_master,files_list, adres, date)
     files_list.append(filename_master)
     for i in range(len(files_list)):
-        if os.path.isfile(files_list[i]):
+        if os.path.isfile(files_list[i]): 
             os.remove(files_list[i])
         else: 
             print("File doesn't exists!")

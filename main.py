@@ -3,16 +3,16 @@
 import os
 import sys
 
-from peewee import *
-from PyQt5.QtCore import *
-from PyQt5.QtGui import *
-from PyQt5.QtWidgets import *
+from PyQt5.QtWidgets import QApplication, QMessageBox
 
-from classes.class_window import *
+from classes.general_window import GeneralWindow
 from func.func_answer_error import answer_error
-from style.style_windows import *
+from style.style_windows import style_upload
 
-os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = r"venv\Lib\site-packages\PyQt5\Qt5\plugins\platforms"
+os.environ['QT_QPA_PLATFORM_PLUGIN_PATH'] = (
+    r"venv\Lib\site-packages\PyQt5" +
+    r"\Qt5\plugins\platforms"
+)
 
 try:
     from PyQt5.QtWinExtras import QtWin
@@ -32,7 +32,7 @@ def main():
         print(repr(window))
     except Exception as e:
         QMessageBox.critical(
-            self,
+            None,
             'Что-то пошло не так',
             f'{answer_error()} Подробности:\n {e}'
         )

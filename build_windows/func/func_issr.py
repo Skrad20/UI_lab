@@ -325,7 +325,7 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     ravn(ga)
     ravn(ag)
 
-    # Проверочная соединеная таблица
+    # Проверочная соединенная таблица
     tabl_ravn = ag.merge(ga, on='animal', how='outer')
     #(tabl_ravn.to_csv(r'C:\Users\Коптев\Desktop\pyton\ISSR\tabl.csv',
     #                sep=";",
