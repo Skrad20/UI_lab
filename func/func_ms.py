@@ -14,7 +14,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QTableWidgetItem)
 
 from func.db_job import (save_bus_data, upload_bus_data,
-                         upload_data_db_for_searh_father)
+                         upload_data_db_for_searh_father, upload_fater_data)
 from func.func_answer_error import answer_error
 
 from .parser_def import add_missing
@@ -256,14 +256,121 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     name_select(doc, result)
 
     result = result.transpose()
-    (result.to_csv(
+    result.to_csv(
         r'func\data\ms_word\result_ms_word.csv',
         sep=";",
         decimal=',',
         encoding="cp1251"
-    ))
-
+    )
     return result
+
+
+def check_error_ms(
+    df: pd.DataFrame,
+    df_profil: pd.DataFrame
+) -> dict:
+    try:
+        list_number_father = []
+        list_locus_er_father = []
+        list_father_er = []
+        list_animal_father = []
+        list_number_mutter = []
+        list_locus_er_mutter = []
+        list_mutter_er = []
+        list_animal_mutter = []
+        for i in range(len(df)):
+            number = int(df.loc[i, 'number_proba'])
+            number_animal = int(df.loc[i, 'number_animal'])
+            number_mutter = int(df.loc[i, 'number_mutter'])
+            number_fater = int(df.loc[i, 'number_father'])
+            dict_mutter = upload_bus_data(number_mutter)
+            dict_father = upload_fater_data(number_fater)
+            df_animal_prof = df_profil.query(
+                'num == @number'
+            ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True).T.to_dict().get(0)
+            for locus, val in dict_father.items():
+                value_fater_ms = val
+                if value_fater_ms != '-':
+                    print(locus)
+                    locus_a = locus.split('_father')[0]
+                    value_animal_ms = df_animal_prof.get(locus_a, 1)
+                    print(value_animal_ms)
+                    if value_animal_ms != 1:
+                        value_fater_ms_loc = value_fater_ms.split('/')
+                        value_animal_ms_loc = value_animal_ms.split('/')
+                        if (
+                            value_animal_ms_loc[0].replace(
+                                ' ', ''
+                            ) != value_fater_ms_loc[0].replace(' ', '')
+
+                            and value_animal_ms_loc[0].replace(
+                                ' ', ''
+                            ) != value_fater_ms_loc[1].replace(' ', '')
+
+                            and value_animal_ms_loc[1].replace(
+                                ' ', ''
+                            ) != value_fater_ms_loc[0].replace(' ', '')
+
+                            and value_animal_ms_loc[1].replace(
+                                ' ', ''
+                            ) != value_fater_ms_loc[1].replace(' ', '')
+                        ):
+                            list_number_father.append(number)
+                            list_locus_er_father.append(locus)
+                            list_father_er.append(number_fater)
+                            list_animal_father.append(number_animal)
+            for locus, val in dict_mutter.items():
+                value_mutter_ms = val
+                if value_mutter_ms != '-':
+                    locus_a = locus.split('_mutter')[0]
+                    value_animal_ms = df_animal_prof.get(locus_a, 1)
+                    if value_animal_ms != 1:
+                        value_mutter_ms_loc = value_mutter_ms.split('/')
+                        value_animal_ms_loc = value_animal_ms.split('/')
+                        if (
+                            value_animal_ms_loc[0].replace(
+                                ' ', ''
+                            ) != value_mutter_ms_loc[0].replace(' ', '')
+
+                            and value_animal_ms_loc[0].replace(
+                                ' ', ''
+                            ) != value_mutter_ms_loc[1].replace(' ', '')
+
+                            and value_animal_ms_loc[1].replace(
+                                ' ', ''
+                            ) != value_mutter_ms_loc[0].replace(' ', '')
+
+                            and value_animal_ms_loc[1].replace(
+                                ' ', ''
+                            ) != value_mutter_ms_loc[1].replace(' ', '')
+                        ):
+                            list_number_mutter.append(i)
+                            list_locus_er_mutter.append(locus)
+                            list_mutter_er.append(number_mutter)
+                            list_animal_mutter.append(number_animal)
+
+        res_error_father = pd.DataFrame({
+            'number': list_number_father,
+            'locus': list_locus_er_father,
+            'father': list_father_er,
+            'animal': list_animal_father,
+        })
+        res_error_mutter = pd.DataFrame({
+            'number': list_number_mutter,
+            'locus': list_locus_er_mutter,
+            'mutter': list_mutter_er,
+            'animal': list_animal_mutter,
+        })
+        print(res_error_father)
+        print(res_error_mutter)
+        return {"father": res_error_father, "mutter": res_error_mutter}
+    except Exception as e:
+        name = "\nfunc_ms.py | check_error_ms\n"
+        QMessageBox.critical(
+            None,
+            'Ошибка ввода',
+            f'{answer_error()} {name}Подробности:\n {e}'
+        )
 
 
 def creat_doc_pas_gen(
@@ -300,7 +407,8 @@ def creat_doc_pas_gen(
             QMessageBox.critical(
                 None,
                 'Ошибка ввода',
-                f'{answer_error()} {name}Подробности:\n {e}')
+                f'{answer_error()} {name}Подробности:\n {e}'
+            )
         df_profil['num'] = df_profil['num'].astype('int')
         df = df.fillna(0)
         series_num = list(df_profil['num'])
@@ -343,71 +451,18 @@ def creat_doc_pas_gen(
             df['number_mutter'],
             downcast='integer'
         )
-        locus_str_er = []
-        fater_er = []
-        animal = []
-        number = []
-        for i in range(len(df)):
-            anmal_num = df.loc[i, 'number_proba']
-            animal_inve = df.loc[i, 'number_animal']
-            fater_num = df.loc[i, 'number_father']
-            df_animal_prof = df_profil.query(
-                'num == @anmal_num'
-                ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True)
-            df_fater_prof = df_faters.query(
-                'number == @fater_num'
-                ).loc[:, 'BM1818': 'SPS113'].reset_index(drop=True)
-            for locus_f in df_fater_prof.columns:
-                try:
-                    value_fater_ms = df_fater_prof.loc[0, locus_f]
-                    if value_fater_ms != '-':
-                        if locus_f in df_animal_prof.columns:
-                            try:
-                                value_animal_ms = df_animal_prof.loc[
-                                    0,
-                                    locus_f
-                                ]
-                                value_fater_ms_loc = value_fater_ms.split('/')
-                                value_animal_ms_loc = value_animal_ms.split(
-                                    '/'
-                                )
-                                if (
-                                    value_animal_ms_loc[0].replace(
-                                        ' ', ''
-                                    ) != value_fater_ms_loc[0].replace(' ', '')
-                                    and value_animal_ms_loc[0].replace(
-                                        ' ', ''
-                                    ) != value_fater_ms_loc[1].replace(' ', '')
-                                    and value_animal_ms_loc[1].replace(
-                                        ' ', ''
-                                    ) != value_fater_ms_loc[0].replace(' ', '')
-                                    and value_animal_ms_loc[1].replace(
-                                        ' ', ''
-                                    ) != value_fater_ms_loc[1].replace(' ', '')
-                                ):
-                                    print(
-                                        f'Не подходит локус {locus_f}' +
-                                        f' у животного {animal_inve}'
-                                    )
-                                    number.append(i)
-                                    locus_str_er.append(locus_f)
-                                    fater_er.append(animal_inve)
-                                    animal.append(animal_inve)
-                            except Exception as e:
-                                print(e, anmal_num)
-                except Exception as e:
-                    print(e)
-        res_error = pd.DataFrame({
-            'number': number,
-            'locus': locus_str_er,
-            'fater': fater_num,
-            'animal': animal,
-        })
-        res_error.to_csv(
+        dict_error = check_error_ms(df, df_profil)
+        dict_error.get("mutter").to_csv(
+            r'func\data\creat_pass_doc\res_error_mutter.csv',
+            sep=";",
+            decimal=',',
+            encoding="cp1251")
+        dict_error.get("father").to_csv(
             r'func\data\creat_pass_doc\res_error.csv',
             sep=";",
             decimal=',',
             encoding="cp1251")
+
         files_list = []
         try:
             for i in range(len(series_num)):
@@ -420,20 +475,23 @@ def creat_doc_pas_gen(
                     df_profil_only = df_profil_end.query(
                         'num == @num_anim'
                     ).reset_index()
+
                     number_animal = df_info.loc[0, 'number_animal']
                     name_animal = df_info.loc[0, 'name_animal']
                     number_proba = df_info.loc[0, 'number_proba']
                     number_father = df_info.loc[0, 'number_father']
                     name_father = df_info.loc[0, 'name_father']
-                    number_mutter = df_info.loc[0, 'number_mutter']
+                    number_mutter = int(df_info.loc[0, 'number_mutter'])
                     name_mutter = df_info.loc[0, 'name_mutter']
                     animal_join = [name_animal, str(number_animal)]
                     fater_join = [name_father, str(number_father)]
                     mutter_join = [name_mutter, str(number_mutter)]
-                    dict_profil_only = df_profil_only.loc[0, :].to_dict()
                     animal = ' '.join(animal_join)
                     fater = ' '.join(fater_join)
                     mutter = ' '.join(mutter_join)
+
+                    dict_profil_only = df_profil_only.loc[0, :].to_dict()
+
                     if number_father in list_number_faters:
                         df_faters_only = (df_faters.query(
                             'number == @number_father'
@@ -442,7 +500,6 @@ def creat_doc_pas_gen(
                         dict_faters_new = {}
                         for key, val in dict_faters_only.items():
                             dict_faters_new[key+"_fater"] = val
-                        print(dict_faters_new)
                         context = {
                             'number_animal': number_animal,
                             'name_animal': name_animal,
@@ -458,7 +515,7 @@ def creat_doc_pas_gen(
                         context = {**context, **dict_faters_new}
                         context = {**context, **dict_profil_only}
                         save_bus_data(context)
-                        dict_mutter = upload_bus_data(mutter)
+                        dict_mutter = upload_bus_data(number_mutter)
                         context = {**context, **dict_mutter}
                         doc.render(context)
                         doc.save(str(i) + ' generated_doc.docx')
@@ -480,7 +537,7 @@ def creat_doc_pas_gen(
                         }
                         context = {**context, **dict_profil_only}
                         save_bus_data(context)
-                        dict_mutter = upload_bus_data(mutter)
+                        dict_mutter = upload_bus_data(number_mutter)
                         context = {**context, **dict_mutter}
                         doc.render(context)
                         doc.save(str(i) + ' generated_doc.docx')
@@ -515,7 +572,7 @@ def creat_doc_pas_gen(
                 os.remove(files_list[i])
             else:
                 print("File doesn't exists!")
-        return res_error
+        return dict_error.get("father")
     except Exception as e:
         name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '
         QMessageBox.critical(

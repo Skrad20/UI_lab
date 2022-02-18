@@ -21,6 +21,7 @@ from func.func_answer_error import answer_error
 from func.func_issr import issr_analit_func
 from func.func_ms import (ResOut, creat_doc_pas_gen, enter_adres, ms_out_word,
                           save_file, save_file_for_word, search_father)
+from func.db_job import upload_data_farmers_father
 from lists_name.list_name_row import list_name_row_search_father
 from models.models import Logs
 from setting import DB as db
@@ -1002,13 +1003,7 @@ class WindowSearchFarher(Window_main):
         labe_text_2 = QLabel(text_2)
         labe_text_2.setAlignment(Qt.AlignCenter)
         self.vb.addWidget(labe_text_2)
-        farmers = set(pd.read_csv(
-            r'func\data\search_fatherh\faters.csv',
-            sep=';',
-            decimal=',',
-            encoding='cp1251',
-
-        )['хозяйство'])
+        farmers = upload_data_farmers_father()
         print(farmers)
         list_farmers = list(farmers)
         list_farmers_in = []
