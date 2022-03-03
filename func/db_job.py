@@ -264,10 +264,8 @@ def upload_bus_data(number: int) -> dict:
 
 
 def create_columns_name(row):
-    logger.debug("Старт create_columns_name")
     name = row['name']
     number = row['number']
-    logger.debug("Конец create_columns_name")
     return f"{name} {number}"
 
 
