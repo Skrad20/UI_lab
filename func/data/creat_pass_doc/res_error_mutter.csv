@@ -1,3 +1,4 @@
+<<<<<<< HEAD
 ;number;locus;mutter;animal
 0;53;BM1824_mutter;3992;6390
 1;53;CSRM60_mutter;3992;6390
@@ -13,3 +14,6 @@
 11;86;CSRM60_mutter;4078;6336
 12;86;ETH3_mutter;4078;6336
 13;86;ILSTS6_mutter;4078;6336
+=======
+;number;locus;parent;animal;male
+>>>>>>> bb16370ffe614e260792701f2b20254539f9e0e0

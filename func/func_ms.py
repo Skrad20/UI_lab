@@ -294,6 +294,8 @@ def check_error_ms(
         list_locus_er_mutter = []
         list_mutter_er = []
         list_animal_mutter = []
+        male_father = []
+        male_mutter = []
         for i in range(len(df)):
             number = int(df.loc[i, 'number_proba'])
             number_animal = int(df.loc[i, 'number_animal'])
@@ -301,6 +303,7 @@ def check_error_ms(
             number_fater = int(df.loc[i, 'number_father'])
             dict_mutter = upload_bus_data(number_mutter)
             dict_father = upload_fater_data(number_fater)
+<<<<<<< HEAD
             df_profil['num'] = df_profil['num'].astype('int')
             print(number, list(df_profil['num']))
             if number in list(df_profil['num']):
@@ -362,18 +365,94 @@ def check_error_ms(
                             list_locus_er_mutter.append(locus)
                             list_mutter_er.append(number_mutter)
                             list_animal_mutter.append(number_animal)
+=======
+            print(df_profil.query(
+                'num == @number'
+            ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True).T.to_dict())
+            df_animal_prof = df_profil.query(
+                'num == @number'
+            ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True).T.to_dict().get(0, 1)
+            if df_animal_prof != 1:
+                for locus, val in dict_father.items():
+                    print('father')
+                    value_fater_ms = val
+                    if value_fater_ms != '-':
+                        print(locus)
+                        locus_a = locus.split('_father')[0]
+                        value_animal_ms = df_animal_prof.get(locus_a, 1)
+                        print(value_animal_ms)
+                        if value_animal_ms != 1:
+                            value_fater_ms_loc = value_fater_ms.split('/')
+                            value_animal_ms_loc = value_animal_ms.split('/')
+                            if (
+                                value_animal_ms_loc[0].replace(
+                                    ' ', ''
+                                ) != value_fater_ms_loc[0].replace(' ', '')
 
+                                and value_animal_ms_loc[0].replace(
+                                    ' ', ''
+                                ) != value_fater_ms_loc[1].replace(' ', '')
+
+                                and value_animal_ms_loc[1].replace(
+                                    ' ', ''
+                                ) != value_fater_ms_loc[0].replace(' ', '')
+
+                                and value_animal_ms_loc[1].replace(
+                                    ' ', ''
+                                ) != value_fater_ms_loc[1].replace(' ', '')
+                            ):
+                                list_number_father.append(number)
+                                list_locus_er_father.append(locus_a)
+                                list_father_er.append(number_fater)
+                                list_animal_father.append(number_animal)
+                                male_father.append('dad')
+                for locus, val in dict_mutter.items():
+                    print('mutter')
+                    value_mutter_ms = val
+                    if value_mutter_ms != '-':
+                        print(locus)
+                        locus_a = locus.split('_mutter')[0]
+                        print(locus_a)
+                        value_animal_ms = df_animal_prof.get(locus_a, 1)
+                        if value_animal_ms != 1:
+                            value_mutter_ms_loc = value_mutter_ms.split('/')
+                            value_animal_ms_loc = value_animal_ms.split('/')
+                            if (
+                                value_animal_ms_loc[0].replace(
+                                    ' ', ''
+                                ) != value_mutter_ms_loc[0].replace(' ', '')
+
+                                and value_animal_ms_loc[0].replace(
+                                    ' ', ''
+                                ) != value_mutter_ms_loc[1].replace(' ', '')
+
+                                and value_animal_ms_loc[1].replace(
+                                    ' ', ''
+                                ) != value_mutter_ms_loc[0].replace(' ', '')
+>>>>>>> bb16370ffe614e260792701f2b20254539f9e0e0
+
+                                and value_animal_ms_loc[1].replace(
+                                    ' ', ''
+                                ) != value_mutter_ms_loc[1].replace(' ', '')
+                            ):
+                                list_number_mutter.append(i)
+                                list_locus_er_mutter.append(locus_a)
+                                list_mutter_er.append(number_mutter)
+                                list_animal_mutter.append(number_animal)
+                                male_mutter.append('mom')
         res_error_father = pd.DataFrame({
             'number': list_number_father,
             'locus': list_locus_er_father,
-            'father': list_father_er,
+            'parent': list_father_er,
             'animal': list_animal_father,
+            'male': male_father,
         })
         res_error_mutter = pd.DataFrame({
             'number': list_number_mutter,
             'locus': list_locus_er_mutter,
-            'mutter': list_mutter_er,
+            'parent': list_mutter_er,
             'animal': list_animal_mutter,
+            'male': male_mutter,
         })
         logger.debug("Конец check_error_ms")
         return {"father": res_error_father, "mutter": res_error_mutter}
@@ -706,7 +785,9 @@ def creat_doc_pas_gen(
             sep=";",
             decimal=',',
             encoding="cp1251")
-
+        res_err = pd.concat(
+            [dict_error.get("mutter"), dict_error.get("father")]
+        )
         files_list = []
         try:
             for i in range(len(series_num)):
@@ -820,7 +901,7 @@ def creat_doc_pas_gen(
                 os.remove(files_list[i])
             else:
                 print("File doesn't exists!")
-        return dict_error.get("father")
+        return res_err
     except Exception as e:
         name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '
         QMessageBox.critical(

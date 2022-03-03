@@ -1,4 +1,5 @@
 <<<<<<< HEAD
+<<<<<<< HEAD
 ;number;locus;father;animal
 0;5;TGLA227_father;50;6412
 1;9;TGLA227_father;50;6311
@@ -17,6 +18,8 @@
 14;43;TGLA227_father;50;6379
 15;48;TGLA227_father;417;6374
 =======
+=======
+>>>>>>> bb16370ffe614e260792701f2b20254539f9e0e0
 ;number;locus;parent;animal;male
 0;6;BM1818_father;73709027;60502;dad
 1;6;BM1824_father;73709027;60502;dad
@@ -29,4 +32,7 @@
 8;6;TGLA126_father;73709027;60502;dad
 9;6;TGLA227_father;73709027;60502;dad
 10;6;TGLA53_father;73709027;60502;dad
+<<<<<<< HEAD
+>>>>>>> bb16370ffe614e260792701f2b20254539f9e0e0
+=======
 >>>>>>> bb16370ffe614e260792701f2b20254539f9e0e0
