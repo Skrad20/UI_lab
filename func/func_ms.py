@@ -1,6 +1,7 @@
 #!/usr/bin/python
 # -*- coding: utf-8 -*-
-
+import logging
+from logging.handlers import RotatingFileHandler
 import datetime
 import os
 
@@ -8,7 +9,7 @@ import numpy as np
 import pandas as pd
 from docx import Document as Document_compose
 from docxcompose.composer import Composer
-from docxtpl import DocxTemplate
+from docxtpl import DocxTemplate, RichText
 from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QFileDialog, QMessageBox, QTableWidget,
                              QTableWidgetItem)
@@ -18,6 +19,19 @@ from func.db_job import (save_bus_data, upload_bus_data,
 from func.func_answer_error import answer_error
 
 from .parser_def import add_missing
+logFile = "./logs/log_preprocessor_ms_data.log"
+logging.basicConfig(
+    filename=logFile,
+    level=logging.DEBUG,
+    filemode='w',
+)
+my_handler = RotatingFileHandler(
+    logFile, mode='a', maxBytes=5*1024*1024,
+    backupCount=2, encoding="cp1251", delay=0
+)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(my_handler)
 
 
 def read_file(adres: str) -> pd.DataFrame:
@@ -269,6 +283,8 @@ def check_error_ms(
     df: pd.DataFrame,
     df_profil: pd.DataFrame
 ) -> dict:
+    logger.debug("Страт check_error_ms")
+    df = df.dropna(subset=[df.columns[5]])
     try:
         list_number_father = []
         list_locus_er_father = []
@@ -285,64 +301,62 @@ def check_error_ms(
             number_fater = int(df.loc[i, 'number_father'])
             dict_mutter = upload_bus_data(number_mutter)
             dict_father = upload_fater_data(number_fater)
+            df_profil['num'] = df_profil['num'].astype('int')
+            print(number, list(df_profil['num']))
+            if number in list(df_profil['num']):
+                pass
+            else:
+                QMessageBox.information(
+                    None,
+                    'Инфорамция',
+                    f'Животного {number_animal} нет в данных. Проба {number}'
+                )
+                continue
+            print("Анализ ошибок" + str(number))
             df_animal_prof = df_profil.query(
                 'num == @number'
             ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True).T.to_dict().get(0)
+
+            logger.debug(
+                "MS father"
+            )
             for locus, val in dict_father.items():
+                logger.debug(f"Values dict: {locus}, {val}")
                 value_fater_ms = val
-                if value_fater_ms != '-':
-                    print(locus)
+                if value_fater_ms != '-' and (value_fater_ms is not None):
+                    logger.debug(
+                        f"Values MS father: {value_fater_ms}, locus {locus}"
+                        )
                     locus_a = locus.split('_father')[0]
                     value_animal_ms = df_animal_prof.get(locus_a, 1)
-                    print(value_animal_ms)
+                    logger.debug(
+                        "Выделение локуса животного: " +
+                        f"{value_animal_ms}, locus {locus_a}"
+                        )
                     if value_animal_ms != 1:
-                        value_fater_ms_loc = value_fater_ms.split('/')
-                        value_animal_ms_loc = value_animal_ms.split('/')
-                        if (
-                            value_animal_ms_loc[0].replace(
-                                ' ', ''
-                            ) != value_fater_ms_loc[0].replace(' ', '')
-
-                            and value_animal_ms_loc[0].replace(
-                                ' ', ''
-                            ) != value_fater_ms_loc[1].replace(' ', '')
-
-                            and value_animal_ms_loc[1].replace(
-                                ' ', ''
-                            ) != value_fater_ms_loc[0].replace(' ', '')
-
-                            and value_animal_ms_loc[1].replace(
-                                ' ', ''
-                            ) != value_fater_ms_loc[1].replace(' ', '')
+                        if verification_ms(
+                            value_fater_ms,
+                            value_animal_ms
                         ):
                             list_number_father.append(number)
                             list_locus_er_father.append(locus)
                             list_father_er.append(number_fater)
                             list_animal_father.append(number_animal)
+            logger.debug(
+                "MS Mutter"
+            )
             for locus, val in dict_mutter.items():
                 value_mutter_ms = val
                 if value_mutter_ms != '-':
+                    logger.debug(
+                        f"Values MS mutter: {value_mutter_ms}, locus {locus}"
+                        )
                     locus_a = locus.split('_mutter')[0]
                     value_animal_ms = df_animal_prof.get(locus_a, 1)
                     if value_animal_ms != 1:
-                        value_mutter_ms_loc = value_mutter_ms.split('/')
-                        value_animal_ms_loc = value_animal_ms.split('/')
-                        if (
-                            value_animal_ms_loc[0].replace(
-                                ' ', ''
-                            ) != value_mutter_ms_loc[0].replace(' ', '')
-
-                            and value_animal_ms_loc[0].replace(
-                                ' ', ''
-                            ) != value_mutter_ms_loc[1].replace(' ', '')
-
-                            and value_animal_ms_loc[1].replace(
-                                ' ', ''
-                            ) != value_mutter_ms_loc[0].replace(' ', '')
-
-                            and value_animal_ms_loc[1].replace(
-                                ' ', ''
-                            ) != value_mutter_ms_loc[1].replace(' ', '')
+                        if verification_ms(
+                            value_mutter_ms,
+                            value_animal_ms
                         ):
                             list_number_mutter.append(i)
                             list_locus_er_mutter.append(locus)
@@ -361,16 +375,246 @@ def check_error_ms(
             'mutter': list_mutter_er,
             'animal': list_animal_mutter,
         })
-        print(res_error_father)
-        print(res_error_mutter)
+        logger.debug("Конец check_error_ms")
         return {"father": res_error_father, "mutter": res_error_mutter}
     except Exception as e:
+        logger.error(e)
         name = "\nfunc_ms.py | check_error_ms\n"
         QMessageBox.critical(
             None,
             'Ошибка ввода',
             f'{answer_error()} {name}Подробности:\n {e}'
         )
+        logger.debug("Конец check_error_ms")
+
+
+def verification_ms(one_ms: str, second_ms: str) -> bool:
+    """Возращает True, если данные МС неподходят"""
+    try:
+        logger.debug("Стартует verification_ms")
+        logger.debug(f"Приходящие значения: {one_ms}, {second_ms}")
+        res = False
+        one_split = one_ms.split('/')
+        second_split = second_ms.split('/')
+        if (
+            one_split[0] != second_split[0] and
+            one_split[0] != second_split[1] and
+            one_split[1] != second_split[0] and
+            one_split[1] != second_split[1]
+        ):
+            res = True
+        logger.debug("Конец verification_ms")
+        return res
+    except Exception as e:
+        logger.error(
+            f"data error {one_split}, {second_split}"
+        )
+        name = '\nfunc_ms.py\verification_ms\n '
+        QMessageBox.critical(
+            None,
+            'Ошибка ввода',
+            (f'{answer_error()}{name}Подробности:\n {e}')
+        )
+        logger.debug("end verification_ms")
+
+
+def data_verification(context: dict) -> dict:
+    """Проверка сответствия Данных матери, отца и потомка"""
+    logger.debug("Начало data_verification")
+    list_keys = [
+        'BM1818',
+        'BM1824',
+        'BM2113',
+        'CSRM60',
+        'CSSM66',
+        'CYP21',
+        'ETH10',
+        'ETH225',
+        'ETH3',
+        'ILSTS6',
+        'INRA023',
+        'RM067',
+        'SPS115',
+        'TGLA122',
+        'TGLA126',
+        'TGLA227',
+        'TGLA53',
+        'MGTG4B',
+        'SPS113',
+    ]
+    try:
+        for key in list_keys:
+            child = context.get(key)
+            father = context.get(key+'_father')
+            mutter = context.get(key+'_mutter')
+            logger.debug(
+                f"Значения ключа {key}. Потомок: {child}," +
+                f" отец: {father}, мать: {mutter}"
+            )
+            if (
+                father != '-' and
+                father != '0/0' and
+                father != '' and
+                father is not None and
+                child != '-' and
+                child != '0/0' and
+                child != '' and
+                child is not None
+            ):
+                if verification_ms(child, father):
+                    context[key] = RichText(
+                        context.get(key),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key+'_father'] = RichText(
+                        context.get(key+'_father'),
+                        color='#ff0000',
+                        bold=True
+                    )
+            if (
+                mutter != '-' and
+                mutter != '0/0' and
+                mutter != '' and
+                mutter is not None and
+                child != '-' and
+                child != '0/0' and
+                child != '' and
+                child is not None
+            ):
+                if verification_ms(child, mutter):
+                    context[key] = RichText(
+                        context.get(key),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key+'_mutter'] = RichText(
+                        context.get(key+'_mutter'),
+                        color='#ff0000',
+                        bold=True
+                    )
+        logger.debug("конец data_verification")
+        return context
+    except Exception as e:
+        name = '\nfunc_ms.py\\data_verification\n'
+        logger.error(
+            f"Значение ключа {key}. Потомок: {child}," +
+            f" отец: {father}, мать: {mutter}"
+        )
+        QMessageBox.critical(
+            None,
+            'Ошибка ввода',
+            (f'{answer_error()}{name}Подробности:\n {e}')
+        )
+        logger.debug("Конец data_verification")
+
+
+def check_conclusion(context: dict) -> str:
+    logger.debug("Запуск check_conclusion")
+    res = ''
+    list_keys = [
+        'BM1818',
+        'BM1824',
+        'BM2113',
+        'CSRM60',
+        'CSSM66',
+        'CYP21',
+        'ETH10',
+        'ETH225',
+        'ETH3',
+        'ILSTS6',
+        'INRA023',
+        'RM067',
+        'SPS115',
+        'TGLA122',
+        'TGLA126',
+        'TGLA227',
+        'TGLA53',
+        'MGTG4B',
+        'SPS113',
+    ]
+    mutter = context.get('BM1818_mutter')
+    father = context.get('BM1818_father')
+    flag = False
+    for key in list_keys:
+        child = context.get(key)
+        father = context.get(key+'_father')
+        mutter = context.get(key+'_mutter')
+        logger.debug(
+            f"Значения ключа {key}. Потомок: {child}," +
+            f" отец: {father}, мать: {mutter}"
+        )
+        if (
+            father != '-' and
+            father != '0/0' and
+            father != '' and
+            father is not None and
+            child != '-' and
+            child != '0/0' and
+            child != '' and
+            child is not None
+        ):
+            if verification_ms(child, father):
+                flag = True
+                break
+        if (
+            mutter != '-' and
+            mutter != '0/0' and
+            mutter != '' and
+            mutter is not None and
+            child != '-' and
+            child != '0/0' and
+            child != '' and
+            child is not None
+        ):
+            if verification_ms(child, mutter):
+                flag = True
+                break
+
+    if flag:
+        if (
+            mutter != '' and
+            mutter != '-' and
+            mutter != '0/0' and
+            mutter is not None and
+            father != '' and
+            father != '-' and
+            father != '0/0' and
+            father is not None
+        ):
+            res = 'Родители не соответствуют'
+        elif (
+            mutter == '' or
+            mutter == '-' or
+            mutter == '0/0' or
+            mutter is None
+        ):
+            res = 'Отец не соответствует'
+        else:
+            res = ''
+    else:
+        if (
+            mutter != '' and
+            mutter != '-' and
+            mutter != '0/0' and
+            mutter is not None and
+            father != '' and
+            father != '-' and
+            father != '0/0' and
+            father is not None
+        ):
+            res = 'Родители соответствуют'
+        elif (
+            mutter == '' or
+            mutter == '-' or
+            mutter == '0/0' or
+            mutter is None
+        ):
+            res = 'Отец соответствует'
+        else:
+            res = ''
+    logger.debug("Конец check_conclusion")
+    return res
 
 
 def creat_doc_pas_gen(
@@ -499,7 +743,7 @@ def creat_doc_pas_gen(
                         dict_faters_only = df_faters_only.loc[0, :].to_dict()
                         dict_faters_new = {}
                         for key, val in dict_faters_only.items():
-                            dict_faters_new[key+"_fater"] = val
+                            dict_faters_new[key+"_father"] = val
                         context = {
                             'number_animal': number_animal,
                             'name_animal': name_animal,
@@ -508,7 +752,7 @@ def creat_doc_pas_gen(
                             'number_father': number_father,
                             'name_father': name_father,
                             'animal': animal,
-                            'fater': fater,
+                            'father': fater,
                             'mutter': mutter,
                             'date': date
                         }
@@ -517,6 +761,8 @@ def creat_doc_pas_gen(
                         save_bus_data(context)
                         dict_mutter = upload_bus_data(number_mutter)
                         context = {**context, **dict_mutter}
+                        context['conclusion'] = check_conclusion(context)
+                        context = data_verification(context)
                         doc.render(context)
                         doc.save(str(i) + ' generated_doc.docx')
                         title = str(i) + ' generated_doc.docx'
@@ -531,7 +777,7 @@ def creat_doc_pas_gen(
                             'number_father': number_father,
                             'name_father': name_father,
                             'animal': animal,
-                            'fater': fater,
+                            'father': fater,
                             'mutter': mutter,
                             'date': date
                         }
@@ -539,6 +785,8 @@ def creat_doc_pas_gen(
                         save_bus_data(context)
                         dict_mutter = upload_bus_data(number_mutter)
                         context = {**context, **dict_mutter}
+                        context['conclusion'] = check_conclusion(context)
+                        context = data_verification(context)
                         doc.render(context)
                         doc.save(str(i) + ' generated_doc.docx')
                         title = str(i) + ' generated_doc.docx'

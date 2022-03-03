@@ -1,3 +1,4 @@
+from doctest import DocFileTest
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -5,13 +6,32 @@ from PyQt5.QtWidgets import QMessageBox
 
 from func.func_answer_error import answer_error
 from models.models import BullFather
-from setting import DB as db
 
 from .db_job import upload_data_db_for_creat_pass
+import logging
+from logging.handlers import RotatingFileHandler
+
+
+logFile = "./logs/log_preprocessor_ms_data.log"
+logging.basicConfig(
+    filename=logFile,
+    level=logging.DEBUG,
+    filemode='w',
+)
+my_handler = RotatingFileHandler(
+    logFile, mode='a', maxBytes=5*1024*1024,
+    backupCount=2, encoding="cp1251", delay=0
+)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(my_handler)
 
 
 def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
     """Добавляет данные по отцам"""
+    logger.debug("Стартует add_missing")
+    logger.debug(df)
+    df = df.dropna(subset=[df.columns[5]])
     try:
         df_dad = upload_data_db_for_creat_pass()
         list_father_db = df_dad.number
@@ -20,6 +40,9 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
             if number in list_father_db:
                 pass
             else:
+                logger.debug(
+                    f"Номер {number}"
+                )
                 name = (
                     df[df[df.columns[5]] == number][df.columns[6]]
                     .reset_index(drop=True)[0]
@@ -28,14 +51,17 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
                     print('Не добавлено')
                 else:
                     print(f"Добавлен {number}")
+        logger.debug("Конец add_missing")
         return upload_data_db_for_creat_pass()
     except Exception as e:
+        logger.error(e)
         name = '\nparser_def.py.py\nadd_missing\n '
         QMessageBox.critical(
             None,
             'Ошибка ввода',
             (f'{answer_error()}{name}Подробности:\n {e}')
         )
+        logger.debug("Конец add_missing")
 
 
 def parser_ms_dad(number: int, name: str, farm: str) -> int:
@@ -160,8 +186,11 @@ def filter_id_bus(number: str) -> list:
         response = requests.put(url, json=params)
 
         token = response.json().get('token')
-        number_page = response.json().get('idArray')[0]
-        return number_page, token
+        if len(response.json().get('idArray')) > 0:
+            number_page = response.json().get('idArray')[0]
+            return number_page, token
+        else:
+            return -1, token
     except Exception as e:
         name = '\nparser_def.py.py\nfilter_id_bus\n '
         QMessageBox.critical(
