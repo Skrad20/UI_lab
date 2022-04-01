@@ -28,6 +28,7 @@ QPushButton {
     padding: 10px 5px;
     margin: 5;
 }
+
 QToolTip { 
     color: #ffffff; 
     background-color:  #333;
@@ -81,7 +82,7 @@ QHeaderView::section:horizontal {
     background-color: qlineargradient(x1: 0, y1: 0, x2: 0, y2: 1, stop: 0 #013501, stop: 1 #008000);
 }
 
- QHeaderView::section:vertical {
+QHeaderView::section:vertical {
     color: #fff;
     border-style: solid;
     background-color: qlineargradient(x1: 0, y1: 1, x2: 0, y2: 0, stop: 0 #013501, stop: 1 #008000);

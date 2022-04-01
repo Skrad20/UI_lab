@@ -17,7 +17,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
 from func.db_job import (save_bus_data, upload_bus_data,
                          upload_data_db_for_searh_father, upload_fater_data)
 from func.func_answer_error import answer_error
-
+from .config_pars import ConfigMeneger
 from .parser_def import add_missing
 logFile = "./logs/log_preprocessor_ms_data.log"
 logging.basicConfig(
@@ -81,35 +81,44 @@ def ms_clutch(row: dict, col1: str, col2: str) -> str:
 
 def enter_adres(name_str: str = 'Open File') -> str:
     """Возращает адрес файла."""
+    path = ConfigMeneger.get_path_save()
     adres = QFileDialog.getOpenFileName(
         None,
         name_str,
-        './',
+        path,
         'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)'
     )[0]
+    after_path = '/'.join(adres.split('/')[:-1])
+    ConfigMeneger.set_path_save(after_path)
     return adres
 
 
 def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
+    path = ConfigMeneger.get_path_save()
     adres = QFileDialog.getSaveFileName(
         None,
         name_str,
-        './',
+        path,
         'CSV (*.csv);; Text Files (*.txt)'
     )[0]
+    after_path = '/'.join(adres.split('/')[:-1])
+    ConfigMeneger.set_path_save(after_path)
     df_res.to_csv(adres, sep=";", decimal=',')
     return adres
 
 
 def save_file_for_word(name_str: str = 'Save File') -> None:
     """Возращает адрес файла."""
+    path = ConfigMeneger.get_path_save()
     adres = QFileDialog.getSaveFileName(
         None,
         name_str,
-        './',
+        path,
         'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)'
     )[0]
+    after_path = '/'.join(adres.split('/')[:-1])
+    ConfigMeneger.set_path_save(after_path)
     return adres
 
 
@@ -283,7 +292,7 @@ def check_error_ms(
     df: pd.DataFrame,
     df_profil: pd.DataFrame
 ) -> dict:
-    logger.debug("Страт check_error_ms")
+    logger.debug("Start check_error_ms")
     df = df.dropna(subset=[df.columns[5]])
     try:
         list_number_father = []
@@ -308,11 +317,13 @@ def check_error_ms(
             if number in list(df_profil['num']):
                 pass
             else:
-                QMessageBox.information(
-                    None,
-                    'Инфорамция',
-                    f'Животного {number_animal} нет в данных. Проба {number}'
-                )
+                if number > 0:
+                    QMessageBox.information(
+                        None,
+                        'Инфорамция',
+                        f'Животного {number_animal}' +
+                        f' нет в данных. Проба {number}'
+                    )
                 continue
             print("Анализ ошибок" + str(number))
             df_animal_prof = df_profil.query(
@@ -344,6 +355,7 @@ def check_error_ms(
                             list_locus_er_father.append(locus)
                             list_father_er.append(number_fater)
                             list_animal_father.append(number_animal)
+                            male_father.append("male")
             logger.debug(
                 "MS Mutter"
             )
@@ -364,6 +376,10 @@ def check_error_ms(
                             list_locus_er_mutter.append(locus)
                             list_mutter_er.append(number_mutter)
                             list_animal_mutter.append(number_animal)
+                            male_mutter.append('female')
+        logger.debug(
+                "Save errors father"
+            )
         res_error_father = pd.DataFrame({
             'number': list_number_father,
             'locus': list_locus_er_father,
@@ -371,6 +387,9 @@ def check_error_ms(
             'animal': list_animal_father,
             'male': male_father,
         })
+        logger.debug(
+                "Save errors mutter"
+            )
         res_error_mutter = pd.DataFrame({
             'number': list_number_mutter,
             'locus': list_locus_er_mutter,
@@ -378,7 +397,7 @@ def check_error_ms(
             'animal': list_animal_mutter,
             'male': male_mutter,
         })
-        logger.debug("Конец check_error_ms")
+        logger.debug("End check_error_ms")
         return {"father": res_error_father, "mutter": res_error_mutter}
     except Exception as e:
         logger.error(e)
@@ -388,14 +407,14 @@ def check_error_ms(
             'Ошибка ввода',
             f'{answer_error()} {name}Подробности:\n {e}'
         )
-        logger.debug("Конец check_error_ms")
+        logger.debug("End check_error_ms")
 
 
 def verification_ms(one_ms: str, second_ms: str) -> bool:
     """Возращает True, если данные МС неподходят"""
     try:
-        logger.debug("Стартует verification_ms")
-        logger.debug(f"Приходящие значения: {one_ms}, {second_ms}")
+        logger.debug("start verification_ms")
+        logger.debug(f"Input data: {one_ms}, {second_ms}")
         res = False
         one_split = one_ms.split('/')
         second_split = second_ms.split('/')
@@ -406,7 +425,7 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
             one_split[1] != second_split[1]
         ):
             res = True
-        logger.debug("Конец verification_ms")
+        logger.debug("end verification_ms")
         return res
     except Exception as e:
         logger.error(
@@ -496,24 +515,28 @@ def data_verification(context: dict) -> dict:
                         color='#ff0000',
                         bold=True
                     )
-        logger.debug("конец data_verification")
+        logger.debug("end data_verification")
         return context
     except Exception as e:
         name = '\nfunc_ms.py\\data_verification\n'
         logger.error(
-            f"Значение ключа {key}. Потомок: {child}," +
-            f" отец: {father}, мать: {mutter}"
+            f"Value keys {key}. Child: {child}," +
+            f" Father: {father}, Mutter: {mutter}"
         )
         QMessageBox.critical(
             None,
             'Ошибка ввода',
             (f'{answer_error()}{name}Подробности:\n {e}')
         )
-        logger.debug("Конец data_verification")
+        logger.debug("End data_verification")
 
 
 def check_conclusion(context: dict) -> str:
-    logger.debug("Запуск check_conclusion")
+    """
+    Проверяет есть ли ошибки в паспорте и изменяе заключение.
+    Возращает изменный context для ввода в паспорт.
+    """
+    logger.debug("Start check_conclusion")
     res = ''
     list_keys = [
         'BM1818',
@@ -538,14 +561,19 @@ def check_conclusion(context: dict) -> str:
     ]
     mutter = context.get('BM1818_mutter')
     father = context.get('BM1818_father')
-    flag = False
+    flag_mutter = False
+    flag_father = False
+    number_null_mutter = 0
+    number_null_father = 0
+    flag_null_mutter = False
+    flag_null_father = False
     for key in list_keys:
         child = context.get(key)
         father = context.get(key+'_father')
         mutter = context.get(key+'_mutter')
         logger.debug(
-            f"Значения ключа {key}. Потомок: {child}," +
-            f" отец: {father}, мать: {mutter}"
+            f"Value key {key}. Child: {child}," +
+            f" father: {father}, mutter: {mutter}"
         )
         if (
             father != '-' and
@@ -558,8 +586,12 @@ def check_conclusion(context: dict) -> str:
             child is not None
         ):
             if verification_ms(child, father):
-                flag = True
+                flag_father = True
                 break
+        else:
+            number_null_father += 1
+            if number_null_father > 10:
+                flag_null_father = True
         if (
             mutter != '-' and
             mutter != '0/0' and
@@ -571,52 +603,24 @@ def check_conclusion(context: dict) -> str:
             child is not None
         ):
             if verification_ms(child, mutter):
-                flag = True
+                flag_mutter = True
                 break
+        else:
+            number_null_mutter += 1
+            if number_null_mutter > 10:
+                flag_null_mutter = True
 
-    if flag:
-        if (
-            mutter != '' and
-            mutter != '-' and
-            mutter != '0/0' and
-            mutter is not None and
-            father != '' and
-            father != '-' and
-            father != '0/0' and
-            father is not None
-        ):
-            res = 'Родители не соответствуют'
-        elif (
-            mutter == '' or
-            mutter == '-' or
-            mutter == '0/0' or
-            mutter is None
-        ):
-            res = 'Отец не соответствует'
-        else:
-            res = ''
+    if flag_father and flag_mutter:
+        res = 'Родители не соответствуют'
+    elif flag_father:
+        res = 'Отец не соответствует'
+    elif flag_mutter or flag_null_mutter:
+        res = 'Отец соответствует'
+    elif not flag_null_mutter and not flag_null_father:
+        res = 'Родители соответствуют'
     else:
-        if (
-            mutter != '' and
-            mutter != '-' and
-            mutter != '0/0' and
-            mutter is not None and
-            father != '' and
-            father != '-' and
-            father != '0/0' and
-            father is not None
-        ):
-            res = 'Родители соответствуют'
-        elif (
-            mutter == '' or
-            mutter == '-' or
-            mutter == '0/0' or
-            mutter is None
-        ):
-            res = 'Отец соответствует'
-        else:
-            res = ''
-    logger.debug("Конец check_conclusion")
+        res = ''
+    logger.debug("end check_conclusion")
     return res
 
 
@@ -642,6 +646,7 @@ def creat_doc_pas_gen(
         ]
         df_faters = add_missing(df, hosut)
         df_profil = read_file(adres_genotyping)
+        print(df_profil.columns)
         try:
             df_profil['num'] = df_profil.apply(
                 delit,

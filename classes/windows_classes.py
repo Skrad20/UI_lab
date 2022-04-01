@@ -1286,11 +1286,11 @@ class WindowTableEnterDataSF(MainDialog):
 class SecondWindow(QMainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        uic.loadUi('./classes/t.ui', self)
+        uic.loadUi('./classes/ui/test.ui', self)
 
 
 class WindowTest(Window_main):
     """Окно для тестирования функций."""
-    def __init__(self, name: str):
-        super().__init__(name)
+    def __init__(self, name: str, parent=None):
+        super().__init__(name, parent)
         print('dfgdfgdf')

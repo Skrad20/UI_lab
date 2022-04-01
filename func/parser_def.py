@@ -29,8 +29,8 @@ logger.addHandler(my_handler)
 
 def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
     """Добавляет данные по отцам"""
-    logger.debug("Стартует add_missing")
-    logger.debug(df)
+    logger.debug("Start add_missing")
+    logger.debug(df.head())
     df = df.dropna(subset=[df.columns[5]])
     try:
         df_dad = upload_data_db_for_creat_pass()
@@ -41,7 +41,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
                 pass
             else:
                 logger.debug(
-                    f"Номер {number}"
+                    f"Number father {number}"
                 )
                 name = (
                     df[df[df.columns[5]] == number][df.columns[6]]
@@ -51,7 +51,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
                     print('Не добавлено')
                 else:
                     print(f"Добавлен {number}")
-        logger.debug("Конец add_missing")
+        logger.debug("End add_missing")
         return upload_data_db_for_creat_pass()
     except Exception as e:
         logger.error(e)
@@ -61,7 +61,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
             'Ошибка ввода',
             (f'{answer_error()}{name}Подробности:\n {e}')
         )
-        logger.debug("Конец add_missing")
+        logger.debug("End add_missing")
 
 
 def parser_ms_dad(number: int, name: str, farm: str) -> int:
