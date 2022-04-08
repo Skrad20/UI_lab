@@ -427,6 +427,7 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
             int(one_split[1]) != int(second_split[1])
         ):
             res = True
+        logger.debug(f"result {res}")
         logger.debug("end verification_ms")
         return res
     except Exception as e:
