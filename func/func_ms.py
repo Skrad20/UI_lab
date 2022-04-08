@@ -133,7 +133,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
         columns = df_res.columns
         table.setHorizontalHeaderLabels(columns)
     except Exception as e:
-        print(e)
+        logger.error(e)
     for column in range(len(df_res.columns)):
         for row in range(len(df_res)):
             item = QTableWidgetItem(str(df_res.iloc[row, column]))
@@ -267,13 +267,13 @@ def ms_out_word(adres: str) -> pd.DataFrame:
                     data_out.loc[nom_date_out, 'numer'] = res_name[1]
                     data_out.loc[nom_date_out, 'name'] = res_name[0]
                 except Exception as e:
-                    print(e)
+                    logger.error(e)
                     data_out.loc[nom_date_out, 'numer'] = res_name[0]
                 try:
                     data_out.loc[nom_date_out, 'vater'] = res_vater[0]
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[1]
                 except Exception as e:
-                    print(e)
+                    logger.error(e)
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
 
     name_select(doc, result)
@@ -413,21 +413,24 @@ def check_error_ms(
 def verification_ms(one_ms: str, second_ms: str) -> bool:
     """Возращает True, если данные МС неподходят"""
     try:
+        one_ms = one_ms.replace(" ", '')
+        second_ms = second_ms.replace(" ", '')
         logger.debug("start verification_ms")
         logger.debug(f"Input data: {one_ms}, {second_ms}")
         res = False
         one_split = one_ms.split('/')
         second_split = second_ms.split('/')
         if (
-            one_split[0] != second_split[0] and
-            one_split[0] != second_split[1] and
-            one_split[1] != second_split[0] and
-            one_split[1] != second_split[1]
+            int(one_split[0]) != int(second_split[0]) and
+            int(one_split[0]) != int(second_split[1]) and
+            int(one_split[1]) != int(second_split[0]) and
+            int(one_split[1]) != int(second_split[1])
         ):
             res = True
         logger.debug("end verification_ms")
         return res
     except Exception as e:
+        logger.error(e)
         logger.error(
             f"data error {one_split}, {second_split}"
         )
@@ -442,7 +445,7 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
 
 def data_verification(context: dict) -> dict:
     """Проверка сответствия Данных матери, отца и потомка"""
-    logger.debug("Начало data_verification")
+    logger.debug("start data_verification")
     list_keys = [
         'BM1818',
         'BM1824',
@@ -470,8 +473,8 @@ def data_verification(context: dict) -> dict:
             father = context.get(key+'_father')
             mutter = context.get(key+'_mutter')
             logger.debug(
-                f"Значения ключа {key}. Потомок: {child}," +
-                f" отец: {father}, мать: {mutter}"
+                f"Value key {key}. Child: {child}," +
+                f" father: {father}, mutter: {mutter}"
             )
             if (
                 father != '-' and
@@ -519,6 +522,7 @@ def data_verification(context: dict) -> dict:
         return context
     except Exception as e:
         name = '\nfunc_ms.py\\data_verification\n'
+        logger.error(e)
         logger.error(
             f"Value keys {key}. Child: {child}," +
             f" Father: {father}, Mutter: {mutter}"
@@ -630,6 +634,7 @@ def creat_doc_pas_gen(
     adres: str,
     hosut: str = 'Хозяйство'
 ) -> pd.DataFrame:
+    logger.debug("star creat_doc_pas_gen")
     try:
         now = datetime.datetime.now()
         list_father_non = []
@@ -655,6 +660,7 @@ def creat_doc_pas_gen(
                 axis=1
             )
         except Exception as e:
+            logger.error(e)
             name = "\nfunc_ms.py|delit in creat_doc_pas_gen\n"
             QMessageBox.critical(
                 None,
@@ -704,6 +710,7 @@ def creat_doc_pas_gen(
             downcast='integer'
         )
         dict_error = check_error_ms(df, df_profil)
+        logger.debug("start save_error_df")
         dict_error.get("mutter").to_csv(
             r'func\data\creat_pass_doc\res_error_mutter.csv',
             sep=";",
@@ -714,10 +721,12 @@ def creat_doc_pas_gen(
             sep=";",
             decimal=',',
             encoding="cp1251")
+        logger.debug("end save_error_df")
         res_err = pd.concat(
             [dict_error.get("mutter"), dict_error.get("father")]
         )
         files_list = []
+        logger.debug("start cycle create password")
         try:
             for i in range(len(series_num)):
                 doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_2.docx')
@@ -806,15 +815,17 @@ def creat_doc_pas_gen(
                 else:
                     print(
                         f'Нет животного: проба {int(series_num[i])},' +
-                        f' номер {num_anim}, страница: {i+1}'
+                        f' номер {series_num[i]}, страница: {i+1}'
                     )
         except Exception as e:
+            logger.error(e)
             name = '\nfunc_ms.py\ncreat_doc_pas_gen\ngenerate password\n'
             QMessageBox.critical(
                 None,
                 'Ошибка ввода',
                 f'{answer_error()}{name}Подробности:\n {e}'
             )
+        logger.debug("end cycle create password")
         non_father = pd.DataFrame({'Отцы': list(set(list_father_non))})
         non_father.to_csv(
             r'func\data\creat_pass_doc\non_father.csv',
@@ -822,6 +833,7 @@ def creat_doc_pas_gen(
             decimal=',',
             encoding="cp1251")
         filename_master = files_list.pop(0)
+        logger.debug("start cycle create word doc")
 
         combine_all_docx(filename_master, files_list, adres, date)
         files_list.append(filename_master)
@@ -830,9 +842,11 @@ def creat_doc_pas_gen(
                 os.remove(files_list[i])
             else:
                 print("File doesn't exists!")
+        logger.debug("end cycle create word doc. Return")
         return res_err
     except Exception as e:
         name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '
+        logger.error(e)
         QMessageBox.critical(
             None,
             'Ошибка ввода',
