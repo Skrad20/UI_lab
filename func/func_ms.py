@@ -65,7 +65,6 @@ def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
 def delit(row: dict, delitel: str, col: str) -> str:
     '''Разделение строки по делителю.'''
     num = row[col]
-    print(num)
     num = num.split(delitel)
     return num[-1]
 
@@ -290,7 +289,8 @@ def ms_out_word(adres: str) -> pd.DataFrame:
 
 def check_error_ms(
     df: pd.DataFrame,
-    df_profil: pd.DataFrame
+    df_profil: pd.DataFrame,
+    flag_mutter: bool = False,
 ) -> dict:
     logger.debug("Start check_error_ms")
     df = df.dropna(subset=[df.columns[5]])
@@ -356,27 +356,28 @@ def check_error_ms(
                             list_father_er.append(number_fater)
                             list_animal_father.append(number_animal)
                             male_father.append("male")
-            logger.debug(
-                "MS Mutter"
-            )
-            for locus, val in dict_mutter.items():
-                value_mutter_ms = val
-                if value_mutter_ms != '-':
-                    logger.debug(
-                        f"Values MS mutter: {value_mutter_ms}, locus {locus}"
-                        )
-                    locus_a = locus.split('_mutter')[0]
-                    value_animal_ms = df_animal_prof.get(locus_a, 1)
-                    if value_animal_ms != 1:
-                        if verification_ms(
-                            value_mutter_ms,
-                            value_animal_ms
-                        ):
-                            list_number_mutter.append(i)
-                            list_locus_er_mutter.append(locus)
-                            list_mutter_er.append(number_mutter)
-                            list_animal_mutter.append(number_animal)
-                            male_mutter.append('female')
+            if flag_mutter:
+                logger.debug(
+                    "MS Mutter"
+                )
+                for locus, val in dict_mutter.items():
+                    value_mutter_ms = val
+                    if value_mutter_ms != '-':
+                        logger.debug(
+                            f"Values MS mutter: {value_mutter_ms}, locus {locus}"
+                            )
+                        locus_a = locus.split('_mutter')[0]
+                        value_animal_ms = df_animal_prof.get(locus_a, 1)
+                        if value_animal_ms != 1:
+                            if verification_ms(
+                                value_mutter_ms,
+                                value_animal_ms
+                            ):
+                                list_number_mutter.append(i)
+                                list_locus_er_mutter.append(locus)
+                                list_mutter_er.append(number_mutter)
+                                list_animal_mutter.append(number_animal)
+                                male_mutter.append('female')
         logger.debug(
                 "Save errors father"
             )
@@ -538,7 +539,7 @@ def data_verification(context: dict) -> dict:
 
 def check_conclusion(context: dict) -> str:
     """
-    Проверяет есть ли ошибки в паспорте и изменяе заключение.
+    Проверяет есть ли ошибки в паспорте и изменяет заключение.
     Возращает изменный context для ввода в паспорт.
     """
     logger.debug("Start check_conclusion")
@@ -633,7 +634,8 @@ def creat_doc_pas_gen(
     adres_invertory: str,
     adres_genotyping: str,
     adres: str,
-    hosut: str = 'Хозяйство'
+    farm: str = 'Хозяйство',
+    flag_mutter: bool = False
 ) -> pd.DataFrame:
     logger.debug("star creat_doc_pas_gen")
     try:
@@ -650,9 +652,8 @@ def creat_doc_pas_gen(
             'number_father',
             'name_father',
         ]
-        df_faters = add_missing(df, hosut)
+        df_faters = add_missing(df, farm)
         df_profil = read_file(adres_genotyping)
-        print(df_profil.columns)
         try:
             df_profil['num'] = df_profil.apply(
                 delit,
@@ -710,7 +711,7 @@ def creat_doc_pas_gen(
             df['number_mutter'],
             downcast='integer'
         )
-        dict_error = check_error_ms(df, df_profil)
+        dict_error = check_error_ms(df, df_profil, flag_mutter)
         logger.debug("start save_error_df")
         dict_error.get("mutter").to_csv(
             r'func\data\creat_pass_doc\res_error_mutter.csv',
@@ -733,6 +734,7 @@ def creat_doc_pas_gen(
                 doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_2.docx')
                 if series_num[i] in series_proba:
                     num_anim = series_num[i]
+                    logger.debug(f"Номер животного {num_anim}")
                     df_info = df.query(
                         'number_proba == @num_anim'
                     ).reset_index()
@@ -767,7 +769,7 @@ def creat_doc_pas_gen(
                         context = {
                             'number_animal': number_animal,
                             'name_animal': name_animal,
-                            'hosbut': hosut,
+                            'hosbut': farm,
                             'number_proba': number_proba,
                             'number_father': number_father,
                             'name_father': name_father,
@@ -779,8 +781,9 @@ def creat_doc_pas_gen(
                         context = {**context, **dict_faters_new}
                         context = {**context, **dict_profil_only}
                         save_bus_data(context)
-                        dict_mutter = upload_bus_data(number_mutter)
-                        context = {**context, **dict_mutter}
+                        if flag_mutter:
+                            dict_mutter = upload_bus_data(number_mutter)
+                            context = {**context, **dict_mutter}
                         context['conclusion'] = check_conclusion(context)
                         context = data_verification(context)
                         doc.render(context)
@@ -792,7 +795,7 @@ def creat_doc_pas_gen(
                         context = {
                             'number_animal': number_animal,
                             'name_animal': name_animal,
-                            'hosbut': hosut,
+                            'hosbut': farm,
                             'number_proba': number_proba,
                             'number_father': number_father,
                             'name_father': name_father,
@@ -803,8 +806,9 @@ def creat_doc_pas_gen(
                         }
                         context = {**context, **dict_profil_only}
                         save_bus_data(context)
-                        dict_mutter = upload_bus_data(number_mutter)
-                        context = {**context, **dict_mutter}
+                        if flag_mutter:
+                            dict_mutter = upload_bus_data(number_mutter)
+                            context = {**context, **dict_mutter}
                         context['conclusion'] = check_conclusion(context)
                         context = data_verification(context)
                         doc.render(context)
@@ -815,7 +819,7 @@ def creat_doc_pas_gen(
                         print(f'Нет быка: {number_father}, страница: {i+1}')
                 else:
                     print(
-                        f'Нет животного: проба {int(series_num[i])},' +
+                        f'Нет животного: проба {series_num[i]},' +
                         f' номер {series_num[i]}, страница: {i+1}'
                     )
         except Exception as e:

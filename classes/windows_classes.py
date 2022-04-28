@@ -1,13 +1,14 @@
 import datetime as dt
 import os
+import logging
+from logging.handlers import RotatingFileHandler
 
 import numpy as np
 import pandas as pd
 from .additional_classes import TableAddFather
 from .dialogs_classes import MainDialog
-from .forms_classes import Form
+from .forms_classes import FormEnterFarmName
 from pandas.core.frame import DataFrame
-from PyQt5 import uic
 from PyQt5.QtCore import QEvent, QPoint, Qt, pyqtSignal
 from PyQt5.QtGui import (QColor, QEnterEvent, QFont, QIcon, QKeySequence,
                          QPainter, QPen, QStandardItemModel)
@@ -26,6 +27,24 @@ from lists_name.list_name_row import list_name_row_search_father
 from models.models import Logs
 from setting import DB as db
 from setting import TRANSPARENCY as transparency
+from classes.ui.gui import Ui_MainWindow
+import random
+import string
+
+logFile = "./logs/log_preprocessor_ms_data.log"
+logging.basicConfig(
+    filename=logFile,
+    level=logging.DEBUG,
+    filemode='w',
+)
+my_handler = RotatingFileHandler(
+    logFile, mode='a', maxBytes=5*1024*1024,
+    backupCount=2, encoding="cp1251", delay=0
+)
+
+logger = logging.getLogger(__name__)
+logger.addHandler(my_handler)
+
 
 adres_job = ''
 data_job = ''
@@ -900,13 +919,14 @@ class WindowGenPassWord(Window_main):
 
     def gen_analit_password_creat(self) -> None:
         """Проводит анализ полученных данных"""
-        self.hosbut = self.fenster_enter_date()
+        self.farm, self.bool_mutter = self.fenster_enter_data()
         self.adres_res = save_file_for_word('Сохранить результаты')
         self.df_error = creat_doc_pas_gen(
             self.adres_invertory,
             self.adres_genotyping,
             self.adres_res,
-            self.hosbut,
+            self.farm,
+            self.bool_mutter
         )
         self.len_df = len(self.df_error)
 
@@ -941,12 +961,20 @@ class WindowGenPassWord(Window_main):
         )
         dialog.exec_()
 
-    def fenster_enter_date(self) -> str:
-        '''Выводит окно ввода данных.'''
-        dialog = Form('Введите название хозяйства')
+    def fenster_enter_data(self) -> list[str, bool]:
+        '''
+        Выводит окно ввода данных.
+        Возвращает строковые значение - название хозяйства,
+        булево значение - анализ матерей.
+        '''
+        logger.debug("start fenster_enter_data")
+        dialog = FormEnterFarmName('Введите название хозяйства')
         dialog.exec_()
-        hosbut = dialog.button_click()
-        return hosbut
+        farm, bool_mutter_analis = dialog.button_click()
+        logger.debug(farm)
+        logger.debug(bool_mutter_analis)
+        logger.debug("end fenster_enter_data")
+        return farm, bool(bool_mutter_analis)
 
     def gen_password(self) -> None:
         '''Вызывает функции генерации паспортов.'''
@@ -1002,7 +1030,6 @@ class WindowSearchFarher(Window_main):
         labe_text_2.setAlignment(Qt.AlignCenter)
         self.vb.addWidget(labe_text_2)
         farmers = upload_data_farmers_father()
-        print(farmers)
         list_farmers = list(farmers)
         list_farmers_in = []
         for i in range(len((list_farmers))):
@@ -1283,14 +1310,21 @@ class WindowTableEnterDataSF(MainDialog):
         )
 
 
-class SecondWindow(QMainWindow):
+class SecondWindow(QMainWindow, Ui_MainWindow):
     def __init__(self, parent=None):
         super().__init__(parent)
-        uic.loadUi('./classes/ui/test.ui', self)
+        self.setupUi(self)
+        self.pushButton.clicked.connect(self.buttonClicked)
+
+    def generate_pins(self, size=6, chars=string.digits):
+        return ''.join(random.choice(chars) for x in range(size))
+
+    def buttonClicked(self):
+        self.textEdit.append(self.generate_pins(10))
 
 
 class WindowTest(Window_main):
     """Окно для тестирования функций."""
     def __init__(self, name: str, parent=None):
         super().__init__(name, parent)
-        print('dfgdfgdf')
+        print('Test windows open')
