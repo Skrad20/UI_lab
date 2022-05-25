@@ -23,7 +23,15 @@ logger.addHandler(my_handler)
 
 
 def upload_data_farmers_father() -> set:
-    logger.debug("Стартует upload_data_farmers_father")
+    """
+    Загружает инвентарные номера отцов из базы данных.
+    ----------------------
+    Параметры:
+    ----------------------
+    Возвращаемое значение:
+        res_set (set): список номеров отцов.
+    """
+    logger.debug("Start upload_data_farmers_father")
     res = []
     buses = BullFather.select()
     for bus in buses:
@@ -32,13 +40,21 @@ def upload_data_farmers_father() -> set:
         else:
             res.append(bus.farm)
     res_set = set(res)
-    logger.debug("Конец upload_data_farmers_father")
+    logger.debug("End upload_data_farmers_father")
     return res_set
 
 
 def save_bus_data(dt_in: dict) -> None:
-    """Сохраняет данные по коровам в базу"""
-    logger.debug("Стартует save_bus_data")
+    """
+    Сохраняет данные по коровам в базу.
+    ----------------------
+    Параметры:
+        dt_in (dict): данные для сохроанения в базу.
+    ----------------------
+    Возвращаемое значение:
+        None.
+    """
+    logger.debug("Start save_bus_data")
     query = ProfilsCows.select().where(
         ProfilsCows.number == dt_in.get("number_animal")
     )
@@ -71,7 +87,7 @@ def save_bus_data(dt_in: dict) -> None:
                 SPS113=dt_in.get("SPS113", '-'),
             )
             pc.save()
-            logger.debug("Конец save_bus_data")
+            logger.debug("End save_bus_data")
     except Exception as e:
         logger.error(e)
         name = '\ndb_job.py\nsave_bus_data\n'
@@ -80,12 +96,20 @@ def save_bus_data(dt_in: dict) -> None:
             'Ошибка ввода',
             f'{answer_error()} {name} Подробности:\n {e}'
         )
-        logger.debug("Конец save_bus_data")
+        logger.debug("End save_bus_data")
 
 
 def save_bus_data_fater(data_job: pd.DataFrame) -> None:
-    """Сохраняет данные по быкам в базу"""
-    logger.debug("Стартует save_bus_data_fater")
+    """
+    Сохраняет данные по быкам в базу.
+    ----------------------
+    Параметры:
+        data_job (pd.DataFrame): данные по быкам для сохранения.
+    ----------------------
+    Возвращаемое значение:
+        None.
+    """
+    logger.debug("Start save_bus_data_fater")
     try:
         pc = BullFather(
             name=data_job.loc[0, "Имя"],
@@ -112,7 +136,7 @@ def save_bus_data_fater(data_job: pd.DataFrame) -> None:
             SPS113=data_job.loc[0, "SPS113"],
         )
         pc.save()
-        logger.debug("Конец save_bus_data_fater")
+        logger.debug("End save_bus_data_fater")
 
     except Exception as e:
         logger.error(e)
@@ -122,12 +146,20 @@ def save_bus_data_fater(data_job: pd.DataFrame) -> None:
             'Ошибка ввода',
             (f'{answer_error()} {name}Подробности:\n {e}')
             )
-        logger.debug("Конец save_bus_data_fater")
+        logger.debug("End save_bus_data_fater")
 
 
 def upload_fater_data(number: int) -> dict:
-    """Загружает данные по отцу из базы"""
-    logger.debug("Стартует upload_fater_data")
+    """
+    Загружает данные по отцу из базы.
+    ----------------------
+    Параметры:
+        number (int): инвентарный номер быка.
+    ----------------------
+    Возвращаемое значение:
+        res (dict): словарь с данными по быку.
+    """
+    logger.debug("Start upload_fater_data")
     try:
         query = BullFather.select().where(
             BullFather.number == number
@@ -157,7 +189,7 @@ def upload_fater_data(number: int) -> dict:
                 "MGTG4B_father": bus.MGTG4B,
                 "SPS113_father": bus.SPS113,
             }
-            logger.debug("Конец upload_fater_data")
+            logger.debug("End upload_fater_data")
             return res
         else:
             res = {
@@ -191,12 +223,20 @@ def upload_fater_data(number: int) -> dict:
             'Ошибка ввода',
             f'{answer_error()}{name}Подробности:\n {e}'
         )
-        logger.debug("Конец upload_fater_data")
+        logger.debug("End upload_fater_data")
 
 
 def upload_bus_data(number: int) -> dict:
-    """Загружает данные по матерям из базы"""
-    logger.debug("Стартует upload_bus_data")
+    """
+    Загружает данные по матерям из базы.
+    ----------------------
+    Параметры:
+        number (int): инвентарный номер нетели.
+    ----------------------
+    Возвращаемое значение:
+        res (dict): словарь с данными по нетели.
+    """
+    logger.debug("Start upload_bus_data")
     try:
         query = ProfilsCows.select().where(
             ProfilsCows.number == number
@@ -226,7 +266,7 @@ def upload_bus_data(number: int) -> dict:
                 "MGTG4B_mutter": bus.MGTG4B,
                 "SPS113_mutter": bus.SPS113,
             }
-            logger.debug("Конец upload_bus_data")
+            logger.debug("End upload_bus_data")
             return res
         else:
             res = {
@@ -250,7 +290,7 @@ def upload_bus_data(number: int) -> dict:
                 "MGTG4B_mutter": '-',
                 "SPS113_mutter": '-',
             }
-            logger.debug("Конец upload_bus_data")
+            logger.debug("End upload_bus_data")
             return res
     except Exception as e:
         logger.error(e)
@@ -260,7 +300,7 @@ def upload_bus_data(number: int) -> dict:
             'Ошибка ввода',
             f'{answer_error()}{name}Подробности:\n {e}'
         )
-        logger.debug("Конец upload_bus_data")
+        logger.debug("End upload_bus_data")
 
 
 def create_columns_name(row):
@@ -269,9 +309,16 @@ def create_columns_name(row):
     return f"{name} {number}"
 
 
-def upload_data_db_for_searh_father():
-    """Загружает данные по отцам из базы для поиска."""
-    logger.debug("Старт upload_data_db_for_searh_father")
+def upload_data_db_for_searh_father() -> pd.DataFrame:
+    """
+    Загружает данные по отцам из базы для поиска.
+    ----------------------
+    Параметры:
+    ----------------------
+    Возвращаемое значение:
+        res (pd.DataFrame): датасет с данными по быкам.
+    """
+    logger.debug("Start upload_data_db_for_searh_father")
     list_col = [
         'name', 'number', 'farm', 'BM1818', 'BM1824',
         'BM2113', 'CSRM60', 'CSSM66', 'CYP21', 'ETH10',
@@ -305,13 +352,20 @@ def upload_data_db_for_searh_father():
         df.loc[i, "MGTG4B"] = bus.MGTG4B
         df.loc[i, "SPS113"] = bus.SPS113
         i += 1
-    logger.debug("Конец upload_data_db_for_searh_father")
+    logger.debug("End upload_data_db_for_searh_father")
     return df
 
 
 def upload_data_db_for_creat_pass():
-    """Загружает данные по отцам из базы для паспартов."""
-    logger.debug("Старт upload_data_db_for_creat_pass")
+    """
+    Загружает данные по отцам из базы для паспартов.
+    ----------------------
+    Параметры:
+    ----------------------
+    Возвращаемое значение:
+        res (pd.DataFrame): датасет с данными по быкам.
+    """
+    logger.debug("Start upload_data_db_for_creat_pass")
     list_col = [
         'name', 'number', 'name_number', 'BM1818', 'BM1824',
         'BM2113', 'CSRM60', 'CSSM66', 'CYP21', 'ETH10',
@@ -347,7 +401,7 @@ def upload_data_db_for_creat_pass():
     df.name_number = df.apply(create_columns_name, axis=1)
     df.index = df.number
     df.number = df.number.astype('float')
-    logger.debug("Конец upload_data_db_for_creat_pass")
+    logger.debug("End upload_data_db_for_creat_pass")
     return df
 
 

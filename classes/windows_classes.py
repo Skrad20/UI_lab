@@ -768,7 +768,47 @@ class WindowISSR(Window_main):
 
 
 class WindowGenPassWord(Window_main):
-    '''Рабочее окно для данных из word.'''
+    '''
+    Рабочее окно для данных из word.
+    ...
+    Атрибуты
+    --------
+    name : str
+        Заголовок окна
+
+    Методы
+    ------
+    info(additional=""):
+        Печатает имя и возраст человека.
+
+    gen_password_invertory():
+        Генерирует запись о добавлении данных.
+
+    add_data_in_table_invertory():
+        Выводит окно для вставки данных описей в таблицу.
+
+    add_data_in_table_profils():
+        Выводит окно для вставки данных профилей в таблиц.
+
+    gen_password_genotyping():
+        Генерирует запись о добавленых данных.
+
+    gen_analit_password_creat():
+        Запуск генерации паспартов через вызов функции creat_doc_pas_gen()
+
+    example_inventiry():
+        Выводит таблицу с примером данных по осписи.
+
+    example_genotyping():
+        Выводит таблицу с примером данных по результатам.
+
+    fenster_enter_data():
+        Выводит окно ввода данных.
+
+    gen_password():
+        Вызывает функции внутриклассовую генерации паспортов.
+    '''
+
     def __init__(self, name: str):
         super().__init__(name)
         log_3 = Logs(name='Сбор паспортов')
@@ -901,7 +941,7 @@ class WindowGenPassWord(Window_main):
             )
 
     def gen_password_genotyping(self) -> None:
-        """Генерирует запись о добавленых данных"""
+        """Генерирует запись о добавленых данных."""
         self.adres_genotyping = enter_adres(
             'Добавить данные по генотипированию'
         )
@@ -963,9 +1003,13 @@ class WindowGenPassWord(Window_main):
 
     def fenster_enter_data(self) -> list[str, bool]:
         '''
-        Выводит окно ввода данных.
-        Возвращает строковые значение - название хозяйства,
-        булево значение - анализ матерей.
+        Выводит окно ввода данных по названию хозяйства.
+            Параметры:
+                -----------
+            Возвращаемое значение:
+                farm (str): название хозяйства
+                bool_mutter_analis (bool): да/нет анализировать матерей
+                    при генерации паспартов
         '''
         logger.debug("start fenster_enter_data")
         dialog = FormEnterFarmName('Введите название хозяйства')

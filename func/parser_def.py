@@ -1,4 +1,3 @@
-from doctest import DocFileTest
 import pandas as pd
 import requests
 from bs4 import BeautifulSoup
@@ -27,8 +26,43 @@ logger = logging.getLogger(__name__)
 logger.addHandler(my_handler)
 
 
+def check_ms_in_cell(str_test):
+    '''
+    Возвращает булево значение содержит строка микросателлиты или нет.
+    ----------------------
+    Параметры:
+        str_test (str): Тестовая строка данных с сайта
+    ----------------------
+    Возвращаемое значение:
+        (bool): входит / не входит элемент в строку
+    '''
+    msatle = [
+        'BM1818', 'BM1824',
+        'BM2113', 'CSRM60', 'CSSM66',
+        'CYP21', 'ETH10', 'ETH225',
+        'ETH3', 'ILSTS6', 'INRA023',
+        'RM067', 'SPS115', 'TGLA122',
+        'TGLA126', 'TGLA227', 'TGLA53',
+        'MGTG4B', 'SPS113'
+    ]
+    for col in msatle:
+        if col in str_test:
+            return True
+    return False
+
+
 def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
-    """Добавляет данные по отцам"""
+    """
+    Возращает датасет с быками.
+    Проверяет наличие быков в базе. При необходимости добавляет.
+    ----------------------
+    Параметры:
+        df (pd.DataFrame): датасет по описи нетелей.
+        farm (str): название хозяйства.
+    ----------------------
+    Возвращаемое значение:
+        df (pd.DataFrame): датасет по микросателлитам быков.
+    """
     logger.debug("Start add_missing")
     logger.debug(df.head())
     df = df.dropna(subset=[df.columns[5]])
@@ -36,7 +70,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
         df_dad = upload_data_db_for_creat_pass()
         list_father_db = df_dad.number
         list_father_invert = df[df.columns[5]]
-        for number in list_father_invert:
+        for number in set(list_father_invert):
             if number in list_father_db:
                 pass
             else:
@@ -65,7 +99,17 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
 
 
 def parser_ms_dad(number: int, name: str, farm: str) -> int:
-    """Парсит и сохраняет данные в базу по быкам"""
+    """
+    Парсит и сохраняет данные в базу по быкам.
+    ----------------------
+    Параметры:
+        number (int): инвентарный номер быка.
+        name (str): кличка быка.
+        farm (str): название предприятия.
+    ----------------------
+    Возвращаемое значение:
+        res (bool): 0/1, 1 - ошибка.
+    """
     try:
         print(number)
         number_page, token = filter_id_bus(str(number))
@@ -115,7 +159,17 @@ def parser_ms_dad(number: int, name: str, farm: str) -> int:
 
 
 def parser_ms(number_page, token):
-    """Собирает и парсит данные по МС быков"""
+    """
+    Собирает и парсит данные по МС быков.
+    ----------------------
+    Параметры:
+        number_page (int): номер страницы с данными о быке.
+        token (str): токен авторизации.
+    ----------------------
+    Возвращаемое значение:
+        df_out (pd.DataFrame): датасет с данными
+            по микросателлитым быков.
+    """
     try:
         url_2 = f"https://xn--90aof1e.xn--p1ai/bulls/bull/{number_page}?token={token}"
         response_page = requests.put(url_2)
@@ -124,14 +178,7 @@ def parser_ms(number_page, token):
         res = soup.find_all('div', attrs={'class': 'fl_l'})
         out_res = '6666666666666666666'
         for row in res:
-            if (
-                str(row)[18:24] == "BM1818" or
-                str(row)[18:24] == "BM1824" or
-                str(row)[18:24] == "BM2113" or
-                str(row)[18:24] == "ETH225" or
-                str(row)[18:24] == "SPS113" or
-                str(row)[18:24] == "TGLA53"
-            ):
+            if check_ms_in_cell(str(row)):
                 out_res = str(row)
         if out_res[0] != '6':
             out_res = out_res.split('<div class="fl_l">')[1]
@@ -167,6 +214,17 @@ def parser_ms(number_page, token):
 
 
 def filter_id_bus(number: str) -> list:
+    """
+    Отфильтровывает данные с сайта быки.рф.
+    Возращает номер страницы и токен авторизации.
+    ----------------------
+    Параметры:
+        number (str): инвентарный номер быка.
+    ----------------------
+    Возвращаемое значение:
+        number_page (int): номер страницы с данными о быке
+        token (str): токен авторизации
+    """
     try:
         params = [
             {"value": 0, "im": "Общая база быков", "field": "", "method": "data_base", "group": "", "ready": True},
@@ -174,7 +232,7 @@ def filter_id_bus(number: str) -> list:
             {"value": True, "field": "bull", "method": "checkbox", "group": "prizn", "ready": True},
             {"value": True, "field": "sperm", "method": "checkbox", "group": "prizn", "ready": True},
             {"value": True, "field": "parent", "method": "checkbox", "group": "prizn", "ready": True},
-            {"value": number, "field": "ninv", "type": "string", "param": {"like": False}, "method": "line", "ready": True},
+            {"value": number, "field": "ninv", "type": "string", "param": {"like": True}, "method": "line", "ready": True},
             {"value": [["CVM", "CV", "TV"], ["BLAD", "BT", "TL"], ["Brachyspina", "BY", "TY"], ["DUMPS", "DP", "TD"], ["Mulefoot", "MF", "TM"], ["FXID", "FXIDC", "FXIDF"], ["Citrullinemia", "CNC", "CNF"], ["PT", "PTC", "PTF"], ["DF", "DFC", "DFF"], ["D2", "D2C", "D2F"], ["IS", "ISC", "ISF"], ["BD", "BDC", "BDF"], ["FH2", "FH2C", "FH2F"], ["Weaver", "WC", "WFF"], ["SMA", "SMAC", "SMAF"], ["SAA", "SAAC", "SAAF"], ["SDM", "SDMC", "SDMF"], ["DW", "DWC", "DWF"], ["OS", "OSC", "OSF"], ["AM", "AMC", "AMF"], ["DM", "DMC", "DMF"], ["NH", "NHC", "NHF"], ["aMAN", "aMANC", "aMANF"], ["bMAN", "bMANC", "bMANF"], ["CM1", "CM1C", "CM1F"], ["CM2", "CM2C", "CM2F"], ["CTS", "CTSC", "CTSF"], ["[HAM", "HAMC", "HAMF"], ["AP", "APC", "APF"], ["CA", "CAC", "CAF"], ["IE", "IEC", "IEF"], ["HDZ", "HDZC", "HDZF"], ["PK", "PKC", "PKF"], ["HHT", "HHTC", "HHTF"], ["HI", "HIC", "HIF"], ["DD", "DDC", "DDF"], ["CC", "CCC", "CCF"], ["HY", "HYC", "HYF"], ["TH", "THC", "THF"], ["CP", "CPC", "CPF"], ["PHA", "PHAC", "PHAF"], ["NS", "NSC", "NSF"], ["ICM", "ICMC", "ICMF"], ["OH", "OHC", "OHF"], ["OD", "ODC", "ODF"], ["GC", "GCC", "GCF"], ["MSUD", "MSUDC", "MSUDF"], ["HP", "HPC", "HPF"], ["NCL", "NCLC", "NCLF"], ["NPD", "NPDC", "NPDF"], ["TP", "TPC", "TPF"], ["A", "A", "A*"], ["BMS", "BMSC", "BMSF"], ["HG", "HGC", "HGF"], ["PP", "POC", "POF"], ["Pp", "POS", "POF"], ["Черн. окрас", "BC", "BF"], ["Красн. окрас", "RC", "RF"], ["POR", "POR"], ["RTF", "RTF"]], "method": "anomaly", "ready": True},
             {"method": "order", "data": {}},
             {"method": "token", "data": ""},

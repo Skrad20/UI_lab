@@ -318,12 +318,11 @@ def check_error_ms(
                 pass
             else:
                 if number > 0:
-                    QMessageBox.information(
-                        None,
-                        'Инфорамция',
+                    name = (
                         f'Животного {number_animal}' +
                         f' нет в данных. Проба {number}'
                     )
+                    logger.info(name)
                 continue
             print("Анализ ошибок" + str(number))
             df_animal_prof = df_profil.query(
@@ -364,7 +363,8 @@ def check_error_ms(
                     value_mutter_ms = val
                     if value_mutter_ms != '-':
                         logger.debug(
-                            f"Values MS mutter: {value_mutter_ms}, locus {locus}"
+                            f"Values MS mutter: {value_mutter_ms}, " +
+                            f"locus {locus}"
                             )
                         locus_a = locus.split('_mutter')[0]
                         value_animal_ms = df_animal_prof.get(locus_a, 1)
