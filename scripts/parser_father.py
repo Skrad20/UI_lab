@@ -74,7 +74,7 @@ def parser_ms(number_page, token):
         )
 
 
-def filter_id_bus(number: str) -> list:
+def filter_id_bus(number: str, name: str = '') -> list:
     try:
         params = [
             {"value": 0, "im": "Общая база быков", "field": "", "method": "data_base", "group": "", "ready": True},
@@ -92,13 +92,18 @@ def filter_id_bus(number: str) -> list:
         url = 'https://xn--90aof1e.xn--p1ai/api/filter/1'
 
         response = requests.put(url, json=params)
-        print(response.json())
+        count = 0
         token = response.json().get('token')
-        if len(response.json().get('idArray')) > 0:
-            number_page = response.json().get('idArray')[0]
-            return number_page, token
-        else:
-            return -1, token
+
+        while len(response.json().get('idArray')) > count:
+            number_page = response.json().get('idArray')[count]
+            nickname = response.json().get('data')[count].get("klichka")
+            print(nickname)
+            if nickname.lower() == name.lower():
+                return number_page, token
+            count += 1
+
+        return -1, token
     except Exception as e:
         name = '\nparser_def.py.py\nfilter_id_bus\n '
         QMessageBox.critical(
@@ -109,7 +114,7 @@ def filter_id_bus(number: str) -> list:
 
 
 if __name__ == "__main__":
-    number_page, token = filter_id_bus(294)
+    number_page, token = filter_id_bus(9, "бизайн")
     print(number_page, token)
     df = parser_ms(number_page, token)
     print(df)

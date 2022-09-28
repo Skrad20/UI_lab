@@ -9,6 +9,7 @@ from .windows_classes import (
 )
 
 from func.func_answer_error import answer_error
+from func.update_database_father import donwload_data, update_db
 from setting import IS_TEST as is_test
 
 adres_job = ''
@@ -58,10 +59,25 @@ class GeneralWindow(QMainWindow):
             'Анализ ISSR',
             text='Методы для ISSR анализа',
         )
+        self.window.button_creat(
+            self.updata_basedata,
+            'Обновление базы данных',
+            text='Скачать обновления по быкам',
+        )
         self.window.button_creat(self.show_about_programm, 'О программе')
         if is_test:
             self.window.button_creat(self.show_window_tests, 'Тест')
         self.window.show()
+
+    def updata_basedata(self) -> None:
+        """Добавляет данные по МС быков в базу данных"""
+        path = donwload_data()
+        update_db(path)
+        QMessageBox.information(
+            self,
+            'Обновление',
+            'База данных обновлена'
+        )
 
     def show_window_MS(self) -> None:
         """Отрисовывает окно анализа микросателлитов."""

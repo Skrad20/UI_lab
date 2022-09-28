@@ -356,14 +356,14 @@ def upload_data_db_for_searh_father() -> pd.DataFrame:
     return df
 
 
-def upload_data_db_for_creat_pass():
+def upload_data_db_for_creat_pass() -> pd.DataFrame:
     """
     Загружает данные по отцам из базы для паспартов.
     ----------------------
     Параметры:
     ----------------------
     Возвращаемое значение:
-        res (pd.DataFrame): датасет с данными по быкам.
+        df (pd.DataFrame): датасет с выгруженными данными.
     """
     logger.debug("Start upload_data_db_for_creat_pass")
     list_col = [

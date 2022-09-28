@@ -89,7 +89,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
         return upload_data_db_for_creat_pass()
     except Exception as e:
         logger.error(e)
-        name = '\nparser_def.py.py\nadd_missing\n '
+        name = '\nparser_def.py.py\nadd_missing\n'
         QMessageBox.critical(
             None,
             'Ошибка ввода',
