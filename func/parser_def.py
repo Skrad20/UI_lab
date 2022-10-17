@@ -112,15 +112,17 @@ def parser_ms_dad(number: int, name: str, farm: str) -> int:
     """
     try:
         print(number)
-        number_page, token = filter_id_bus(str(number))
-        df = parser_ms(number_page, token)
-        i = 0
-        df = df.reset_index(drop=True)
         query = BullFather.select().where(
             BullFather.number == number
         )
+        if query.exists():
+            return 1
+        number_page, token = filter_id_bus(str(number), name)
+        df = parser_ms(number_page, token)
+        i = 0
+        df = df.reset_index(drop=True)
 
-        if df.iloc[0, 0] != 1 and query.exists():
+        if df.iloc[0, 0] != 1:
             bus = BullFather(
                 name=name,
                 number=number,
@@ -176,6 +178,7 @@ def parser_ms(number_page, token):
         soup = BeautifulSoup(response_page.text, 'lxml')
 
         res = soup.find_all('div', attrs={'class': 'fl_l'})
+
         out_res = '6666666666666666666'
         for row in res:
             if check_ms_in_cell(str(row)):
@@ -213,7 +216,7 @@ def parser_ms(number_page, token):
         )
 
 
-def filter_id_bus(number: str) -> list:
+def filter_id_bus(number: str, name: str = '') -> list:
     """
     Отфильтровывает данные с сайта быки.рф.
     Возращает номер страницы и токен авторизации.
@@ -242,13 +245,18 @@ def filter_id_bus(number: str) -> list:
         url = 'https://xn--90aof1e.xn--p1ai/api/filter/1'
 
         response = requests.put(url, json=params)
-
+        count = 0
         token = response.json().get('token')
-        if len(response.json().get('idArray')) > 0:
-            number_page = response.json().get('idArray')[0]
-            return number_page, token
-        else:
-            return -1, token
+
+        while len(response.json().get('idArray')) > count:
+            number_page = response.json().get('idArray')[count]
+            nickname = response.json().get('data')[count].get("klichka")
+            print(nickname, name, nickname == name, nickname.lower() == name.lower())
+            if nickname.lower().strip() == name.lower().strip():
+                return number_page, token
+            count += 1
+
+        return -1, token
     except Exception as e:
         name = '\nparser_def.py.py\nfilter_id_bus\n '
         QMessageBox.critical(
@@ -256,3 +264,8 @@ def filter_id_bus(number: str) -> list:
             'Ошибка ввода',
             (f'{answer_error()}{name}Подробности:\n {e}')
         )
+
+
+if __name__ == "__main__":
+    text = "<div class=\"fl_l\">BM1824_180/182,</div>"
+    print(check_ms_in_cell(text))

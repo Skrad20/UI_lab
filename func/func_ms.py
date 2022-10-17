@@ -414,6 +414,7 @@ def check_error_ms(
 def verification_ms(one_ms: str, second_ms: str) -> bool:
     """Возращает True, если данные МС неподходят"""
     try:
+        print(one_ms, second_ms)
         one_ms = one_ms.replace(" ", '')
         second_ms = second_ms.replace(" ", '')
         logger.debug("start verification_ms")
@@ -471,7 +472,7 @@ def data_verification(context: dict) -> dict:
     ]
     try:
         for key in list_keys:
-            child = context.get(key)
+            child = context.get(key, context.get(key.replace("0", "")))
             father = context.get(key+'_father')
             mutter = context.get(key+'_mutter')
             logger.debug(
@@ -490,7 +491,12 @@ def data_verification(context: dict) -> dict:
             ):
                 if verification_ms(child, father):
                     context[key] = RichText(
-                        context.get(key),
+                        context.get(key, context.get(key.replace("0", ""))),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key.replace("0", "")] = RichText(
+                        context.get(key, context.get(key.replace("0", ""))),
                         color='#ff0000',
                         bold=True
                     )
@@ -512,6 +518,11 @@ def data_verification(context: dict) -> dict:
                 if verification_ms(child, mutter):
                     context[key] = RichText(
                         context.get(key),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key.replace("0", "")] = RichText(
+                        context.get(key, context.get(key.replace("0", ""))),
                         color='#ff0000',
                         bold=True
                     )

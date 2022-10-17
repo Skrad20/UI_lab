@@ -98,8 +98,8 @@ def filter_id_bus(number: str, name: str = '') -> list:
         while len(response.json().get('idArray')) > count:
             number_page = response.json().get('idArray')[count]
             nickname = response.json().get('data')[count].get("klichka")
-            print(nickname)
-            if nickname.lower() == name.lower():
+            print(nickname, name, nickname == name, nickname.lower() == name.lower())
+            if nickname.lower().strip() == name.lower().strip():
                 return number_page, token
             count += 1
 
@@ -114,7 +114,26 @@ def filter_id_bus(number: str, name: str = '') -> list:
 
 
 if __name__ == "__main__":
-    number_page, token = filter_id_bus(9, "бизайн")
-    print(number_page, token)
-    df = parser_ms(number_page, token)
-    print(df)
+    dict_query: dict = {
+        "Маршал": 1073,
+    }
+    flag: bool = True
+    for name, number in dict_query.items():
+        number_page, token = filter_id_bus(number, name)
+        print(number_page, token)
+        if flag:
+            res_data: pd.DataFrame = parser_ms(number_page, token)
+            res_data["name"] = name
+            res_data["number"] = number
+            flag = False
+        else:
+            temp: pd.DataFrame = parser_ms(number_page, token)
+            temp["name"] = name
+            temp["number"] = number
+            res_data = pd.concat([res_data, temp])
+
+    res_data.to_csv(
+        "scripts/sub_data/res_search_bus.csv",
+        sep=';',
+        encoding='cp1251',
+    )
