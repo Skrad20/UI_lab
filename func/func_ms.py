@@ -15,7 +15,8 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QTableWidgetItem)
 
 from func.db_job import (save_bus_data, upload_bus_data,
-                         upload_data_db_for_searh_father, upload_fater_data)
+                         upload_data_db_for_searh_father, upload_fater_data,
+                         save_bus_data_fater)
 from func.func_answer_error import answer_error
 from .config_pars import ConfigMeneger
 from .parser_def import add_missing
@@ -221,9 +222,9 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
 
 def ms_out_word(adres: str) -> pd.DataFrame:
     '''Переводит данные из word в csv.'''
-    doc = read_file(adres)
+    doc: pd.DataFrame = read_file(adres)
     doc.columns = ['ms', 'ms_size', 'vater', 'mom']
-    msatle = [
+    msatle: list = [
         'name', 'numer', 'vater', 'number_vater',
         'BM1818', 'BM1824',
         'BM2113', 'CSRM60', 'CSSM66',
@@ -641,6 +642,50 @@ def check_conclusion(context: dict) -> str:
     return res
 
 
+def tarasform_data_for_database(data: pd.DataFrame, farm: str) -> None:
+    """Трансформирует  даннные для передачив базу данных."""
+    df: pd.DataFrame = data.iloc[:, [0, 1, 2]]
+    df.columns = ["number", "name", "prof"]
+    df = df.dropna()
+    df = df.drop_duplicates(subset=['number']).reset_index(drop=True)
+
+    list_locus: list = [
+        "BM1818", "BM1824", "BM2113",
+        "CSRM60", "CSSM66", "CYP21",
+        "ETH10", "ETH225", "ETH3",
+        "ILSTS6", "INRA023", "RM067",
+        "SPS115", "TGLA122", "TGLA126",
+        "TGLA227", "TGLA53", "MGTG4B",
+        "SPS113",
+    ]
+    df[list_locus] = "-"
+
+    def split__(str_input: str) -> list:
+        return str_input.split("_")
+
+    def split_locus(row: str) -> pd.Series:
+        list_in_locus = row.split("  - ")
+        return pd.Series(dict(map(split__, list_in_locus)))
+
+    res: pd.Series = df['prof'].apply(split_locus)
+
+    for col in list_locus:
+        if col in res.columns:
+            df[col] = res[col]
+
+    df: pd.DataFrame = df.fillna('-')
+    df['prof'] = farm
+    df = df.rename(columns={
+        "prof": "Хозяйство",
+        "number": "Инвертарный номер",
+        "name": "Имя",
+        }
+    )
+    for i in range(len(df)):
+        temp = (df.iloc[i, :]).reset_index(drop=True)
+        save_bus_data_fater(temp)
+
+
 def creat_doc_pas_gen(
     adres_invertory: str,
     adres_genotyping: str,
@@ -653,7 +698,13 @@ def creat_doc_pas_gen(
         now = datetime.datetime.now()
         list_father_non = []
         date = now.strftime("%d-%m-%Y")
-        df = read_file(adres_invertory)
+        df: pd.DataFrame = read_file(adres_invertory)
+        df: pd.DataFrame = df.iloc[:, :8]
+        df_data_bull: pd.DataFrame = df.iloc[:, 5:8]
+        if len(df_data_bull) == 3:
+            tarasform_data_for_database(df_data_bull, farm)
+
+        df: pd.DataFrame = df.iloc[:, :7]
         df.columns = [
             'number_animal',
             'name_animal',
@@ -663,8 +714,8 @@ def creat_doc_pas_gen(
             'number_father',
             'name_father',
         ]
-        df_faters = add_missing(df, farm)
-        df_profil = read_file(adres_genotyping)
+        df_faters: pd.DataFrame = add_missing(df, farm)
+        df_profil: pd.DataFrame = read_file(adres_genotyping)
         try:
             df_profil['num'] = df_profil.apply(
                 delit,
