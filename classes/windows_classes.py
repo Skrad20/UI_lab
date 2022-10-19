@@ -1066,7 +1066,7 @@ class WindowSearchFarher(Window_main):
         super().__init__(name)
         log_2 = Logs(name='Поиск отцов')
         log_2.save()
-        self.hosbut_all = {
+        self.farms_all = {
             'Выбрать всех': False
         }
         text_2 = 'Выберите хозяйства'
@@ -1075,45 +1075,31 @@ class WindowSearchFarher(Window_main):
         self.vb.addWidget(labe_text_2)
         farmers = upload_data_farmers_father()
         list_farmers = list(farmers)
-        list_farmers_in = []
-        for i in range(len((list_farmers))):
-            try:
-                split_farm = list_farmers[i].split(', ')
-                for name in split_farm:
-                    name = name.replace(' ', '')
-                    list_farmers_in.append(name)
-            except Exception as e:
-                QMessageBox.critical(
-                    self,
-                    'Ошибка ввода',
-                    f'{answer_error()} Подробности:\n {e}'
-                )
 
         farmers_end = []
-        for farme in list_farmers_in:
-            if farme is np.nan:
+        for farms in list_farmers:
+            if farms is np.nan:
                 pass
-            elif farme == 'nan':
+            elif farms == 'nan':
                 pass
             else:
-                farmers_end.append(farme)
+                farmers_end.append(farms)
 
         farmers_end.append('Выбрать всех')
         farmers_end = list(set(farmers_end))
-        hosbut = farmers_end.copy()
-        hosbut_chek = {
+        farms_chek = {
         }
-        for name in hosbut:
-            hosbut_chek[name] = QCheckBox(name, self)
-            hosbut_chek[name].stateChanged.connect(
+        for name in farmers_end:
+            farms_chek[name] = QCheckBox(name, self)
+            farms_chek[name].stateChanged.connect(
                 lambda checked,
                 res=name: self.check_answer(checked, res)
             )
         cp_layout1 = QGridLayout()
         j = 0
         x = 0
-        for i in range(len(hosbut)):
-            item = hosbut_chek[hosbut[i]]
+        for i in range(len(farmers_end)):
+            item = farms_chek[farmers_end[i]]
             cp_layout1.addWidget(item, j, x)
             x += 1
             if x > 2:
@@ -1127,11 +1113,11 @@ class WindowSearchFarher(Window_main):
 
     def check_answer(self, state, res='s'):
         if state == Qt.Checked:
-            self.hosbut_all[res] = True
-            print(self.hosbut_all)
+            self.farms_all[res] = True
+            print(self.farms_all)
         else:
-            self.hosbut_all[res] = False
-            print(self.hosbut_all)
+            self.farms_all[res] = False
+            print(self.farms_all)
 
     def res_search_cow_father(self, class_func=None) -> None:
         '''Вызывает функции анализа и поиска отцов'''
@@ -1141,7 +1127,8 @@ class WindowSearchFarher(Window_main):
         self.button_oprn_file.clicked.connect(self.open_file_result)
 
         try:
-            df = search_father(self.adres, self.hosbut_all)
+            df = search_father(self.adres, self.farms_all)
+            logger.debug(df)
             self.table_wiew = ResOut(df)
             dialog = WindowResulWiew(
                 self.table_wiew,
@@ -1162,7 +1149,7 @@ class WindowSearchFarher(Window_main):
         self.window = WindowTableEnterDataSF(
             None,
             'Biotech Lab: enter data',
-            self.hosbut_all, self)
+            self.farms_all, self)
         self.window.show()
         self.window.exec_()
 
@@ -1275,9 +1262,9 @@ class WindowResulWiew(MainDialog):
 
 class WindowTableEnterDataSF(MainDialog):
     """Окно для для ввода данных по потомку."""
-    def __init__(self, table, name, hosbut_all, parent):
+    def __init__(self, table, name, farms_all, parent):
         super().__init__(table, name, parent=parent)
-        self.hosbut_all = hosbut_all
+        self.farms_all = farms_all
         self.model = QStandardItemModel(19, 1)
         self.tableView = QTableView()
         header_labels = ['Потомок']
@@ -1327,7 +1314,7 @@ class WindowTableEnterDataSF(MainDialog):
             r'\bus_search_in_table.csv'
         )
         try:
-            df = search_father(adres_job_search_father, self.hosbut_all)
+            df = search_father(adres_job_search_father, self.farms_all)
             self.table_wiew = ResOut(df)
             dialog = WindowResulWiew(
                 self.table_wiew,

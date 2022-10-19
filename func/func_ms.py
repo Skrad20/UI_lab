@@ -142,7 +142,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
 
 
 def split_hosbut_father(row):
-    if type(row['farm']) == str:
+    if type(row['farm']) == str and "," in row['farm']:
         row['farm'] = row['farm'].split(', ')
 
 
@@ -154,70 +154,101 @@ def is_float(s):
         return False
 
 
-def filer_father(hosbut: dict) -> pd.DataFrame:
+def filer_father(farms: dict) -> pd.DataFrame:
+    logger.debug("Start filter_father")
     df = upload_data_db_for_searh_father()
-    if hosbut['Выбрать всех']:
+    if farms['Выбрать всех']:
         return df.drop('farm', axis=1)
     df.apply(split_hosbut_father, axis=1)
-    list_hosbut = []
-    for key, item in hosbut.items():
+    list_farms = []
+    for key, item in farms.items():
         if item:
             if key != 'Выбрать всех':
-                list_hosbut.append(key)
+                list_farms.append(key)
     list_res = []
     for i in range(len(df)):
         if not is_float(df.iloc[i, 1]):
             len_ = len(df.iloc[i, 2])
             for j in range(len_):
-                print(df.iloc[i, 2][j], df.iloc[i, 1], list_hosbut)
-                print(df.iloc[i, 2][j] in list_hosbut)
-                if df.iloc[i, 2][j] in list_hosbut:
+                print(df.iloc[i, 2][j], df.iloc[i, 1], list_farms)
+                print(df.iloc[i, 2][j] in list_farms)
+                if df.iloc[i, 2][j] in list_farms:
                     list_res.append(df.iloc[i, :])
         else:
-            if df.iloc[i, 2] in list_hosbut:
+            if df.iloc[i, 2] in list_farms:
                 list_res.append(df.iloc[i, :])
+
+    logger.debug("Filter_father: tansform result")
     df_res = pd.DataFrame(data=list_res)
-    df = df_res.reset_index(drop=True)
-    df['farm'] = df.pop('farm')
-    return df
+    df_res.reset_index(drop=True)
+    logger.debug("End filter_father")
+    return df_res.drop('farm', axis=1)
 
 
 def search_father(adres: str, filter: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
-    df = filer_father(filter)
-    df_search = read_file(adres)
-    df_search = df_search.T
-    df = df.fillna('-')
-    df = df.replace('  ', '')
-    df_search = df_search.fillna('-')
-    df_search = df_search.reset_index()
-    df_search.columns = df_search.loc[0, :]
-    df_search = df_search.drop(0)
-    df_res = df.copy()
-    for i in range(2, len(df_search.columns)):
-        for j in range(len(df_res)):
-            if df_search.iloc[0, i-1] != '-':
-                locus = df_search.iloc[0, i-1].split('/')
-                if (
-                    df_res.iloc[j, i] != '-' and
-                    str(df_res.iloc[j, i]) != 'nan'
-                ):
-                    locus_base = df_res.iloc[j, i].split('/')
+    try:
+        logger.debug("Start add_search_father")
+        logger.debug("Load data father")
+        df = filer_father(filter)
+
+        logger.debug("Data transform")
+        df_search = read_file(adres)
+        df_search = df_search.T
+        df = df.fillna('-')
+        df = df.replace('  ', '')
+        df_search = df_search.fillna('-')
+        df_search = df_search.reset_index()
+        df_search.columns = df_search.loc[0, :]
+        df_search = df_search.drop(0).reset_index(drop=True)
+        df_res = df.copy().reset_index(drop=True)
+
+        logger.debug("Cycle search")
+        for col in df_search.columns[1:]:
+            for j in range(0, len(df_res)):
+                logger.debug(
+                    f"Cycle search: col - {col}, j - {j}," +
+                    f" len df_s_col - {len(df_search.columns)}," +
+                    f"  len df_r - {len(df_res)}"
+                )
+                if df_search.loc[0, col] != '-':
+                    logger.debug("Comparison, level 1")
+                    locus = df_search.loc[0, col].strip().split('/')
                     if (
-                        locus[0] != locus_base[0] and
-                        locus[1] != locus_base[0] and
-                        locus[0] != locus_base[1] and
-                        locus[1] != locus_base[1]
+                        df_res.loc[j, col] != '-' and
+                        str(df_res.loc[j, col]) != 'nan'
                     ):
-                        df_res.iloc[j, i] = np.nan
-    df_res = df_res.dropna()
-    df_res.to_csv(
-        r'func\data\search_fatherh\bus_search.csv',
-        sep=';',
-        decimal=',',
-        encoding='cp1251'
-    )
-    return df_res
+                        locus_base = df_res.loc[j, col].strip().split('/')
+                        logger.debug("Comparison search_father")
+                        logger.debug("locus" + str(locus))
+                        logger.debug("locus_base" + str(locus_base))
+                        if (
+                            locus[0] != locus_base[0] and
+                            locus[1] != locus_base[0] and
+                            locus[0] != locus_base[1] and
+                            locus[1] != locus_base[1]
+                        ):
+                            logger.debug("Inner comparison")
+                            df_res.loc[j, col] = np.nan
+            df_res = df_res.dropna().reset_index(drop=True)
+        logger.debug("Cycle end")
+        df_res.to_csv(
+            r'func\data\search_fatherh\bus_search.csv',
+            sep=';',
+            decimal=',',
+            encoding='cp1251'
+        )
+        logger.debug("End search_father")
+        return df_res
+    except Exception as e:
+        logger.error("Error search_father")
+        logger.error(e)
+        name = 'search_father'
+        QMessageBox.critical(
+            None,
+            'Ошибка',
+            f'{answer_error()} \n{name}\nПодробности:\n {e}'
+        )
 
 
 def ms_out_word(adres: str) -> pd.DataFrame:
