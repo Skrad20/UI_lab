@@ -24,12 +24,12 @@ def donwload_data() -> str:
 
 def update_db(path: str) -> None:
      df = pd.read_excel(path)
-     df = df.drop_duplicates(subset=['number']).reset_index(drop=True)
+     df = df.reset_index(drop=True)
      for i in range(len(df)):
           query = BullFather.select().where(
-               BullFather.number == df.loc[i, 'number']
+               BullFather.number == df.loc[i, 'number'],
+               BullFather.farm == df.loc[i, 'farms'],
           )
-          
           if query.exists():
                pass
           else:

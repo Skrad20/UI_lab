@@ -29,7 +29,6 @@ class BaseModelAnimal(pw.Model):
     number = pw.IntegerField(
         null=False,
         verbose_name='Инвертарный номер животного',
-        unique=True,
     )
     farm = pw.CharField(
         verbose_name='Название хозяйства',

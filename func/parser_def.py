@@ -113,7 +113,8 @@ def parser_ms_dad(number: int, name: str, farm: str) -> int:
     try:
         print(number)
         query = BullFather.select().where(
-            BullFather.number == number
+            BullFather.number == number,
+            BullFather.farm == farm
         )
         if query.exists():
             return 1

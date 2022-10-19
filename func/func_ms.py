@@ -643,7 +643,7 @@ def check_conclusion(context: dict) -> str:
 
 
 def tarasform_data_for_database(data: pd.DataFrame, farm: str) -> None:
-    """Трансформирует  даннные для передачив базу данных."""
+    """Трансформирует даннные для передачив базу данных."""
     df: pd.DataFrame = data.iloc[:, [0, 1, 2]]
     df.columns = ["number", "name", "prof"]
     df = df.dropna()

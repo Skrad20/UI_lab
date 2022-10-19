@@ -56,7 +56,8 @@ def save_bus_data(dt_in: dict) -> None:
     """
     logger.debug("Start save_bus_data")
     query = ProfilsCows.select().where(
-        ProfilsCows.number == dt_in.get("number_animal")
+        ProfilsCows.number == dt_in.get("number_animal"),
+        ProfilsCows.farm == dt_in.get("hosbut"),
     )
     try:
         if query.exists():
