@@ -752,6 +752,7 @@ def creat_doc_pas_gen(
         ]
         df_faters: pd.DataFrame = add_missing(df, farm)
         df_profil: pd.DataFrame = read_file(adres_genotyping)
+        logger.debug("Data passed")
         try:
             df_profil['num'] = df_profil.apply(
                 delit,
@@ -767,14 +768,18 @@ def creat_doc_pas_gen(
                 'Ошибка ввода',
                 f'{answer_error()} {name}Подробности:\n {e}'
             )
+        logger.debug("Passed step 1")
         df_profil['num'] = df_profil['num'].astype('int')
         df = df.fillna(0)
         series_num = list(df_profil['num'])
+        logger.debug("Passed step 2")
         series_proba = list(df['number_proba'].astype('int'))
+        logger.debug("Passed step 3")
         df_profil['Sample Name'] = df_profil.pop('num')
         df_profil = df_profil.rename(columns={'Sample Name': 'num'})
         df_profil = df_profil.fillna(0)
         df_profil = df_profil.astype('int')
+        logger.debug("Passed step 4")
         for i in range(1, len(df_profil.columns), 2):
             j = i + 1
             col1 = df_profil.columns[i]
@@ -787,6 +792,7 @@ def creat_doc_pas_gen(
                 col2=col2,
                 axis=1
             )
+        logger.debug("Passed step 5")
         df_profil_end = df_profil.iloc[:, -15:]
         df_profil_end['num'] = df_profil['num']
         df = df.astype('str')

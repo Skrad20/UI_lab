@@ -1001,7 +1001,7 @@ class WindowGenPassWord(Window_main):
         )
         dialog.exec_()
 
-    def fenster_enter_data(self) -> list[str, bool]:
+    def fenster_enter_data(self) -> list:
         '''
         Выводит окно ввода данных по названию хозяйства.
             Параметры:
