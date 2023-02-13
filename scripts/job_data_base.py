@@ -19,7 +19,7 @@ class JobDataBaseBullFather:
     def delete_bull(number):
         res = (
             BullFather
-            .get(BullFather.number > number)
+            .get(BullFather.number == number)
         )
         res.delete_instance()
 
@@ -39,6 +39,6 @@ class JobDataBaseBullFather:
 
 if __name__ == "__main__":
     instance = JobDataBaseBullFather()
-    for _ in range(376):
-        instance.delete_bull(0)
+    for number in [691, 1056, 397, 998, 704, 816]:
+        instance.delete_bull(number)
     print('Ok')

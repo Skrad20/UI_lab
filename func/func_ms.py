@@ -65,9 +65,14 @@ def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
 
 def delit(row: dict, delitel: str, col: str) -> str:
     '''Разделение строки по делителю.'''
-    num = row[col]
-    num = num.split(delitel)
-    return num[-1]
+    try:
+        num = row[col]
+        num = num.split(delitel)
+        return num[-1]
+    except Exception as e:
+        logger.error(e)
+        logger.error(col)
+        logger.error(str(row[col]))
 
 
 def ms_clutch(row: dict, col1: str, col2: str) -> str:
