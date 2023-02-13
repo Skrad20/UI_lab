@@ -30,7 +30,7 @@ class FormEnterFarmName(QDialog):
         "Сохраняет текст в свойствах класса"
         self.res_mutter_analis = bool(checked)
 
-    def button_click(self) -> list[str, bool]:
+    def button_click(self) -> list:
         '''
         Возвращает название хозяйства и булевое значение
         необходимости обработки матерей

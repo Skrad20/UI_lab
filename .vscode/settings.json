@@ -1,4 +1,12 @@
 {
     "python.linting.flake8Enabled": true,
-    "python.linting.enabled": true
+    "python.linting.enabled": true,
+    "sqltools.connections": [
+        {
+            "previewLimit": 50,
+            "driver": "SQLite",
+            "database": "${workspaceFolder:UI_lab}/db.sqlite3",
+            "name": "й"
+        }
+    ]
 }
