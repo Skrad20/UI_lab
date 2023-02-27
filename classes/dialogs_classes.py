@@ -17,10 +17,28 @@ class MainDialog(QDialog):
         self.tabl = table
 
     def botton_closed(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.close()
 
     def initUI(self, name):
         """Конструктор формы"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.center()
         self.setMinimumWidth(1000)
         self.setMinimumHeight(500)
@@ -30,6 +48,15 @@ class MainDialog(QDialog):
 
     def center(self):
         """Центрирует окно"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().topLeft()
         qr.moveCenter(cp)
@@ -38,6 +65,15 @@ class MainDialog(QDialog):
 
     def eventFilter(self, source, event):
         '''Отслеживание событий вставки или копирования.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             if event.type() == QEvent.KeyPress:
                 if event == QKeySequence.Copy:
@@ -70,6 +106,15 @@ class MainDialog(QDialog):
 
     def copySelection(self):
         '''Копирование данных ctrl+С.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.clipboard.clear()
         selected = self.tableView.selectedIndexes()
         rows = []
@@ -105,6 +150,15 @@ class MainDialog(QDialog):
 
     def pasteSelection(self):
         '''Вставка данных ctrl+V.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         table = QApplication.clipboard()
         mime = table.mimeData()
         data = mime.data('text/plain')

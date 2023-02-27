@@ -2,8 +2,7 @@ from models.models import BullFather
 
 
 res = (BullFather
-       .get(BullFather.number == True)
+       .get(True)
        )
 
-print(res)
 res.delete_instance()

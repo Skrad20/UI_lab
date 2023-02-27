@@ -29,12 +29,30 @@ class GeneralWindow(QMainWindow):
         self.setCentralWidget(self.table_widget)
 
     def flashSplash(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.splash = QSplashScreen(QPixmap('./data/error.png'))
         self.splash.show()
         QTimer.singleShot(2000, self.splash.close)
 
     def initUI(self):
         """Конструктор геометрии."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.setGeometry(300, 300, 300, 220)
         self.setWindowTitle('Icon')
         self.setWindowIcon(QIcon(r'data\icon.jpg'))
@@ -42,6 +60,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_biotech(self) -> None:
         """Отрисовывает окно биотеха."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.window = Window_main('Biotech Lab')
         self.window.setObjectName('Biotech_window')
         text = (
@@ -71,6 +98,15 @@ class GeneralWindow(QMainWindow):
 
     def updata_basedata(self) -> None:
         """Добавляет данные по МС быков в базу данных"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         path = donwload_data()
         update_db(path)
         QMessageBox.information(
@@ -81,6 +117,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_MS(self) -> None:
         """Отрисовывает окно анализа микросателлитов."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = Window_main('Biotech Lab: Microsatellite analysis')
             self.window.button_creat(
@@ -115,6 +160,15 @@ class GeneralWindow(QMainWindow):
 
     def add_vater(self):
         '''Добавление отца в базу по быкам.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowAddFatter(
                 'Biotech Lab: Microsatellite analysis. Add father'
@@ -135,6 +189,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_MS_aus_word(self) -> None:
         '''Отрисовывает окно отбора данных из  Word.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowMSAusWord(
                 'Biotech Lab: Microsatellite analysis. Aus word'
@@ -169,6 +232,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_MS_serch_father(self) -> None:
         '''Отрисовывает окно поиска отцов.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowSearchFarher(
                 'Biotech Lab: Microsatellite analysis. Search father'
@@ -199,6 +271,15 @@ class GeneralWindow(QMainWindow):
 
     def show_creat_pass_doc_gen(self) -> None:
         '''Отрисовывает окно генерации паспортов.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowGenPassWord(
                 'Biotech Lab: Microsatellite analysis. Generation password'
@@ -215,6 +296,15 @@ class GeneralWindow(QMainWindow):
 
     def show_about_programm(self):
         '''Отрисовывает окно о программе.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowAbout('Biotech Lab: about programm')
             self.window.setObjectName('WindowAbout')
@@ -243,6 +333,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_ISSR(self) -> None:
         '''Отрисовывает окно ISSR.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             self.window = WindowISSR('Biotech Lab: ISSR analysis')
             self.window.button_creat(self.show_window_biotech, 'На главную')
@@ -256,6 +355,15 @@ class GeneralWindow(QMainWindow):
 
     def open_file(self) -> None:
         """Сохраняет путь к файлу"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.file_adres = QFileDialog.getOpenFileName(
             self,
             'Open File',
@@ -265,6 +373,15 @@ class GeneralWindow(QMainWindow):
 
     def show_window_tests(self):
         """Окно для тестирования новых функций"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         QMessageBox.critical(
             self,
             'Что-то пошло не так',
@@ -293,5 +410,14 @@ class GeneralWindow(QMainWindow):
         return f'Запуск успешен. Переменные среды: {self.file_adres}'
 
     def open_second_window(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.window = SecondWindow(self)
         self.window.show()

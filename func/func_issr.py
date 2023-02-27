@@ -11,6 +11,15 @@ tqdm.pandas()
 
 def ga_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     genotype = 'G'
     size_ga = row['GA']
     if 2500 < size_ga:
@@ -135,6 +144,15 @@ def ga_issr(row) -> str:
 
 def ag_issr(row) -> str:
     """Функция определения принадлежности данных к аллели"""
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     genotype = 'A'
     size_ga = row['AG']
     if 2500 < size_ga:
@@ -258,7 +276,19 @@ def ag_issr(row) -> str:
 
 
 def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
-    """функция для транспонирования таблицы"""
+    """
+    Возвращает транспонированную таблицу.
+    Описание
+
+    Параметры:
+    ----------
+        df: pd.DataFrame
+        index_zahl: pd.DataFrame
+    
+    Возвращает:
+    -----------
+        result_end_1: pd.DataFrame
+    """
     result_end_1 = pd.DataFrame()
     b = len(index_zahl)
     for i in range(b):
@@ -277,7 +307,16 @@ def data_transpose(df: pd.DataFrame, index_zahl: pd.DataFrame) -> pd.DataFrame:
 
 
 def issr_analit_func(adres: str) -> pd.DataFrame:
-    """Анлиза данных issr"""
+    """
+    Анлиза данных issr
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     # загрузка входных данных с раделителем по ячейкам и долевым ","
     df = read_file(adres)
     # Изменяем названия столбцов для удобства
@@ -315,7 +354,7 @@ def issr_analit_func(adres: str) -> pd.DataFrame:
     ga['animal'] = df['animal']
     ga['genotype'] = df['GA']
 
-    # функция выравнивания даннх по номерам. Проходим по циклом по всему ДФ
+    # функция выравнивания данных по номерам. Проходим по циклом по всему ДФ
     # если строка равна нулю то она получает значение предыдущей с префиксом
     # Если нет то остается имеющееся значение
 

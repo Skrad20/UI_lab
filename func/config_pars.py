@@ -3,11 +3,29 @@ import configparser
 
 
 class ConfigMeneger:
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     @staticmethod
     def createConfig():
         """
         Create a config file
         """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+    """
         path = "./func/settings.ini"
         config = configparser.ConfigParser()
         config.add_section("AdressOpen")
@@ -24,6 +42,15 @@ class ConfigMeneger:
         """
         Read config
         """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+    """
         path = "./func/settings.ini"
         if not os.path.exists(path):
             ConfigMeneger.createConfig()
@@ -39,6 +66,15 @@ class ConfigMeneger:
         """
         Update config
         """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+    """
         path = "./func/settings.ini"
         if not os.path.exists(path):
             ConfigMeneger.createConfig()

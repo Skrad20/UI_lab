@@ -1,3 +1,5 @@
+#!/usr/bin/python
+# -*- coding: utf-8 -*-
 from playhouse.migrate import SqliteDatabase, SqliteMigrator, migrate
 import peewee as pw
 

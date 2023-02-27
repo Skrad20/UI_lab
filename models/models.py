@@ -2,9 +2,7 @@
 # -*- coding: utf-8 -*-
 
 import datetime as dt
-
 import peewee as pw
-
 from setting import DB as db
 
 
@@ -135,6 +133,7 @@ class DescendantCow(BaseModelAnimal):
 
 
 class InvertoryCows(pw.Model):
+    """"""
     id = pw.AutoField()
     number = pw.IntegerField(
         null=False,
@@ -175,6 +174,7 @@ class InvertoryCows(pw.Model):
 
 
 class InvertoryCowsExample(InvertoryCows):
+    """"""
     id = pw.AutoField()
     number = pw.IntegerField(
         null=False,
@@ -339,15 +339,23 @@ class InvertoryCowsExample(InvertoryCows):
 
 
 class ProfilsCows(BaseModelAnimal):
-
+    """"""
     class Meta:
         database = db
         verbose_name = 'Результаты генотипирования коровы'
         table_name = 'ProfilsCows'
 
 
-class ProfilsCowsExample(BaseModelAnimal):
+class ProfilsCowsForPassword(BaseModelAnimal):
+    """"""
+    class Meta:
+        database = db
+        verbose_name = 'Результаты генотипирования для подбора матерей'
+        table_name = 'ProfilsCows'
 
+
+class ProfilsCowsExample(BaseModelAnimal):
+    """"""
     class Meta:
         database = db
         verbose_name = 'Результаты генотипирования коровы пример'
@@ -359,6 +367,7 @@ ProfilsCowsExample.create_table()
 InvertoryCowsExample.create_table()
 InvertoryCows.create_table()
 ProfilsCows.create_table()
+ProfilsCowsForPassword.create_table()
 Logs.create_table()
 BullFather.create_table()
 DescendantCow.create_table()

@@ -28,6 +28,15 @@ class FormEnterFarmName(QDialog):
 
     def check_box_answer(self, checked, res):
         "Сохраняет текст в свойствах класса"
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.res_mutter_analis = bool(checked)
 
     def button_click(self) -> list:
@@ -35,12 +44,30 @@ class FormEnterFarmName(QDialog):
         Возвращает название хозяйства и булевое значение
         необходимости обработки матерей
         '''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.text = self.le.text()
         self.close()
         return self.text, self.res_mutter_analis
 
     def initUI(self, name: str) -> None:
         """Конструктор формы"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.center()
         self.setFixedSize(400, 300)
         self.setWindowTitle(name)
@@ -49,6 +76,15 @@ class FormEnterFarmName(QDialog):
 
     def center(self) -> None:
         """Центрирует окно"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().topLeft()
         qr.moveCenter(cp)

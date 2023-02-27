@@ -137,6 +137,15 @@ class TitleBar(QWidget):
         self.setHeight()
 
     def showMaximized(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if self.buttonMaximum.text() == '1':
             # Максимизировать
             self.buttonMaximum.setText('2')
@@ -147,6 +156,15 @@ class TitleBar(QWidget):
 
     def setHeight(self, height=38):
         """ Установка высоты строки заголовка """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.setMinimumHeight(height)
         self.setMaximumHeight(height)
         # Задайте размер правой кнопки  ?
@@ -159,32 +177,95 @@ class TitleBar(QWidget):
 
     def setTitle(self, title):
         """ Установить заголовок """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.titleLabel.setText(title)
 
     def setIcon(self, icon):
         """ настройки значокa """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.iconLabel.setPixmap(icon.pixmap(self.iconSize, self.iconSize))
 
     def setIconSize(self, size):
         """ Установить размер значка """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.iconSize = size
 
     def enterEvent(self, event):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.setCursor(Qt.ArrowCursor)
         super(TitleBar, self).enterEvent(event)
 
     def mouseDoubleClickEvent(self, event):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(TitleBar, self).mouseDoubleClickEvent(event)
         self.showMaximized()
 
     def mousePressEvent(self, event):
         """ Событие клика мыши """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if event.button() == Qt.LeftButton:
             self.mPos = event.pos()
         event.accept()
 
     def mouseReleaseEvent(self, event):
         ''' Событие отказов мыши '''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.mPos = None
         event.accept()
 
@@ -200,6 +281,15 @@ Left, Top, Right, Bottom, LeftTop, RightTop, LeftBottom, RightBottom = range(8)
 
 class Window_main(QWidget):
     """Рабочее окно программы."""
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, name: str, *args, **kwargs):
         super(Window_main, self).__init__(*args, **kwargs)
         self.Margins = 5
@@ -239,14 +329,41 @@ class Window_main(QWidget):
 
     def setTitleBarHeight(self, height=38):
         """ Установка высоты строки заголовка """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.titleBar.setHeight(height)
 
     def setIconSize(self, size):
         """ Установка размера значка """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.titleBar.setIconSize(size)
 
     def setWidget(self, widget):
         """ Настройте свои собственные элементы управления """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if hasattr(self, '_widget'):
             return
         self._widget = widget
@@ -271,12 +388,30 @@ class Window_main(QWidget):
     def showMaximized(self):
         """ Чтобы максимизировать, удалите верхнюю, нижнюю, левую и правую границы.
             Если вы не удалите его, в пограничной области будут пробелы. """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).showMaximized()
         self.layout().setContentsMargins(0, 0, 0, 0)
 
     def showNormal(self):
         """ Восстановить, сохранить верхнюю и нижнюю левую и правую границы,
             иначе нет границы, которую нельзя отрегулировать """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).showNormal()
         self.layout().setContentsMargins(
             self.Margins, self.Margins, self.Margins, self.Margins)
@@ -284,6 +419,16 @@ class Window_main(QWidget):
     def eventFilter(self, obj, event):
         """ Фильтр событий, используемый для решения мыши в других элементах
             управления и восстановления стандартного стиля мыши """
+        
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if isinstance(event, QEnterEvent):
             self.setCursor(Qt.ArrowCursor)
         return super(Window_main, self).eventFilter(obj, event)
@@ -294,6 +439,15 @@ class Window_main(QWidget):
         граница с прозрачностью 1 рисуется в событии перерисовывания,
         чтобы отрегулировать размер окна.
         """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).paintEvent(event)
         painter = QPainter(self)
         painter.setPen(QPen(QColor(255, 255, 255, 1), 2 * self.Margins))
@@ -301,6 +455,15 @@ class Window_main(QWidget):
 
     def mousePressEvent(self, event):
         """ Событие клика мыши """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).mousePressEvent(event)
         if event.button() == Qt.LeftButton:
             self._mpos = event.pos()
@@ -308,12 +471,30 @@ class Window_main(QWidget):
 
     def mouseReleaseEvent(self, event):
         ''' Событие отказов мыши '''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).mouseReleaseEvent(event)
         self._pressed = False
         self.Direction = None
 
     def mouseMoveEvent(self, event):
         """ Событие перемещения мыши """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         super(Window_main, self).mouseMoveEvent(event)
         pos = event.pos()
         xPos, yPos = pos.x(), pos.y()
@@ -360,6 +541,15 @@ class Window_main(QWidget):
 
     def _resizeWidget(self, pos):
         """ Отрегулируйте размер окна """
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if self.Direction is None:
             return
         mpos = pos - self._mpos
@@ -425,6 +615,15 @@ class Window_main(QWidget):
 
     def initUI(self, name):
         """Конструктор формы"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.center()
         self.setMinimumWidth(400)
         self.setMinimumHeight(550)
@@ -434,6 +633,15 @@ class Window_main(QWidget):
 
     def center(self):
         """Центрирует окно"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         qr = self.frameGeometry()
         cp = QDesktopWidget().availableGeometry().center()
         qr.moveCenter(cp)
@@ -447,6 +655,15 @@ class Window_main(QWidget):
             class_func=None
     ) -> None:
         """Создает кнопку в окне программы."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.button = QPushButton()
         self.button.setText(label)
         self.button.clicked.connect(func)
@@ -463,6 +680,15 @@ class Window_main(QWidget):
             class_func=None
     ) -> None:
         """Создает 2 кнопки в ряд в окне программы."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.button_layout = QHBoxLayout()
         self.button_1 = QPushButton()
         self.button_1.setObjectName('first_button_2')
@@ -480,6 +706,15 @@ class Window_main(QWidget):
 
     def label_creat(self, label_str: str, class_func=None) -> None:
         """Создает надпись в окне программы."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.label = QLabel()
         self.label.setAlignment(Qt.AlignCenter)
         self.label.setText(label_str)
@@ -488,10 +723,28 @@ class Window_main(QWidget):
 
     def fill_table_aus_base(self, class_func=None) -> None:
         """Заполняет таблицу из базы."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         pass
 
     def fill_table_hand(self, class_func=None) -> None:
         """Заполняет таблицу из вставки. Передает в базу."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.table = QTableWidget()
         self.table.setRowCount(1)
         self.table.setColumnCount(20)
@@ -499,10 +752,28 @@ class Window_main(QWidget):
 
     def open_file_result(self) -> None:
         '''Открывает файл по адресу, сохраняемому в глобальной переменной'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         os.startfile(adres_job)
 
     def open_file_result_self(self) -> None:
         '''Открывает файл по адресу, сохраняемому в переменной класса'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         os.startfile(self.adres_res)
 
     def __repr__(self) -> str:
@@ -512,6 +783,15 @@ class Window_main(QWidget):
 
 class WindowAddFatter(Window_main):
     '''Рабочее окно для добавления отцов.'''
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     def __init__(self, name: str):
         super().__init__(name=None)
         log_2 = Logs(name='Добавление отца')
@@ -535,6 +815,15 @@ class WindowAddFatter(Window_main):
 
 class Wind_Table_GP_invertory(MainDialog):
     '''Окно для ввода описи.'''
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     def __init__(self, table, name, parent):
         super().__init__(table, name, parent=parent)
         self.model = QStandardItemModel(500, 7)
@@ -565,6 +854,15 @@ class Wind_Table_GP_invertory(MainDialog):
 
     def save_data(self) -> None:
         '''Cохранение данных по описи'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.df_res = DataFrame(
             columns=[x for x in range(self.tableView.model().columnCount())],
             index=[x for x in range(self.tableView.model().rowCount())])
@@ -601,6 +899,15 @@ class Wind_Table_GP_invertory(MainDialog):
 
 class Wind_Table_GP_profils(MainDialog):
     '''Окно для ввода описи.'''
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, table, name, parent):
         super().__init__(table, name, parent=parent)
         self.model = QStandardItemModel(500, 31)
@@ -655,6 +962,15 @@ class Wind_Table_GP_profils(MainDialog):
 
     def save_data(self) -> None:
         '''Cохранение данных по описи'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.df_res = DataFrame(
             columns=[x for x in range(self.tableView.model().columnCount())],
             index=[x for x in range(self.tableView.model().rowCount())])
@@ -686,6 +1002,15 @@ class Wind_Table_GP_profils(MainDialog):
 
 class WindowISSR(Window_main):
     '''Рабочее окно для обработки ISSR.'''
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, name: str):
         super().__init__(name)
         log = Logs(name='Сбор паспортов ISSR')
@@ -723,6 +1048,15 @@ class WindowISSR(Window_main):
 
     def gen_issr(self) -> None:
         '''Ввод результатов ISSR'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.adres_issr_in = enter_adres('Добавить данные по ISSR')
         if self.adres_issr_in != '':
             self.button_1.setStyleSheet(
@@ -738,6 +1072,15 @@ class WindowISSR(Window_main):
 
     def example_issr(self) -> None:
         '''Вывод примера оформления'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         df_example_inventiry = pd.read_csv(
             r'func\data\issr\issr.txt',
             sep='\t',
@@ -863,6 +1206,15 @@ class WindowGenPassWord(Window_main):
 
     def gen_password_invertory(self) -> None:
         """Генерирует запись о добавленых данных"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.adres_invertory = enter_adres('Добавить опись')
         if self.adres_invertory != '':
             self.button_1.setStyleSheet(
@@ -878,6 +1230,15 @@ class WindowGenPassWord(Window_main):
 
     def add_data_in_table_invertory(self) -> None:
         '''Выводит окно для вставки данных описей в таблицу.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.adres_invertory = (
             r"func\data\creat_pass_doc" +
             r'\inventory_aus_table.csv'
@@ -942,6 +1303,15 @@ class WindowGenPassWord(Window_main):
 
     def gen_password_genotyping(self) -> None:
         """Генерирует запись о добавленых данных."""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.adres_genotyping = enter_adres(
             'Добавить данные по генотипированию'
         )
@@ -959,6 +1329,15 @@ class WindowGenPassWord(Window_main):
 
     def gen_analit_password_creat(self) -> None:
         """Проводит анализ полученных данных"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.farm, self.bool_mutter = self.fenster_enter_data()
         self.adres_res = save_file_for_word('Сохранить результаты')
         self.df_error = creat_doc_pas_gen(
@@ -988,6 +1367,15 @@ class WindowGenPassWord(Window_main):
 
     def example_genotyping(self) -> None:
         '''Открывает файл пример для генотипирования.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         df_example_genotyping = pd.read_csv(
             r'func\data\creat_pass_doc\profils_example.csv',
             sep=';',
@@ -1047,12 +1435,30 @@ class WindowGenPassWord(Window_main):
 
 class WindowAbout(Window_main):
     '''Рабочее окно для данных из word.'''
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, name: str):
         super().__init__(name)
         self.initUI_self()
 
     def initUI_self(self):
         """Конструктор формы"""
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.center()
         self.setMaximumWidth(500)
         self.setMaximumHeight(500)
@@ -1062,6 +1468,15 @@ class WindowAbout(Window_main):
 
 class WindowSearchFarher(Window_main):
     '''Рабочее окно для поиска возможных отцов.'''
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, name: str):
         super().__init__(name)
         log_2 = Logs(name='Поиск отцов')
@@ -1112,6 +1527,15 @@ class WindowSearchFarher(Window_main):
         self.vb.addWidget(labe_text)
 
     def check_answer(self, state, res='s'):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if state == Qt.Checked:
             self.farms_all[res] = True
             print(self.farms_all)
@@ -1121,6 +1545,15 @@ class WindowSearchFarher(Window_main):
 
     def res_search_cow_father(self, class_func=None) -> None:
         '''Вызывает функции анализа и поиска отцов'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.adres = enter_adres()
         self.button_oprn_file = QPushButton()
         self.button_oprn_file.setText('Открыть файл CSV')
@@ -1146,6 +1579,15 @@ class WindowSearchFarher(Window_main):
             )
 
     def data_result_in(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.window = WindowTableEnterDataSF(
             None,
             'Biotech Lab: enter data',
@@ -1156,11 +1598,29 @@ class WindowSearchFarher(Window_main):
 
 class WindowMSAusWord(Window_main):
     '''Рабочее окно для данных из word.'''
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     def __init__(self, name: str):
         super().__init__(name)
 
     def res_ms_aus_word_in_csv(self):
         '''Вызывает функции отбора данных из word'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.label_creat(str(dt.datetime.now()))
         self.button_creat(self.open_file_result, 'Открыть файл CSV')
         self.adres = enter_adres('Выбрать документ')
@@ -1179,6 +1639,15 @@ class WindowMSAusWord(Window_main):
 
 class WindowTabl(MainDialog):
     """Окно с табличкой"""
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, table, name, parent):
         super().__init__(table, name, parent=parent)
         self.tabl = table
@@ -1193,6 +1662,15 @@ class WindowTabl(MainDialog):
 
 class WindowResulWiew(MainDialog):
     '''Рабочее окно для вывода результатов'''
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, table, name, button, label, parent):
         super().__init__(table, name, parent=parent)
         self.tabl = table
@@ -1213,6 +1691,15 @@ class WindowResulWiew(MainDialog):
 
     def eventFilter(self, source, event):
         '''Отслеживание событий вставки или копирования.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         try:
             if event.type() == QEvent.KeyPress:
                 if event == QKeySequence.Copy:
@@ -1239,6 +1726,15 @@ class WindowResulWiew(MainDialog):
 
     def copySelection(self):
         '''Копирование данных ctrl+С.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.clipboard.clear()
         selected = self.tabl.selectedIndexes()
         rows = []
@@ -1262,6 +1758,15 @@ class WindowResulWiew(MainDialog):
 
 class WindowTableEnterDataSF(MainDialog):
     """Окно для для ввода данных по потомку."""
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, table, name, farms_all, parent):
         super().__init__(table, name, parent=parent)
         self.farms_all = farms_all
@@ -1287,6 +1792,15 @@ class WindowTableEnterDataSF(MainDialog):
 
     def save_data(self) -> None:
         '''Сохранение данных по потомкам.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.df_res = DataFrame(
             columns=[x for x in range(self.tableView.model().columnCount())],
             index=[x for x in range(self.tableView.model().rowCount())])
@@ -1348,14 +1862,41 @@ class SecondWindow(QMainWindow, Ui_MainWindow):
         self.pushButton.clicked.connect(self.buttonClicked)
 
     def generate_pins(self, size=6, chars=string.digits):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         return ''.join(random.choice(chars) for x in range(size))
 
     def buttonClicked(self):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.textEdit.append(self.generate_pins(10))
 
 
 class WindowTest(Window_main):
     """Окно для тестирования функций."""
+    """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
     def __init__(self, name: str, parent=None):
         super().__init__(name, parent)
         print('Test windows open')

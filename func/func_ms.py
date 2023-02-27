@@ -20,15 +20,20 @@ from func.db_job import (save_bus_data, upload_bus_data,
 from func.func_answer_error import answer_error
 from .config_pars import ConfigMeneger
 from .parser_def import add_missing
-logFile = "./logs/log_preprocessor_ms_data.log"
+from setting import log_file
+
 logging.basicConfig(
-    filename=logFile,
+    filename=log_file,
     level=logging.DEBUG,
     filemode='w',
 )
 my_handler = RotatingFileHandler(
-    logFile, mode='a', maxBytes=5*1024*1024,
-    backupCount=2, encoding="cp1251", delay=0
+    log_file,
+    mode='a',
+    maxBytes=5*1024*1024,
+    backupCount=2,
+    encoding="cp1251",
+    delay=0
 )
 
 logger = logging.getLogger(__name__)
@@ -36,7 +41,15 @@ logger.addHandler(my_handler)
 
 
 def read_file(adres: str) -> pd.DataFrame:
-    '''Чтение файла по полученному адресу'''
+    '''
+    Возращает датасет, прочитанный из файла по полученному адресу.
+    Параметры:
+    ----------
+        adres: str - Адрес расположения датасета.
+    Возвращает:
+    -----------
+        df_doc: pd.DataFrame - Прочитанный датасет.
+    '''
     adres_split = adres.split('.')
     if adres_split[-1] == 'csv':
         df_doc = (pd.read_csv(adres, sep=';', decimal=',', encoding='cp1251'))
@@ -52,8 +65,25 @@ def read_file(adres: str) -> pd.DataFrame:
     return df_doc
 
 
-def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
-    '''Сбор документа для Word.'''
+def combine_all_docx(
+        filename_master: str,
+        files_list: list,
+        adres: str,
+        date) -> None:
+    '''
+    Сбор документа для Word.
+
+    Параметры:
+    ----------
+        filename_master: str - Название выходного файла.
+        files_list: list - Лист названий промежуточных файлов.
+        adres: str - Адрес места сохранения файла.
+        date - Дата создания паспорта.
+
+    Возвращает:
+    -----------
+        None
+    '''
     number_sections = len(files_list)
     doc_m = Document_compose(filename_master)
     composer = Composer(doc_m)
@@ -63,8 +93,20 @@ def combine_all_docx(filename_master, files_list: list, adres, date) -> None:
     composer.save(adres)
 
 
-def delit(row: dict, delitel: str, col: str) -> str:
-    '''Разделение строки по делителю.'''
+def delit(row: pd.Series, delitel: str, col: str) -> str:
+    '''
+    Возвращает выдленнное значение из нужного столбца строки по делителю.
+    Заточена под apply.
+    Параметры:
+    ----------
+        row: pd.Series - Набор данных.
+        delitel: str - Разделитель.
+        col: str - Название столбца для отбора.
+
+    Возвращает:
+    -----------
+        num: str - Выделенный номер.
+    '''
     try:
         num = row[col]
         num = num.split(delitel)
@@ -75,8 +117,19 @@ def delit(row: dict, delitel: str, col: str) -> str:
         logger.error(str(row[col]))
 
 
-def ms_clutch(row: dict, col1: str, col2: str) -> str:
-    '''Объединение строки через знак.'''
+def ms_clutch(row: pd.Series, col1: str, col2: str) -> str:
+    '''
+    Возвращает объединенное значение выделенных строк через знак.
+    Заточена под apply.
+    Параметры:
+    ----------
+        row: pd.Series - Набор данных.
+        col1: str - Первый столбец.
+        col2: str - Второй столбец.
+    Возвращает:
+    -----------
+        ms0: str - Объединенные значения
+    '''
     ms1 = row[col1]
     ms2 = row[col2]
     join_ms = [str(ms1), str(ms2)]
@@ -85,7 +138,15 @@ def ms_clutch(row: dict, col1: str, col2: str) -> str:
 
 
 def enter_adres(name_str: str = 'Open File') -> str:
-    """Возращает адрес файла."""
+    """
+    Возращает адрес файла из диалогового окна открытия.
+    Параметры:
+    ----------
+        name_str: str - Заголовок диалогового окна.
+    Возвращает:
+    -----------
+        adres: str - Адрес файла.
+    """
     path = ConfigMeneger.get_path_save()
     adres = QFileDialog.getOpenFileName(
         None,
@@ -99,7 +160,17 @@ def enter_adres(name_str: str = 'Open File') -> str:
 
 
 def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
-    """Возращает адрес файла."""
+    """
+    Возращает адрес файла сохранененого
+    по адресу полученному из диалогового окна.
+    Параметры:
+    ----------
+        df_res: pd.DataFrame - Сохраняемый датасет.
+        name_str: str - Заголовок диалогового окна.
+    Возвращает:
+    -----------
+        adres: str - Адрес файла.
+    """
     path = ConfigMeneger.get_path_save()
     adres = QFileDialog.getSaveFileName(
         None,
@@ -113,22 +184,17 @@ def save_file(df_res: pd.DataFrame, name_str: str = 'Save File') -> None:
     return adres
 
 
-def save_file_for_word(name_str: str = 'Save File') -> None:
-    """Возращает адрес файла."""
-    path = ConfigMeneger.get_path_save()
-    adres = QFileDialog.getSaveFileName(
-        None,
-        name_str,
-        path,
-        'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)'
-    )[0]
-    after_path = '/'.join(adres.split('/')[:-1])
-    ConfigMeneger.set_path_save(after_path)
-    return adres
-
-
 def ResOut(df_res: pd.DataFrame) -> QTableWidget:
-    """Выводит результаты в таблицу."""
+    """
+    Возвращает таблицу виджета.
+
+    Параметры:
+    ----------
+        df_res: pd.DataFrame - Выводимый датасет.
+    Возвращает:
+    -----------
+        table: QTableWidget - Таблица виджета.
+    """
     table = QTableWidget()
     table.setSizeAdjustPolicy(QAbstractScrollArea.AdjustToContents)
     table.setEditTriggers(QAbstractItemView.NoEditTriggers)
@@ -146,12 +212,49 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
     return table
 
 
-def split_hosbut_father(row):
+def split_farm_father(row: pd.Series) -> pd.Series:
+    """
+    Разделяет названия в строке данных.
+
+    Параметры:
+    ----------
+        row: pd.Series - Строка данных
+
+    Возвращает:
+    -------
+        row: pd.Series - Строка данных преобразованная
+    """
     if type(row['farm']) == str and "," in row['farm']:
         row['farm'] = row['farm'].split(', ')
+    return row
 
 
-def is_float(s):
+def save_file_for_word(name_str: str = 'Save File') -> None:
+    """Возращает адрес файла."""
+    path = ConfigMeneger.get_path_save()
+    adres = QFileDialog.getSaveFileName(
+        None,
+        name_str,
+        path,
+        'CSV (*.csv);; Word (*.docx);; Text Files (*.txt)'
+    )[0]
+    after_path = '/'.join(adres.split('/')[:-1])
+    ConfigMeneger.set_path_save(after_path)
+    return adres
+
+
+
+def is_float(s: str) -> bool:
+    """
+    Возвращает ответ является ли строка числом с плавующей точкой.
+
+    Параметры:
+    ----------
+        s: str - Строка для проверки.
+    Возвращает:
+    -------
+        bool - Число/Не число.
+    """
     try:
         float(s)
         return True
@@ -160,23 +263,32 @@ def is_float(s):
 
 
 def filer_father(farms: dict) -> pd.DataFrame:
+    """
+    Возвращает отфильтрованный датасет по хозяйствам.
+
+    Параметры:
+    ----------
+        farms: dict - набор хозяйств, котроые должны остаться.
+    Возвращает:
+    -----------
+        df_res: pd.DataFrame - Отфильтрованный датасет.
+    """
     logger.debug("Start filter_father")
     df = upload_data_db_for_searh_father()
     if farms['Выбрать всех']:
         return df.drop('farm', axis=1)
-    df.apply(split_hosbut_father, axis=1)
+    df.apply(split_farm_father, axis=1)
     list_farms = []
     for key, item in farms.items():
         if item:
             if key != 'Выбрать всех':
                 list_farms.append(key)
+
     list_res = []
     for i in range(len(df)):
         if not is_float(df.iloc[i, 1]):
             len_ = len(df.iloc[i, 2])
             for j in range(len_):
-                print(df.iloc[i, 2][j], df.iloc[i, 1], list_farms)
-                print(df.iloc[i, 2][j] in list_farms)
                 if df.iloc[i, 2][j] in list_farms:
                     list_res.append(df.iloc[i, :])
         else:
@@ -190,12 +302,23 @@ def filer_father(farms: dict) -> pd.DataFrame:
     return df_res.drop('farm', axis=1)
 
 
-def search_father(adres: str, filter: dict) -> pd.DataFrame:
+def search_father(adres: str, filter_farms: dict) -> pd.DataFrame:
     """Поиск возможных отцов."""
+    """
+    Возврадает датасет с отцами подходящими по ген посаспорту.
+
+    Параметры:
+    ----------
+        adres: str - Файл с генотипом для побора отцов.
+        filter_farms: dict - Набор хозяйств для фильтрации.
+    Возвращает:
+    -----------
+        df_res: pd.DataFrame - Датасет с отобранными отцами.
+    """
     try:
         logger.debug("Start add_search_father")
         logger.debug("Load data father")
-        df = filer_father(filter)
+        df = filer_father(filter_farms)
 
         logger.debug("Data transform")
         df_search = read_file(adres)
@@ -216,6 +339,7 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
                     f" len df_s_col - {len(df_search.columns)}," +
                     f"  len df_r - {len(df_res)}"
                 )
+
                 if df_search.loc[0, col] != '-':
                     logger.debug("Comparison, level 1")
                     locus = df_search.loc[0, col].strip().split('/')
@@ -235,6 +359,7 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
                         ):
                             logger.debug("Inner comparison")
                             df_res.loc[j, col] = np.nan
+
             df_res = df_res.dropna().reset_index(drop=True)
         logger.debug("Cycle end")
         df_res.to_csv(
@@ -245,6 +370,7 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
         )
         logger.debug("End search_father")
         return df_res
+
     except Exception as e:
         logger.error("Error search_father")
         logger.error(e)
@@ -257,7 +383,17 @@ def search_father(adres: str, filter: dict) -> pd.DataFrame:
 
 
 def ms_out_word(adres: str) -> pd.DataFrame:
-    '''Переводит данные из word в csv.'''
+    """
+    Возвращает распарсинные данные по генетическим паспортам
+    из документов Word.
+
+    Параметры:
+    ----------
+        adres: str - Адрес для прочтения файла.
+    Возвращает:
+    ----------
+        result: pd.DataFrame - Результат парсинга.
+    """
     doc: pd.DataFrame = read_file(adres)
     doc.columns = ['ms', 'ms_size', 'vater', 'mom']
     msatle: list = [
@@ -278,6 +414,20 @@ def ms_out_word(adres: str) -> pd.DataFrame:
         ms: str,
         no: int
     ) -> None:
+        """
+        Собирает данные по МС.
+
+        Параметры:
+        ----------
+            data_in: pd.DataFrame - Входной датасет.
+            data_out: pd.DataFrame - Выходной датасет.
+            ms: str - Название МС.
+            no: int - Номер МС в списке.
+
+        Возвращает:
+        -----------
+            None
+        """
         for i in range(len(data_in)):
             if data_in.loc[i, 'ms'] == ms:
                 res = data_in.loc[i, 'ms_size']
@@ -291,6 +441,17 @@ def ms_out_word(adres: str) -> pd.DataFrame:
     result = result.reset_index()
 
     def name_select(data_in: pd.DataFrame, data_out: pd.DataFrame) -> None:
+        """
+        Отбор кличек и номеров.
+
+        Параметры:
+        ----------
+            data_in: pd.DataFrame - Входной датасет.
+            data_out: pd.DataFrame - Выходной датасет.
+        Возвращает:
+        -----------
+            None
+        """
         count = 0
         for i in range(len(data_in)):
             if data_in.loc[i, 'ms'] == 'Локус':
@@ -329,6 +490,19 @@ def check_error_ms(
     df_profil: pd.DataFrame,
     flag_mutter: bool = False,
 ) -> dict:
+    """
+    Возвращает проверенные на соответсвие потомков матерями отцам
+     словари по данным МС.
+
+    Параметры:
+    ----------
+        df: pd.DataFrame - Основной датасет.
+        df_profil: pd.DataFrame - Профиль потомка.
+        flag_mutter: bool = False - Флаг. Нужна ли проверка матерей.
+    Возвращает:
+    -----------
+        Словарь: dict - Словарь с ошибками по матерям и по отцам.
+    """
     logger.debug("Start check_error_ms")
     df = df.dropna(subset=[df.columns[5]])
     try:
@@ -350,7 +524,7 @@ def check_error_ms(
             dict_mutter = upload_bus_data(number_mutter)
             dict_father = upload_fater_data(number_fater)
             df_profil['num'] = df_profil['num'].astype('int')
-            print(number, list(df_profil['num']))
+
             if number in list(df_profil['num']):
                 pass
             else:
@@ -361,7 +535,7 @@ def check_error_ms(
                     )
                     logger.info(name)
                 continue
-            print("Анализ ошибок" + str(number))
+
             df_animal_prof = df_profil.query(
                 'num == @number'
             ).loc[:, 'ETH3': 'ETH10'].reset_index(drop=True).T.to_dict().get(0)
@@ -379,7 +553,7 @@ def check_error_ms(
                     locus_a = locus.split('_father')[0]
                     value_animal_ms = df_animal_prof.get(locus_a, 1)
                     logger.debug(
-                        "Выделение локуса животного: " +
+                        "Values locus animal: " +
                         f"{value_animal_ms}, locus {locus_a}"
                         )
                     if value_animal_ms != 1:
@@ -449,9 +623,17 @@ def check_error_ms(
 
 
 def verification_ms(one_ms: str, second_ms: str) -> bool:
-    """Возращает True, если данные МС неподходят"""
+    """Возращает True, если данные МС неподходят
+
+    Параметры:
+    ----------
+        one_ms: str - Первый набор МС.
+        second_ms: str - Второй набор МС.
+    Возвращает:
+    ----------
+        res: bool - Неподходит/подходит.
+    """
     try:
-        print(one_ms, second_ms)
         one_ms = one_ms.replace(" ", '')
         second_ms = second_ms.replace(" ", '')
         logger.debug("start verification_ms")
@@ -469,6 +651,7 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
         logger.debug(f"result {res}")
         logger.debug("end verification_ms")
         return res
+
     except Exception as e:
         logger.error(e)
         logger.error(
@@ -484,7 +667,16 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
 
 
 def data_verification(context: dict) -> dict:
-    """Проверка сответствия Данных матери, отца и потомка"""
+    """
+    Возвращает имзенный контекст с пометками ошибок.
+
+    Параметры:
+    ----------
+        context: dict - Входящий словарь данных.
+    Возвращает:
+    -----------
+        context: dict - Изменный словарь данных.
+    """
     logger.debug("start data_verification")
     list_keys = [
         'BM1818',
@@ -570,6 +762,7 @@ def data_verification(context: dict) -> dict:
                     )
         logger.debug("end data_verification")
         return context
+
     except Exception as e:
         name = '\nfunc_ms.py\\data_verification\n'
         logger.error(e)
@@ -589,6 +782,13 @@ def check_conclusion(context: dict) -> str:
     """
     Проверяет есть ли ошибки в паспорте и изменяет заключение.
     Возращает изменный context для ввода в паспорт.
+
+    Параметры:
+    ----------
+        context: dict - Начальные данные.
+    Возвращает:
+    ----------
+        res: str - Заключение.
     """
     logger.debug("Start check_conclusion")
     res = ''
@@ -679,7 +879,15 @@ def check_conclusion(context: dict) -> str:
 
 
 def tarasform_data_for_database(data: pd.DataFrame, farm: str) -> None:
-    """Трансформирует даннные для передачив базу данных."""
+    """Трансформирует данные по отцам и передает в базу данных.
+    Параметры:
+    ----------
+        data: pd.DataFrame - Датасет с профилем отца
+        farm: str - Название хозяйства.
+    Возвращает:
+    ----------
+        None
+    """
     df: pd.DataFrame = data.iloc[:, [0, 1, 2]]
     df.columns = ["number", "name", "prof"]
     df = df.dropna()
@@ -722,6 +930,61 @@ def tarasform_data_for_database(data: pd.DataFrame, farm: str) -> None:
         save_bus_data_fater(temp)
 
 
+def save_file_text(data: dict) -> None:
+    """
+    Сохраняет данные в файл.
+    Параметры:
+    ----------
+        data: dict - данные об ошибках.
+            not_father: list - Номера отцов.
+            not_animal: list - Номера проб.
+            father: list - Номера животных с ошибками по отцу.
+            mutter: list - Номера животных с ошибками по матери.
+    Возвращает:
+    -----------
+        None.
+    """
+    logger.debug("start save_file_text")
+    with open(r'func\data\creat_pass_doc\log_error.txt', "w+") as f:
+        logger.debug("write data to file")
+        for key, val in data.items():
+            str_res: str = f"{key}: {val}\n"
+            f.write(str_res)
+    logger.debug("end save_file_text")
+
+
+def analys_error(errors: dict) -> dict:
+    """
+    Анализирует и возвращает данные об ошибках.
+    Параметры:
+    ----------
+        df_error: dict - данные об ошибках.
+        Ожидамые ключи:
+            not_father: list - Номера отцов
+            not_animal: list - Номера проб
+            father: pd.DataFrame - columns: number	locus	parent	animal	male
+            mutter: pd.DataFrame - columns: number	locus	parent	animal	male
+
+    Возвращает:
+    -----------
+        result: dict - Сводные данные по ошибкам.
+    """
+
+    logger.debug("start analys_error")
+    result: dict = {
+        "not_animal": list(set(errors.get("not_animal"))),
+        "not_father": list(set(errors.get("not_father"))),
+    }
+    logger.debug("cycle transport data to dict")
+    for key in ["father", "mutter"]:
+        temp: pd.DataFrame = errors.get(key)
+        temp.drop_duplicates(subset="animal", inplace=True)
+        result[key] = list(set(temp["animal"]))
+
+    logger.debug("end analys_error")
+    return result
+
+
 def creat_doc_pas_gen(
     adres_invertory: str,
     adres_genotyping: str,
@@ -729,6 +992,21 @@ def creat_doc_pas_gen(
     farm: str = 'Хозяйство',
     flag_mutter: bool = False
 ) -> pd.DataFrame:
+    """
+    Создает паспорта генетические. Созраняет по адресу.
+    Возвращает данные по ошибкам.
+
+    Параметры:
+    ----------
+        adres_invertory: str - Адрес описи.
+        adres_genotyping: str - Адрес результатов.
+        adres: str - Адрес сохранения паспортов.
+        farm: str = 'Хозяйство' - Название хозяйства.
+        flag_mutter: bool = False - Нужна ли проверка матерей.
+    Возвращает:
+    -----------
+        res_err: pd.DataFrame - Данные по ошибкам.
+    """
     logger.debug("star creat_doc_pas_gen")
     try:
         now = datetime.datetime.now()
@@ -768,18 +1046,13 @@ def creat_doc_pas_gen(
                 'Ошибка ввода',
                 f'{answer_error()} {name}Подробности:\n {e}'
             )
-        logger.debug("Passed step 1")
         df_profil['num'] = df_profil['num'].astype('int')
         df = df.fillna(0)
         series_num = list(df_profil['num'])
-        logger.debug("Passed step 2")
         series_proba = list(df['number_proba'].astype('int'))
-        logger.debug("Passed step 3")
         df_profil['Sample Name'] = df_profil.pop('num')
         df_profil = df_profil.rename(columns={'Sample Name': 'num'})
-        df_profil = df_profil.fillna(0)
-        df_profil = df_profil.astype('int')
-        logger.debug("Passed step 4")
+        df_profil = df_profil.fillna(0).astype('int')
         for i in range(1, len(df_profil.columns), 2):
             j = i + 1
             col1 = df_profil.columns[i]
@@ -792,7 +1065,6 @@ def creat_doc_pas_gen(
                 col2=col2,
                 axis=1
             )
-        logger.debug("Passed step 5")
         df_profil_end = df_profil.iloc[:, -15:]
         df_profil_end['num'] = df_profil['num']
         df = df.astype('str')
@@ -833,6 +1105,9 @@ def creat_doc_pas_gen(
         )
         files_list = []
         logger.debug("start cycle create password")
+        dict_error['not_father'] = []
+        dict_error['not_animal'] = []
+
         try:
             for i in range(len(series_num)):
                 doc = DocxTemplate(r'func\data\creat_pass_doc\gen_pass_2.docx')
@@ -920,8 +1195,10 @@ def creat_doc_pas_gen(
                         title = str(i) + ' generated_doc.docx'
                         files_list.append(title)
                         list_father_non.append(str(number_father))
+                        dict_error['not_father'].append(number_father)
                         print(f'Нет быка: {number_father}, страница: {i+1}')
                 else:
+                    dict_error['not_animal'].append(series_num[i])
                     print(
                         f'Нет животного: проба {series_num[i]},' +
                         f' номер {series_num[i]}, страница: {i+1}'
@@ -952,6 +1229,9 @@ def creat_doc_pas_gen(
             else:
                 print("File doesn't exists!")
         logger.debug("end cycle create word doc. Return")
+
+        # Сохраняем данные об ошибках в файл в логе.
+        save_file_text(analys_error(dict_error))
         return res_err
     except Exception as e:
         name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '

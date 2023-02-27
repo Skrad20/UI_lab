@@ -17,6 +17,15 @@ from models.models import BullFather
 
 class TableAddFather(MainDialog):
     '''Окно для добавления отца.'''
+    """
+    Описание
+
+    Параметры:
+    ----------
+    
+    Возвращает:
+    -------
+    """
     def __init__(self, table, name, hosbut_all, parent):
         super().__init__(table, name, parent=parent)
         self.model = QStandardItemModel(22, 1)
@@ -49,6 +58,15 @@ class TableAddFather(MainDialog):
 
     def save_data(self) -> None:
         '''Сохранение данных по отцу.'''
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         self.df_res = DataFrame(
             columns=[x for x in range(self.tableView.model().columnCount())],
             index=[x for x in range(self.tableView.model().rowCount())])
@@ -102,6 +120,15 @@ class TableAddFather(MainDialog):
         )
 
     def validate(self, data_job: DataFrame):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+    """
         df = pd.read_csv(
             './func/data/search_fatherh/faters.csv',
             sep=';',
@@ -117,6 +144,15 @@ class TableAddFather(MainDialog):
 
 class TableDataEnter(QTableWidget):
     def keyPressEvent(self, event):
+        """
+        Описание
+
+        Параметры:
+        ----------
+        
+        Возвращает:
+        -------
+        """
         if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
 
             return
