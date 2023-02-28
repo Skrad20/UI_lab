@@ -154,6 +154,5 @@ class TableDataEnter(QTableWidget):
         -------
         """
         if event.key() == Qt.Key_V and event.modifiers() == Qt.ControlModifier:
-
             return
         super(TableDataEnter, self).keyPressEvent(event)

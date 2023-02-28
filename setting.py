@@ -16,3 +16,7 @@ path_save = r"C:\Users\Пользователь\Desktop"
 
 # Путь для сохранения логов по МС
 log_file = "./logs/log_preprocessor_ms_data.log"
+
+
+# Путь для сохранения config
+config_file = "./func/settings.ini"
