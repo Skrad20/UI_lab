@@ -20,3 +20,6 @@ log_file = "./logs/log_preprocessor_ms_data.log"
 
 # Путь для сохранения config
 config_file = "./func/settings.ini"
+
+# Путь доя шаблона для паспартов
+PATH_TEMP = r'func\data\creat_pass_doc\gen_pass_2.docx'
