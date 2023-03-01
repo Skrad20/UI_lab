@@ -1016,111 +1016,112 @@ class ManegerDataMS(Maneger):
             logger.debug("start cycle create password")
             dict_error['not_father'] = []
             dict_error['not_animal'] = []
-            try:
-                for i in range(len(series_numbers_animal)):
-                    doc = DocxTemplate(PATH_TEMP)
-                    if series_numbers_animal[i] in series_numbers_sample:
-                        num_animal = series_numbers_animal[i]
-                        logger.debug(f"Номер животного {num_animal}")
-                        df_info = df.query(
-                            'number_sample == @num_animal'
-                        ).reset_index()
-                        df_profil = df_profil_end.query(
-                            'num == @num_anim'
-                        ).reset_index()
+            for i in range(len(series_numbers_animal)):
+                doc = DocxTemplate(PATH_TEMP)
+                if series_numbers_animal[i] in series_numbers_sample:
+                    num_animal = series_numbers_animal[i]
+                    logger.debug(f"Номер животного {num_animal}")
+                    df_info = df.query(
+                        'number_sample == @num_animal'
+                    ).reset_index()
+                    df_profil = df_profil_end.query(
+                        'num == @num_animal'
+                    ).reset_index()
 
-                        number_animal = df_info.loc[0, 'number_animal']
-                        name_animal = df_info.loc[0, 'name_animal']
-                        number_proba = df_info.loc[0, 'number_sample']
-                        number_father = df_info.loc[0, 'number_father']
-                        name_father = df_info.loc[0, 'name_father']
-                        number_mutter = int(df_info.loc[0, 'number_mutter'])
-                        name_mutter = df_info.loc[0, 'name_mutter']
-                        animal_join = [name_animal, str(number_animal)]
-                        fater_join = [name_father, str(number_father)]
-                        mutter_join = [name_mutter, str(number_mutter)]
-                        animal = ' '.join(animal_join)
-                        fater = ' '.join(fater_join)
-                        mutter = ' '.join(mutter_join)
+                    number_animal = df_info.loc[0, 'number_animal']
+                    name_animal = df_info.loc[0, 'name_animal']
+                    number_proba = df_info.loc[0, 'number_sample']
+                    number_father = df_info.loc[0, 'number_father']
+                    name_father = df_info.loc[0, 'name_father']
+                    number_mutter = int(df_info.loc[0, 'number_mutter'])
+                    name_mutter = df_info.loc[0, 'name_mutter']
+                    animal_join = [name_animal, str(number_animal)]
+                    fater_join = [name_father, str(number_father)]
+                    mutter_join = [name_mutter, str(number_mutter)]
+                    animal = ' '.join(animal_join)
+                    fater = ' '.join(fater_join)
+                    mutter = ' '.join(mutter_join)
 
-                        dict_profil: dict = df_profil.loc[0, :].to_dict()
+                    dict_profil: dict = df_profil.loc[0, :].to_dict()
 
-                        if number_father in list_number_faters:
-                            df_fater = (df_faters.query(
-                                'number == @number_father'
-                            ).reset_index(drop=True))
-                            dict_fater = df_fater.loc[0, :].to_dict()
-                            dict_faters_new = {}
-                            for key, val in dict_fater.items():
-                                dict_faters_new[key+"_father"] = val
-                            context = {
-                                'number_animal': number_animal,
-                                'name_animal': name_animal,
-                                'hosbut': farm,
-                                'number_proba': number_proba,
-                                'number_father': number_father,
-                                'name_father': name_father,
-                                'animal': animal,
-                                'father': fater,
-                                'mutter': mutter,
-                                'date': date
-                            }
-                            context = {**context, **dict_faters_new}
-                            context = {**context, **dict_profil}
-                            self.__maneger_db.save_data_bus_to_db(context)
-                            if flag_mutter:
-                                dict_mutter = self.__maneger_db.donwload_data_for_animal(number_mutter, ProfilsCows)
-                                context = {**context, **dict_mutter}
-                            context['conclusion'] = self.check_conclusion(context)
-                            context = self.data_verification(context)
-                            doc.render(context)
-                            doc.save(str(i) + ' generated_doc.docx')
-                            title = str(i) + ' generated_doc.docx'
-                            files_list.append(title)
-
-                        else:
-                            context = {
-                                'number_animal': number_animal,
-                                'name_animal': name_animal,
-                                'farm': farm,
-                                'number_proba': number_proba,
-                                'number_father': number_father,
-                                'name_father': name_father,
-                                'animal': animal,
-                                'father': fater,
-                                'mutter': mutter,
-                                'date': date
-                            }
-                            context = {**context, **dict_profil}
-                            self.__maneger_db.save_data_bus_to_db(context)
-                            if flag_mutter:
-                                dict_mutter = (
-                                    self.__maneger_db.donwload_data_for_animals(
-                                        number_mutter,
-                                        ProfilsCows)
+                    if number_father in list_number_faters:
+                        df_fater = (df_faters.query(
+                            'number == @number_father'
+                        ).reset_index(drop=True))
+                        dict_fater = df_fater.loc[0, :].to_dict()
+                        dict_faters_new = {}
+                        for key, val in dict_fater.items():
+                            dict_faters_new[key+"_father"] = val
+                        context = {
+                            'number_animal': number_animal,
+                            'name_animal': name_animal,
+                            'hosbut': farm,
+                            'number_proba': number_proba,
+                            'number_father': number_father,
+                            'name_father': name_father,
+                            'animal': animal,
+                            'father': fater,
+                            'mutter': mutter,
+                            'date': date
+                        }
+                        context = {**context, **dict_faters_new}
+                        context = {**context, **dict_profil}
+                        self.__maneger_db.save_data_bus_to_db(context)
+                        if flag_mutter:
+                            dict_mutter = (
+                                self.__maneger_db.donwload_data_for_animal(
+                                    number_mutter, ProfilsCows
                                     )
-                                context = {**context, **dict_mutter}
-                            context['conclusion'] = self.check_conclusion(context)
-                            context = self.data_verification(context)
-                            doc.render(context)
-                            doc.save(str(i) + ' generated_doc.docx')
-                            title = str(i) + ' generated_doc.docx'
-                            files_list.append(title)
-                            list_father_non.append(str(number_father))
-                            dict_error['not_father'].append(number_father)
-                    else:
-                        dict_error['not_animal'].append(
-                            series_numbers_animal[i]
+                                )
+                            context = {**context, **dict_mutter}
+                        context['conclusion'] = self.check_conclusion(
+                            context
                         )
+                        context = self.data_verification(context)
+                        doc.render(context)
+                        doc.save(str(i) + ' generated_doc.docx')
+                        title = str(i) + ' generated_doc.docx'
+                        files_list.append(title)
 
-            except Exception as e:
-                logger.error(e)
-                QMessageBox.critical(
-                    None,
-                    'Ошибка ввода',
-                    f'{answer_error()} Подробности:\n {e}'
-                )
+                    else:
+                        context = {
+                            'number_animal': number_animal,
+                            'name_animal': name_animal,
+                            'farm': farm,
+                            'number_proba': number_proba,
+                            'number_father': number_father,
+                            'name_father': name_father,
+                            'animal': animal,
+                            'father': fater,
+                            'mutter': mutter,
+                            'date': date
+                        }
+                        context = {**context, **dict_profil}
+                        self.__maneger_db.save_data_bus_to_db(context)
+                        if flag_mutter:
+                            dict_mutter = (
+                                self.__maneger_db.donwload_data_for_animal(
+                                    number_mutter,
+                                    ProfilsCows)
+                                )
+                            context = {**context, **dict_mutter}
+                        context['conclusion'] = self.check_conclusion(
+                            context
+                        )
+                        context = self.data_verification(context)
+                        doc.render(context)
+                        doc.save(str(i) + ' generated_doc.docx')
+                        title = str(i) + ' generated_doc.docx'
+                        files_list.append(title)
+                        list_father_non.append(str(number_father))
+                        dict_error['not_father'].append(number_father)
+                else:
+                    dict_error['not_animal'].append(
+                        series_numbers_animal[i]
+                    )
+
             logger.debug("end cycle create password")
+            # Сохраняем ошибки
             non_father = pd.DataFrame({'Отцы': list(set(list_father_non))})
             non_father.to_csv(
                 r'func\data\creat_pass_doc\non_father.csv',
@@ -1130,7 +1131,7 @@ class ManegerDataMS(Maneger):
             )
             filename_master = files_list.pop(0)
             logger.debug("start cycle create word doc")
-
+            # Собираем общий паспорт
             self.combine_all_docx(filename_master, files_list, adres, date)
             files_list.append(filename_master)
             for i in range(len(files_list)):
