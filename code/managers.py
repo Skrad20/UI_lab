@@ -1203,7 +1203,7 @@ class ManagerDataMS(Manager):
 
 class ManagerDataISSR(Manager):
     def __init__(self) -> None:
-        self.manager_file: ManagerFile = ManagerFile()
+        self.__manager_file: ManagerFile = ManagerFile()
         self.__list_size: list = [
             2500, 2300, 2000, 1800, 1700, 1600, 1500, 1400, 1300,
             1240, 1180, 1120, 1060, 1000, 940, 880, 820, 760, 720,
@@ -1237,7 +1237,7 @@ class ManagerDataISSR(Manager):
             genotype_result = genotype + str(temp_i)
         return genotype_result
 
-    def genotype_issr(self, row: pd.Series, genotype: str = "G") -> str:
+    def genotype_issr(self, row: pd.Series, allel: str = "G") -> str:
         """Функция определения принадлежности данных к аллели.
         Адаптер под apply.
         Описание
@@ -1254,8 +1254,8 @@ class ManagerDataISSR(Manager):
             "G": "GA",
             "A": "AG"
         }
-        size = row[dict_genotype.get(genotype)]
-        return self.get_allel_label(size, dict_genotype.get(genotype))
+        size = row[dict_genotype.get(allel)]
+        return self.get_allel_label(size, allel)
 
     def binary_search(self, data: list, low, hight, n) -> int:
         if hight == low:
@@ -1275,7 +1275,7 @@ class ManagerDataISSR(Manager):
             index_values: pd.DataFrame
             ) -> pd.DataFrame:
         """
-        Возвращает транспонированную таблицу.
+        Возвращает транспонированную таблицу для вывода данных.
 
         Параметры:
         ----------
@@ -1286,17 +1286,16 @@ class ManagerDataISSR(Manager):
             result: pd.DataFrame
         """
         result = pd.DataFrame()
-        len_index_val = len(index_values)
-        for i in range(len_index_val):
-            query_val = index_values.loc[i, 'num']
-            select_data_by_i: pd.DataFrame = df.query(
-                'animal == @query_val'
-            ).reset_index()
-            select_data_by_i_transp: pd.DataFrame = (
-                select_data_by_i.transpose().reset_index()
+        list_index = index_values['num'].round(0)
+        df["animal"] = df["animal"].round(0)
+        for index in set(list_index):
+            number_select_samples = df.query(
+                'animal == @index'
+            ).reset_index(drop=True)
+            result = result.append(
+                number_select_samples.T
             )
-            result.append(select_data_by_i_transp)
-        return result
+        return result.reset_index()
 
     def create_indexes(self, data: pd.DataFrame) -> pd.DataFrame:
         """
@@ -1326,7 +1325,8 @@ class ManagerDataISSR(Manager):
         -----------
             result: pd.DataFrame - Датасет с результами анализа.
         """
-        df = self.manager_file.read_file(adress)
+        self.__manager_file.set_path_for_file_to_open(adress)
+        df = self.__manager_file.read_file()
         df.set_axis(
             ['animal', 'GA', 'animal_1', 'AG'],
             axis='columns',
@@ -1334,6 +1334,7 @@ class ManagerDataISSR(Manager):
         )
         df[['animal', 'animal_1']] = df[['animal', 'animal_1']].fillna(0)
 
+        # Предобработка
         dict_dataset: dict = {}
         for genotype in ["GA", "AG"]:
             df[genotype] = df[genotype].astype('str')
@@ -1355,20 +1356,21 @@ class ManagerDataISSR(Manager):
             axis='columns',
             inplace=True
         )
-
+        # Преобразование типов
         merge_data['animal'] = merge_data['animal'].astype('float64')
         merge_data['animal'] = round(merge_data['animal'])
         merge_data['animal'] = merge_data['animal'].astype('int64')
-        merge_data['AG'] = merge_data['AG'].fillna(0)
-        merge_data['GA'] = merge_data['GA'].fillna(0)
+        merge_data[['AG', "GA"]] = merge_data[['AG', "GA"]].fillna(0)
 
+        # Собственно анализ
         for genotype, allel in zip(["GA", "AG"], ["G", "A"]):
-            merge_data[genotype + '_genotype'] = merge_data.progress_apply(
+            merge_data[genotype + '_genotype'] = merge_data.apply(
                 self.genotype_issr,
-                genotype=allel,
+                allel=allel,
                 axis=1
             )
-        merge_data = merge_data['animal', 'AG_genotype', 'GA_genotype']
+
+        merge_data = merge_data[['animal', 'AG_genotype', 'GA_genotype']]
 
         # Возвращение первичных номеров животных
         index_values = pd.DataFrame(merge_data['animal'].value_counts())
@@ -1376,7 +1378,7 @@ class ManagerDataISSR(Manager):
         index_values.columns = ['num', 'chast']
         index_values = index_values.sort_values('num', ascending=True)
         index_values = index_values.reset_index()
-
+        # Фомирование выходных данных
         result_end = self.data_transpose(merge_data, index_values)
         return result_end
 
@@ -1659,6 +1661,10 @@ class ManagerFile(Manager):
         after_path = '/'.join(adres.split('/')[:-1])
         ConfigMeneger.set_path(after_path, "save")
 
+    def set_path_for_file_to_open(self, path: str) -> None:
+        """Устанавливает пут для открытия файлов"""
+        ConfigMeneger.set_path(path, "open")
+
     def save_path_for_file_to_open(self, name_str: str = 'Open File') -> None:
         """
         Сохраняет в конфиг адрес файла из диалогового окна открытия.
@@ -1717,6 +1723,7 @@ class ManagerFile(Manager):
         '''
         adres = ConfigMeneger.get_path("open")
         adres_split = adres.split('.')
+        df_doc: pd.DataFrame = pd.DataFrame()
         if adres_split[-1] == 'csv':
             df_doc = pd.read_csv(
                 adres,
@@ -1733,11 +1740,7 @@ class ManagerFile(Manager):
             )
         elif adres_split[-1] == 'xlsx':
             df_doc = pd.read_excel(adres)
-        else:
-            QMessageBox.critical(
-                None,
-                'Ошибка ввода', 'Вы выбрали файл неверного формата'
-            )
+
         return df_doc
 
 
@@ -1814,7 +1817,7 @@ class ManagerDB(Manager):
             ) -> set:
         """Возвращает инвентарные номера отцов."""
         if self.__farms_set is None:
-            self.upload_data_farmers(model)
+            self.donwload_data_farmers(model)
         return self.__farms_set
 
     def get_data_for_animals(
@@ -1901,7 +1904,7 @@ class ManagerDB(Manager):
 
     def donwload_data_farmers(
             self,
-            model: BaseModelAnimal = ProfilsCows
+            model: BaseModelAnimal = BullFather
             ) -> None:
         """
         Загружает список хозяйств из базы данных.
