@@ -65,11 +65,13 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
     """
     logger.debug("Start add_missing")
     logger.debug(df.head())
-    df = df.dropna(subset=[df.columns[5]])
+    df = df.dropna(subset=["number_father"])
+    logger.debug("After dropna")
+    logger.debug(df.head())
     try:
         df_dad = upload_data_db_for_creat_pass()
         list_father_db = df_dad.number
-        list_father_invert = df[df.columns[5]]
+        list_father_invert = df["number_father"]
         for number in set(list_father_invert):
             if number in list_father_db:
                 pass
@@ -78,7 +80,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
                     f"Number father {number}"
                 )
                 name = (
-                    df[df[df.columns[5]] == number][df.columns[6]]
+                    df[df["number_father"] == number]["name_father"]
                     .reset_index(drop=True)[0]
                 )
                 if 1 == parser_ms_dad(number, name, farm):

@@ -305,8 +305,10 @@ def upload_bus_data(number: int) -> dict:
 
 
 def create_columns_name(row):
+    logger.debug("Start create_columns_name")
     name = row['name']
     number = row['number']
+    logger.debug("End create_columns_name")
     return f"{name} {number}"
 
 
@@ -399,6 +401,8 @@ def upload_data_db_for_creat_pass() -> pd.DataFrame:
         df.loc[i, "MGTG4B"] = bus.MGTG4B
         df.loc[i, "SPS113"] = bus.SPS113
         i += 1
+    logger.debug(df.head())
+    logger.debug("Start aplly")
     df.name_number = df.apply(create_columns_name, axis=1)
     df.index = df.number
     df.number = df.number.astype('float')

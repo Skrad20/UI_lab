@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QFileDialog, QMessageBox, QTableWidget,
                              QTableWidgetItem)
 
-from models.models import ProfilsCows, BaseModelAnimal, BullFather
+from models.models import ProfilsCows, BaseModelAnimal, BullFather, Logs
 from setting import log_file, config_file, dict_paths
 from bs4 import BeautifulSoup
 from func.func_answer_error import answer_error
@@ -1809,7 +1809,8 @@ class ConfigMeneger(Manager):
 class ManagerDB(Manager):
     def __init__(self) -> None:
         self.__farms_set: set = None
-        self.__dict_data_animals: dict = {}
+        self.__dict_data_animal: dict = None
+        self.__dict_data_animals: dict = None
 
     def get_farms(
             self,
@@ -1827,7 +1828,7 @@ class ManagerDB(Manager):
         """Возвращает данные по животным из базы."""
         name_model_data: str = str(model)
         if self.__dict_data_animals.get(name_model_data, None) is None:
-            self.upload_data_for_animals(model)
+            self.donwload_data_for_animals(model)
         return self.__dict_data_animals.get(name_model_data)
 
     def get_data_for_animal(
@@ -1836,7 +1837,8 @@ class ManagerDB(Manager):
             model: BaseModelAnimal = ProfilsCows
             ) -> dict:
         """Возвращает данные по животному из базы."""
-        return self.upload_data_for_animal(number, model)
+        self.donwload_data_for_animal(number, model)
+        return self.__dict_data_animal
 
     def save_data_bus_to_db(
             self,
@@ -1860,16 +1862,16 @@ class ManagerDB(Manager):
         """
         logger.debug("Start save_data_bus_to_db")
         query = model.select().where(
-            model.number == data.get("number_animal"),
+            model.number == data.get("number"),
             model.farm == data.get("farm"),
         )
         try:
             if query.exists():
-                print(data.get("number_animal"), 'существует.')
+                print(data.get("number"), 'существует.')
             else:
                 model_data = model(
-                    name=data.get("name_animal", '-'),
-                    number=data.get("number_animal", '-'),
+                    name=data.get("name", '-'),
+                    number=data.get("number", '-'),
                     farm=data.get("farm", '-'),
                     BM1818=data.get("BM1818", '-'),
                     BM1824=data.get("BM1824", '-'),
@@ -1918,21 +1920,21 @@ class ManagerDB(Manager):
         """
         logger.debug("Start upload_data_farmers")
 
-        self.__farms_set: set = {}
+        self.__farms_set: list = []
         buses = model.select()
         for bus in buses:
             if bus.farm in self.__farms_set:
                 pass
             else:
-                self.__farms_set.add(bus.farm)
-
+                self.__farms_set.append(bus.farm)
+        self.__farms_set = set(self.__farms_set)
         logger.debug("End upload_data_farmers")
 
     def donwload_data_for_animal(
             self,
             number: int,
             model: BaseModelAnimal = ProfilsCows
-            ) -> dict:
+            ) -> None:
         """
         Загружает данные по животному из базы.
         ----------------------
@@ -1942,39 +1944,20 @@ class ManagerDB(Manager):
         Возвращаемое значение:
             res (dict): словарь с данными по животному.
         """
-        logger.debug("Start upload_data_for_animal")
+        logger.debug("Start donwload_data_for_animal")
         query = model.select().where(
             model.number == number
         )
         if query.exists():
-            bus = model.select().where(
+            self.__dict_data_animal = model.select().where(
                 model.number == number
-            ).get()
-            res = {
-                "BM1818": bus.BM1818,
-                "BM1824": bus.BM1824,
-                "BM2113": bus.BM2113,
-                "CSRM60": bus.CSRM60,
-                "CSSM66": bus.CSSM66,
-                "CYP21": bus.CYP21,
-                "ETH10": bus.ETH10,
-                "ETH225": bus.ETH225,
-                "ETH3": bus.ETH3,
-                "ILSTS6": bus.ILSTS6,
-                "INRA023": bus.INRA023,
-                "RM067": bus.RM067,
-                "SPS115": bus.SPS115,
-                "TGLA122": bus.TGLA122,
-                "TGLA126": bus.TGLA126,
-                "TGLA227": bus.TGLA227,
-                "TGLA53": bus.TGLA53,
-                "MGTG4B": bus.MGTG4B,
-                "SPS113": bus.SPS113,
-            }
-            logger.debug("End upload_data_for_animal")
-            return res
+            ).dicts().get()
+            logger.debug("End donwload_data_for_animal")
         else:
-            res = {
+            self.__dict_data_animal = {
+                "name": "-",
+                "number": "-",
+                "farm": "-",
                 "BM1818": '-',
                 "BM1824": '-',
                 "BM2113": '-',
@@ -1995,8 +1978,7 @@ class ManagerDB(Manager):
                 "MGTG4B": '-',
                 "SPS113": '-',
             }
-            logger.debug("End upload_data_for_animal")
-            return res
+            logger.debug("End donwload_data_for_animal")
 
     def donwload_data_for_animals(
             self,
