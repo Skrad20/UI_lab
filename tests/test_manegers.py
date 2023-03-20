@@ -27,7 +27,7 @@ class TestManagerDB(unittest.TestCase):
         )
         for bull in test_data_father:
             BullFather.create(
-                bull
+                пше bull
             )
 
     def test_get_farms(self) -> None:
