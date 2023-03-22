@@ -2,7 +2,7 @@ import requests
 import os
 from urllib.parse import urlencode
 import pandas as pd
-from models.models import BullFather
+from code_app.models import BullFather
 
 
 def donwload_data() -> str:

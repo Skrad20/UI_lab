@@ -1,6 +1,6 @@
 import pandas as pd
 
-from models.models import BullFather
+from code_app.models import BullFather
 
 df = pd.read_csv("data/res_fathers.csv", sep=';', encoding='cp1251')
 df = df.drop_duplicates(subset=['Номер']).reset_index(drop=True)

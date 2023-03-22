@@ -12,7 +12,7 @@ from PyQt5.QtWidgets import (QMessageBox, QPushButton, QTableView,
 from func.db_job import save_bus_data_fater
 from func.func_answer_error import answer_error
 from lists_name.list_name_row import list_name_row_add_father
-from models.models import BullFather
+from code_app.models import BullFather
 
 
 class TableAddFather(MainDialog):

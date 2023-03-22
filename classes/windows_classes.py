@@ -24,7 +24,7 @@ from func.func_ms import (ResOut, creat_doc_pas_gen, enter_adres, ms_out_word,
                           save_file, save_file_for_word, search_father)
 from func.db_job import upload_data_farmers_father
 from lists_name.list_name_row import list_name_row_search_father
-from models.models import Logs
+from code_app.models import Logs
 from setting import DB as db
 from setting import TRANSPARENCY as transparency
 from classes.ui.gui import Ui_MainWindow

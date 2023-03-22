@@ -15,7 +15,7 @@ from PyQt5.QtWidgets import (QAbstractItemView, QAbstractScrollArea,
                              QFileDialog, QMessageBox, QTableWidget,
                              QTableWidgetItem)
 
-from models.models import ProfilsCows, BaseModelAnimal, BullFather
+from code_app import models
 from setting import log_file, config_file, dict_paths
 from bs4 import BeautifulSoup
 from func.func_answer_error import answer_error
@@ -41,6 +41,60 @@ logger.addHandler(my_handler)
 class Manager:
     def __init__(self) -> None:
         pass
+
+
+class DataFixManager(Manager):
+    def __init__(self) -> None:
+        super().__init__()
+        self.create_fix_data()
+
+    def create_fix_data(self):
+        self.list_name_row_add_father = [
+            'Имя',
+            'Инвертарный номер',
+            'Хозяйство',
+            'BM1818',
+            'BM1824',
+            'BM2113',
+            'CSRM60',
+            'CSSM66',
+            'CYP21',
+            'ETH10',
+            'ETH225',
+            'ETH3',
+            'ILSTS6',
+            'INRA023',
+            'RM067',
+            'SPS115',
+            'TGLA122',
+            'TGLA126',
+            'TGLA227',
+            'TGLA53',
+            'MGTG4B',
+            'SPS113',
+        ]
+
+        self.list_name_row_search_father = [
+            'BM1818',
+            'BM1824',
+            'BM2113',
+            'CSRM60',
+            'CSSM66',
+            'CYP21',
+            'ETH10',
+            'ETH225',
+            'ETH3',
+            'ILSTS6',
+            'INRA023',
+            'RM067',
+            'SPS115',
+            'TGLA122',
+            'TGLA126',
+            'TGLA227',
+            'TGLA53',
+            'MGTG4B',
+            'SPS113',
+        ]
 
 
 class ManagerUtilities(Manager):
@@ -110,9 +164,8 @@ class ManagerUtilities(Manager):
             num: str - Выделенный номер.
         '''
         try:
-            num = row[col]
-            num = num.split(delitel)
-            return num[-1]
+            num = row[col].split(delitel)[-1]
+            return num
         except Exception as e:
             logger.error(e)
             logger.error(col)
@@ -120,22 +173,15 @@ class ManagerUtilities(Manager):
 
 
 class ManagerDataMS(Manager):
-    def __init__(self) -> None:
+    def __init__(self, farm: str, model: models.BaseModelAnimal) -> None:
+        self._farm = farm
+        self._model = model
+        self._locus_list = model.get_filds()[4:]
         self.__manager_db = ManagerDB()
         self.__manager_utilites = ManagerUtilities()
         self.__manager_files = ManagerFile()
         self.__manager_parser = ParserData()
-        self.__list_locus: list = [
-            "BM1818", "BM1824", "BM2113",
-            "CSRM60", "CSSM66", "CYP21",
-            "ETH10", "ETH225", "ETH3",
-            "ILSTS6", "INRA023", "RM067",
-            "SPS115", "TGLA122", "TGLA126",
-            "TGLA227", "TGLA53", "MGTG4B",
-            "SPS113",
-        ]
-        self.__list_father_not: list = []
-        self.__list_names_columns_dataset = [
+        self._list_names_columns_dataset = [
                 'number_animal',
                 'name_animal',
                 'number_sample',
@@ -145,7 +191,7 @@ class ManagerDataMS(Manager):
                 'name_father',
             ]
 
-        self.__list_numeric_columns = [
+        self._list_numeric_columns = [
             'number_animal',
             'number_sample',
             'number_mutter',
@@ -155,44 +201,105 @@ class ManagerDataMS(Manager):
         self.__maneger_files = ManagerFile()
         self.__parser_data = ParserData()
 
-    def filter_father(self, farms: dict) -> pd.DataFrame:
+    def loading_data_invertory(self, address: str) -> None:
+        self.dataset_inverory: pd.DataFrame = (
+            self.__manager_files.read_file(address)
+        )
+        self.preprocessing_invertory()
+
+    def preprocessing_invertory(self):
+        # Выделение нужных столбцов
+        self.dataset_inverory = self.dataset_inverory.iloc[:, :8]
+        df_data_bull: pd.DataFrame = self.dataset_inverory.iloc[:, 5:8]
+        if len(df_data_bull) == 3:
+            self.transform_data_for_database(df_data_bull, self._farm)
+
+        self.dataset_inverory = self.dataset_inverory.iloc[:, :7]
+        self.dataset_inverory.columns = self._list_names_columns_dataset
+        if (self._model == models.Bull):
+            self.__manager_parser.add_missing_father(
+                self.dataset_inverory,
+                self._farm
+            )
+
+        # Приведение типов
+        self.dataset_inverory = self.dataset_inverory.astype('str')
+        for col in self._list_numeric_columns:
+            self.dataset_inverory[col] = pd.to_numeric(
+                self.dataset_inverory[col],
+                downcast='integer'
+            )
+
+    def loading_data_profils(self, address: str) -> None:
+        self.dataset_profils: pd.DataFrame = (
+            self.__manager_files.read_file(address)
+        )
+        self.preprocessing_profils()
+
+    def preprocessing_profils(self) -> None:
+        # Выделение номеров проб
+        self.dataset_profils['num'] = self.dataset_profils.apply(
+            self.__manager_utilites.delit,
+            delitel='-',
+            col='Sample Name',
+            axis=1
+        )
+        # Приведение типов
+        self.dataset_profils.drop(['Sample Name'], axis=1, inplace=True)
+        self.dataset_profils = self.dataset_profils.fillna(0).astype('int')
+
+        # Предобработка данных по микросателлитам
+        list_col: list = []
+        for i in range(1, len(self.dataset_profils.columns), 2):
+            j = i + 1
+            col1 = self.dataset_profils.columns[i]
+            col2 = self.dataset_profils.columns[j]
+            col_split = col1.upper().split()[0]
+            self.dataset_profils[col_split] = self.dataset_profils.apply(
+                self.ms_join,
+                col1=col1,
+                col2=col2,
+                axis=1
+            )
+            list_col.append(col_split)
+
+        self.dataset_profils = self.dataset_profils[["num"] + list_col]
+
+    def filter_father(
+            self,
+            farms: dict,
+            model_father: models.BaseModelAnimal = models.Bull
+            ) -> pd.DataFrame:
         """
         Возвращает отфильтрованный датасет по хозяйствам.
 
         Параметры:
         ----------
             farms: dict - набор хозяйств, котроые должны остаться.
+            model_father = models.Bull - Модель для подбора отцов
         Возвращает:
         -----------
             df_res: pd.DataFrame - Отфильтрованный датасет.
         """
         logger.debug("Start filter_father")
-        df_fathers = self.__manager_db.get_data_for_animals(model=BullFather)
+        df_fathers = self.__manager_db.get_data_for_animals(model=model_father)
         if farms.get('Выбрать всех', False):
-            return df_fathers.drop('farm', axis=1)
+            return df_fathers
 
-        df_fathers.apply(self.split_data_from_row, axis=1)
         list_farms = []
         for key, item in farms.items():
             if item:
                 if key != 'Выбрать всех':
                     list_farms.append(key)
 
-        list_res = []
+        list_fathers = []
         for i in range(len(df_fathers)):
-            if not self.__manager_utilites.is_float(df_fathers.iloc[i, 1]):
-                len_ = len(df_fathers.iloc[i, 2])
-                for j in range(len_):
-                    if df_fathers.iloc[i, 2][j] in list_farms:
-                        list_res.append(df_fathers.iloc[i, :])
-            else:
-                if df_fathers.iloc[i, 2] in list_farms:
-                    list_res.append(df_fathers.iloc[i, :])
+            if df_fathers.loc[i, "farm"] in list_farms:
+                list_fathers.append(df_fathers.iloc[i, :])
 
-        logger.debug("Filter_father: tansform result")
-        df_res = pd.DataFrame(data=list_res).reset_index(drop=True)
+        df_res = pd.DataFrame(data=list_fathers).reset_index(drop=True)
         logger.debug("End filter_father")
-        return df_res.drop('farm', axis=1)
+        return df_res
 
     def search_father(self, adres: str, filter_farms: dict) -> pd.DataFrame:
         """Поиск возможных отцов.
@@ -370,150 +477,6 @@ class ManagerDataMS(Manager):
                     logger.error(e)
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
 
-    def check_error_ms(
-        self,
-        df: pd.DataFrame,
-        df_profil: pd.DataFrame,
-        flag_mutter: bool = False,
-    ) -> dict:
-        """
-        Возвращает проверенные на соответсвие потомков матерями отцам
-        словари по данным МС.
-
-        Параметры:
-        ----------
-            df: pd.DataFrame - Основной датасет.
-            df_profil: pd.DataFrame - Профиль потомка.
-            flag_mutter: bool = False - Флаг. Нужна ли проверка матерей.
-        Возвращает:
-        -----------
-            Словарь: dict - Словарь с ошибками по матерям и по отцам.
-        """
-        logger.debug("Start check_error_ms")
-        df = df.dropna(subset=[df.columns[5]])
-        try:
-            list_number_father = []
-            list_locus_er_father = []
-            list_father_er = []
-            list_animal_father = []
-            list_number_mutter = []
-            list_locus_er_mutter = []
-            list_mutter_er = []
-            list_animal_mutter = []
-            male_father = []
-            male_mutter = []
-            for i in range(len(df)):
-                number = int(df.loc[i, 'number_proba'])
-                number_animal = int(df.loc[i, 'number_animal'])
-                number_mutter = int(df.loc[i, 'number_mutter'])
-                number_fater = int(df.loc[i, 'number_father'])
-                dict_mutter = self.__manager_db.get_data_for_animal(
-                    number_mutter,
-                    ProfilsCows
-                )
-                dict_father = self.__manager_db.get_data_for_animal(
-                    number_fater,
-                    BullFather
-                )
-                df_profil['num'] = df_profil['num'].astype('int')
-
-                if number in list(df_profil['num']):
-                    pass
-                else:
-                    if number > 0:
-                        name = (
-                            f'Животного {number_animal}' +
-                            f' нет в данных. Проба {number}'
-                        )
-                        logger.info(name)
-                    continue
-
-                df_animal_prof = df_profil.query(
-                    'num == @number'
-                ).loc[:, 'ETH3': 'ETH10'].reset_index(
-                    drop=True
-                ).T.to_dict().get(0)
-
-                logger.debug(
-                    "MS father"
-                )
-                for locus, val in dict_father.items():
-                    logger.debug(f"Values dict: {locus}, {val}")
-                    value_fater_ms = val
-                    if value_fater_ms != '-' and (value_fater_ms is not None):
-                        logger.debug(
-                            f"Values MS father: {value_fater_ms}, locus {locus}"
-                        )
-                        locus_a = locus.split('_father')[0]
-                        value_animal_ms = df_animal_prof.get(locus_a, 1)
-                        logger.debug(
-                            "Values locus animal: " +
-                            f"{value_animal_ms}, locus {locus_a}"
-                            )
-                        if value_animal_ms != 1:
-                            if self.verification_ms(
-                                value_fater_ms,
-                                value_animal_ms
-                            ):
-                                list_number_father.append(number)
-                                list_locus_er_father.append(locus)
-                                list_father_er.append(number_fater)
-                                list_animal_father.append(number_animal)
-                                male_father.append("male")
-                if flag_mutter:
-                    logger.debug(
-                        "MS Mutter"
-                    )
-                    for locus, val in dict_mutter.items():
-                        value_mutter_ms = val
-                        if value_mutter_ms != '-':
-                            logger.debug(
-                                f"Values MS mutter: {value_mutter_ms}, " +
-                                f"locus {locus}"
-                                )
-                            locus_a = locus.split('_mutter')[0]
-                            value_animal_ms = df_animal_prof.get(locus_a, 1)
-                            if value_animal_ms != 1:
-                                if self.verification_ms(
-                                    value_mutter_ms,
-                                    value_animal_ms
-                                ):
-                                    list_number_mutter.append(i)
-                                    list_locus_er_mutter.append(locus)
-                                    list_mutter_er.append(number_mutter)
-                                    list_animal_mutter.append(number_animal)
-                                    male_mutter.append('female')
-            logger.debug(
-                    "Save errors father"
-                )
-            res_error_father = pd.DataFrame({
-                'number': list_number_father,
-                'locus': list_locus_er_father,
-                'parent': list_father_er,
-                'animal': list_animal_father,
-                'male': male_father,
-            })
-            logger.debug(
-                    "Save errors mutter"
-                )
-            res_error_mutter = pd.DataFrame({
-                'number': list_number_mutter,
-                'locus': list_locus_er_mutter,
-                'parent': list_mutter_er,
-                'animal': list_animal_mutter,
-                'male': male_mutter,
-            })
-            logger.debug("End check_error_ms")
-            return {"father": res_error_father, "mutter": res_error_mutter}
-        except Exception as e:
-            logger.error(e)
-            QMessageBox.critical(
-                None,
-                'Ошибка ввода',
-                f'{answer_error()} Подробности:\n {e}'
-            )
-            logger.debug("End check_error_ms")
-
     def verification_ms(self, one_ms: str, second_ms: str) -> bool:
         """Возращает True, если данные МС неподходят
 
@@ -525,37 +488,23 @@ class ManagerDataMS(Manager):
         ----------
             res: bool - Неподходит/подходит.
         """
-        try:
-            one_ms = one_ms.replace(" ", '')
-            second_ms = second_ms.replace(" ", '')
-            logger.debug("start verification_ms")
-            logger.debug(f"Input data: {one_ms}, {second_ms}")
-            res = False
-            one_split = one_ms.split('/')
-            second_split = second_ms.split('/')
-            if (
-                int(one_split[0]) != int(second_split[0]) and
-                int(one_split[0]) != int(second_split[1]) and
-                int(one_split[1]) != int(second_split[0]) and
-                int(one_split[1]) != int(second_split[1])
-            ):
-                res = True
-            logger.debug(f"result {res}")
-            logger.debug("end verification_ms")
-            return res
-
-        except Exception as e:
-            logger.error(e)
-            logger.error(
-                f"data error {one_split}, {second_split}"
-            )
-            name = '\nfunc_ms.py\verification_ms\n '
-            QMessageBox.critical(
-                None,
-                'Ошибка ввода',
-                (f'{answer_error()}{name}Подробности:\n {e}')
-            )
-            logger.debug("end verification_ms")
+        logger.debug("start verification_ms")
+        logger.debug(f"Input data: {one_ms}, {second_ms}")
+        one_ms = one_ms.replace(" ", '')
+        second_ms = second_ms.replace(" ", '')
+        res = False
+        one_split = one_ms.split('/')
+        second_split = second_ms.split('/')
+        if (
+            int(one_split[0]) != int(second_split[0]) and
+            int(one_split[0]) != int(second_split[1]) and
+            int(one_split[1]) != int(second_split[0]) and
+            int(one_split[1]) != int(second_split[1])
+        ):
+            res = True
+        logger.debug(f"result {res}")
+        logger.debug("end verification_ms")
+        return res
 
     def data_verification(self, context: dict) -> dict:
         """
@@ -569,112 +518,14 @@ class ManagerDataMS(Manager):
             context: dict - Изменный словарь данных.
         """
         logger.debug("start data_verification")
-        try:
-            for key in self.list_locus:
-                child = context.get(key, context.get(key.replace("0", "")))
-                father = context.get(key+'_father')
-                mutter = context.get(key+'_mutter')
-                logger.debug(
-                    f"Value key {key}. Child: {child}," +
-                    f" father: {father}, mutter: {mutter}"
-                )
-                if (
-                    father != '-' and
-                    father != '0/0' and
-                    father != '' and
-                    father is not None and
-                    child != '-' and
-                    child != '0/0' and
-                    child != '' and
-                    child is not None
-                ):
-                    if self.verification_ms(child, father):
-                        context[key] = RichText(
-                            context.get(key, context.get(key.replace("0", ""))),
-                            color='#ff0000',
-                            bold=True
-                        )
-                        context[key.replace("0", "")] = RichText(
-                            context.get(key, context.get(key.replace("0", ""))),
-                            color='#ff0000',
-                            bold=True
-                        )
-                        context[key+'_father'] = RichText(
-                            context.get(key+'_father'),
-                            color='#ff0000',
-                            bold=True
-                        )
-                if (
-                    mutter != '-' and
-                    mutter != '0/0' and
-                    mutter != '' and
-                    mutter is not None and
-                    child != '-' and
-                    child != '0/0' and
-                    child != '' and
-                    child is not None
-                ):
-                    if self.verification_ms(child, mutter):
-                        context[key] = RichText(
-                            context.get(key),
-                            color='#ff0000',
-                            bold=True
-                        )
-                        context[key.replace("0", "")] = RichText(
-                            context.get(key, context.get(key.replace("0", ""))),
-                            color='#ff0000',
-                            bold=True
-                        )
-                        context[key+'_mutter'] = RichText(
-                            context.get(key+'_mutter'),
-                            color='#ff0000',
-                            bold=True
-                        )
-            logger.debug("end data_verification")
-            return context
-
-        except Exception as e:
-            name = '\nfunc_ms.py\\data_verification\n'
-            logger.error(e)
-            logger.error(
-                f"Value keys {key}. Child: {child}," +
-                f" Father: {father}, Mutter: {mutter}"
-            )
-            QMessageBox.critical(
-                None,
-                'Ошибка ввода',
-                (f'{answer_error()}{name}Подробности:\n {e}')
-            )
-            logger.debug("End data_verification")
-
-    def check_conclusion(self, context: dict) -> str:
-        """
-        Проверяет есть ли ошибки в паспорте и изменяет заключение.
-        Возращает изменный context для ввода в паспорт.
-
-        Параметры:
-        ----------
-            context: dict - Начальные данные.
-        Возвращает:
-        ----------
-            res: str - Заключение.
-        """
-        logger.debug("Start check_conclusion")
-        res = ''
-        mutter = context.get('BM1818_mutter')
-        father = context.get('BM1818_father')
         flag_mutter, flag_father, flag_null_mutter, flag_null_father = (
             False, False, False, False
         )
         number_null_mutter, number_null_father = 0, 0
-        for key in self.__list_locus:
-            child = context.get(key)
+        for key in self._locus_list:
+            child = context.get(key, context.get(key.replace("0", "")))
             father = context.get(key+'_father')
             mutter = context.get(key+'_mutter')
-            logger.debug(
-                f"Value key {key}. Child: {child}," +
-                f" father: {father}, mutter: {mutter}"
-            )
             if (
                 father != '-' and
                 father != '0/0' and
@@ -687,7 +538,21 @@ class ManagerDataMS(Manager):
             ):
                 if self.verification_ms(child, father):
                     flag_father = True
-                    break
+                    context[key] = RichText(
+                        context.get(key, context.get(key.replace("0", ""))),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key.replace("0", "")] = RichText(
+                        context.get(key, context.get(key.replace("0", ""))),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key+'_father'] = RichText(
+                        context.get(key+'_father'),
+                        color='#ff0000',
+                        bold=True
+                    )
             else:
                 number_null_father += 1
                 if number_null_father > 10:
@@ -704,24 +569,39 @@ class ManagerDataMS(Manager):
             ):
                 if self.verification_ms(child, mutter):
                     flag_mutter = True
-                    break
+                    context[key] = RichText(
+                        context.get(key),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key.replace("0", "")] = RichText(
+                        context.get(key, context.get(key.replace("0", ""))),
+                        color='#ff0000',
+                        bold=True
+                    )
+                    context[key+'_mutter'] = RichText(
+                        context.get(key+'_mutter'),
+                        color='#ff0000',
+                        bold=True
+                    )
             else:
                 number_null_mutter += 1
                 if number_null_mutter > 10:
                     flag_null_mutter = True
 
+        logger.debug("end data_verification")
         if flag_father and flag_mutter:
-            res = 'Родители не соответствуют'
+            conclusion = 'Родители не соответствуют'
         elif flag_father:
-            res = 'Отец не соответствует'
+            conclusion = 'Отец не соответствует'
         elif flag_mutter or flag_null_mutter:
-            res = 'Отец соответствует'
+            conclusion = 'Отец соответствует'
         elif not flag_null_mutter and not flag_null_father:
-            res = 'Родители соответствуют'
+            conclusion = 'Родители соответствуют'
         else:
-            res = ''
-        logger.debug("end check_conclusion")
-        return res
+            conclusion = ''
+        context['conclusion'] = conclusion
+        return context
 
     def split__(self, str_input: str) -> list:
         return str_input.split("_")
@@ -776,7 +656,7 @@ class ManagerDataMS(Manager):
     def save_text_to_file(
             self,
             data: dict,
-            adress: str = r'func\data\creat_pass_doc\log_error.txt'
+            adress: str = r'data\log\log_error_profils.txt'
             ) -> None:
         """
         Сохраняет данные в файл.
@@ -829,7 +709,12 @@ class ManagerDataMS(Manager):
         logger.debug("end analys_error")
         return result
 
-    def ms_join(self, row: pd.Series, col1: str, col2: str, sep: str = "/") -> str:
+    def ms_join(
+            self,
+            row: pd.Series,
+            col1: str,
+            col2: str,
+            sep: str = "/") -> str:
         '''
         Возвращает объединенное значение выделенных строк через знак.
         Заточена под apply.
@@ -849,32 +734,12 @@ class ManagerDataMS(Manager):
         ms0 = sep.join(join_ms)
         return ms0
 
-    def split_data_from_row(
-            self,
-            row: pd.Series,
-            sep: str = ", "
-            ) -> pd.Series:
-        """
-        Разделяет названия в строке данных.
-
-        Параметры:
-        ----------
-            row: pd.Series - Строка данных
-
-        Возвращает:
-        ----------
-            row: pd.Series - Строка данных преобразованная
-        """
-        if type(row['farm']) == str and "," in row['farm']:
-            row['farm'] = row['farm'].split(sep)
-        return row
-
     def combine_all_docx(
         self,
         filename_master: str,
         files_list: list,
         adres: str,
-        date) -> None:
+        ) -> None:
         '''
         Сбор документа для Word.
         Параметры:
@@ -882,7 +747,6 @@ class ManagerDataMS(Manager):
             filename_master: str - Название выходного файла.
             files_list: list - Лист названий промежуточных файлов.
             adres: str - Адрес места сохранения файла.
-            date - Дата создания паспорта.
         Возвращает:
         -----------
             None
@@ -897,10 +761,12 @@ class ManagerDataMS(Manager):
 
     def creat_doc_pas_gen(
         self,
-        adres_invertory: str,
-        adres_genotyping: str,
+        adress_invertory: str,
+        adress_genotyping: str,
         adres: str,
-        farm: str = 'Хозяйство',
+        model_fater: models.BaseModelAnimal = models.Bull,
+        model_mutter: models.BaseModelAnimal = models.Cow,
+        model_descendant: models.BaseModelAnimal = models.Cow,
         flag_mutter: bool = False
     ) -> pd.DataFrame:
         """
@@ -913,292 +779,125 @@ class ManagerDataMS(Manager):
             adres_genotyping: str - Адрес результатов.
             adres: str - Адрес сохранения паспортов.
             farm: str = 'Хозяйство' - Название хозяйства.
+            model_fater: models.BaseModelAnimal = models.Bull -
+                модель для отца,
+            model_mutter: models.BaseModelAnimal = models.Cow -
+                модель для матери,
+            model_descendant: models.BaseModelAnimal = models.Cow -
+                модель для потомка,
             flag_mutter: bool = False - Нужна ли проверка матерей.
         Возвращает:
         -----------
             res_err: pd.DataFrame - Данные по ошибкам.
         """
-        logger.debug("star creat_doc_pas_gen")
-        try:
-            now = datetime.datetime.now()
-            date = now.strftime("%d-%m-%Y")
-            df: pd.DataFrame = self.__manager_files.read_file(adres_invertory)
-            df: pd.DataFrame = df.iloc[:, :8]
-            df_data_bull: pd.DataFrame = df.iloc[:, 5:8]
-            if len(df_data_bull) == 3:
-                self.transform_data_for_database(df_data_bull, farm)
+        logger.debug("start creat_doc_pas_gen")
 
-            df: pd.DataFrame = self.__maneger_files.read_file(adres_invertory)
-            df: pd.DataFrame = df.iloc[:, :8]
+        species = model_descendant.get_title()
+        now = datetime.datetime.now()
+        date = now.strftime("%d-%m-%Y")
+        self.loading_data_invertory(adress_invertory)
+        self.loading_data_profils(adress_genotyping)
+        dataset_faters: pd.DataFrame = (
+            self.__manager_db.get_data_for_animals(model_fater)
+        )
+        list_number_faters = list(dataset_faters.loc[:, 'number'])
+        numbers_sample_from_profil = list(self.dataset_profils['num'])
+        numbers_sample_from_invertory = list(
+            self.dataset_inverory['number_sample']
+        )
 
-            df_data_bull: pd.DataFrame = df.iloc[:, 5:8]
+        dict_error: dict = {}
+        dict_error['not_father'] = []
+        dict_error['not_animal'] = []
 
-            # Проверка на наличие профилей у отцов
-            if len(df_data_bull) == 3:
-                self.transform_data_for_database(df_data_bull, farm)
-
-            # Отбираем нужные данные и приводим название столбцов
-            df: pd.DataFrame = df.iloc[:, :7]
-            df.columns = [
-                'number_animal',
-                'name_animal',
-                'number_proba',
-                'number_mutter',
-                'name_mutter',
-                'number_father',
-                'name_father',
-            ]
-            df_faters: pd.DataFrame = self.__manager_parser.add_missing_bull(
-                df,
-                farm
+        logger.debug("start cycle create pass")
+        files_list = []
+        for i in range(len(numbers_sample_from_invertory)):
+            doc = DocxTemplate(
+                dict_paths.get("templates_pass").get(species)
             )
-            df_profil: pd.DataFrame = self.__manager_files.read_file(
-                adres_genotyping
-            )
-            logger.debug("Data passed")
-            try:
-                df_profil['num'] = df_profil.apply(
-                    self.__manager_utilites.delit,
-                    delitel='-',
-                    col='Sample Name',
-                    axis=1
-                )
-            except Exception as e:
-                logger.error(e)
-                QMessageBox.critical(
-                    None,
-                    'Ошибка ввода',
-                    f'{answer_error()} Подробности:\n {e}'
-                )
-            df_profil['num'] = df_profil['num'].astype('int')
-            df = df.fillna(0)
-            series_num = list(df_profil['num'])
-            series_proba = list(df['number_proba'].astype('int'))
-            df_profil['Sample Name'] = df_profil.pop('num')
-            df_profil = df_profil.rename(columns={'Sample Name': 'num'})
-            df_profil = df_profil.fillna(0).astype('int')
-            series_numbers_animal = list(df_profil['num'])
+            context = {}
+            if numbers_sample_from_invertory[i] in numbers_sample_from_profil:
+                num_sample = numbers_sample_from_invertory[i]
+                info = self.dataset_inverory.query(
+                    'number_proba == @num_sample'
+                ).reset_index()
+                profil = self.dataset_profils.query(
+                    'num == @num_sample'
+                ).reset_index()
 
-            df = df.fillna(0)
-            series_numbers_sample = list(df['number_sample'].astype('int'))
+                number_animal: int = info.loc[0, 'number_animal']
+                name_animal: int = info.loc[0, 'name_animal']
+                number_father: int = info.loc[0, 'number_father']
+                name_father: str = info.loc[0, 'name_father']
+                number_mutter: int = int(info.loc[0, 'number_mutter'])
+                name_mutter: str = info.loc[0, 'name_mutter']
+                animal_join: str = [name_animal, str(number_animal)]
+                fater_join: str = [name_father, str(number_father)]
+                mutter_join: str = [name_mutter, str(number_mutter)]
 
-            # Обрабатываем данные локусов
-            for i in range(1, len(df_profil.columns), 2):
-                j = i + 1
-                col1 = df_profil.columns[i]
-                col_split = col1.split()[0]
-                col_split = col_split.upper()
-                col2 = df_profil.columns[j]
-                df_profil[col_split] = df_profil.apply(
-                    self.ms_join,
-                    col1=col1,
-                    col2=col2,
-                    axis=1
+                context['number_animal'] = number_animal
+                context['name_animal'] = name_animal
+                context['farm'] = self._farm
+                context['number_father'] = number_father
+                context['name_father'] = name_father
+                context['animal'] = ' '.join(animal_join)
+                context['father'] = ' '.join(fater_join)
+                context['mutter'] = ' '.join(mutter_join)
+                context['date'] = date
+
+                dict_profil = profil.loc[0, :].to_dict()
+                context = {**context, **dict_profil}
+                self.__manager_db.save_data_animal_to_db(
+                    context,
+                    model_descendant
                 )
 
-            # Отбираем и шлифуем данные
-            df_profil_end = df_profil.iloc[:, -15:]
-            df_profil_end['num'] = df_profil['num']
-            df = df.astype('str')
-
-            list_col_to_numeric = [
-                "number_animal", "number_proba",
-                "number_father", "number_mutter"
-            ]
-            for col in list_col_to_numeric:
-                df[col] = pd.to_numeric(
-                    df[col],
-                    downcast='integer'
-                )
-            list_number_faters = list(df_faters.loc[:, 'number'])
-            dict_error = self.check_error_ms(df, df_profil, flag_mutter)
-            logger.debug("start save_error_df")
-            dict_error.get("mutter").to_csv(
-                dict_paths.get("error_ms_mutter"),
-                sep=";",
-                decimal=',',
-                encoding="cp1251")
-            dict_error.get("father").to_csv(
-                dict_paths.get("error_ms_father"),
-                sep=";",
-                decimal=',',
-                encoding="cp1251")
-            logger.debug("end save_error_df")
-            res_err = pd.concat(
-                [dict_error.get("mutter"), dict_error.get("father")]
-            )
-
-            # Начинаем собирать паспорта
-            files_list = []
-            logger.debug("start cycle create password")
-            dict_error['not_father'] = []
-            dict_error['not_animal'] = []
-            for i in range(len(series_numbers_animal)):
-                doc = DocxTemplate(PATH_TEMP)
-                if series_numbers_animal[i] in series_numbers_sample:
-                    num_animal = series_numbers_animal[i]
-                    logger.debug(f"Номер животного {num_animal}")
-                    df_info = df.query(
-                        'number_sample == @num_animal'
-                    ).reset_index()
-                    df_profil = df_profil_end.query(
-                        'num == @num_animal'
-                    ).reset_index()
-
-            try:
-                for i in range(len(series_num)):
-                    doc = DocxTemplate(
-                        dict_paths.get("temp_doc_file")
-                    )
-                    if series_num[i] in series_proba:
-                        num_anim = series_num[i]
-                        logger.debug(f"Номер животного {num_anim}")
-                        df_info = df.query(
-                            'number_proba == @num_anim'
-                        ).reset_index()
-                        df_profil_only = df_profil_end.query(
-                            'num == @num_anim'
-                        ).reset_index()
-
-                        number_animal: int = df_info.loc[0, 'number_animal']
-                        name_animal: int = df_info.loc[0, 'name_animal']
-                        number_proba: int = df_info.loc[0, 'number_proba']
-                        number_father: int = df_info.loc[0, 'number_father']
-                        name_father: str = df_info.loc[0, 'name_father']
-                        number_mutter: int = int(df_info.loc[0, 'number_mutter'])
-                        name_mutter: str = df_info.loc[0, 'name_mutter']
-                        animal_join: str = [name_animal, str(number_animal)]
-                        fater_join: str = [name_father, str(number_father)]
-                        mutter_join: str = [name_mutter, str(number_mutter)]
-                        animal: str = ' '.join(animal_join)
-                        fater: str = ' '.join(fater_join)
-                        mutter: str = ' '.join(mutter_join)
-
-                        dict_profil_only = df_profil_only.loc[0, :].to_dict()
-
-                        if number_father in list_number_faters:
-                            df_faters_only = (df_faters.query(
-                                'number == @number_father'
-                            ).reset_index(drop=True))
-                            dict_faters_only = df_faters_only.loc[0, :].to_dict()
-                            dict_faters_new = {}
-                            for key, val in dict_faters_only.items():
-                                dict_faters_new[key+"_father"] = val
-                            context = {
-                                'number_animal': number_animal,
-                                'name_animal': name_animal,
-                                'hosbut': farm,
-                                'number_proba': number_proba,
-                                'number_father': number_father,
-                                'name_father': name_father,
-                                'animal': animal,
-                                'father': fater,
-                                'mutter': mutter,
-                                'date': date
-                            }
-                            context = {**context, **dict_profil_only}
-                            self.__manager_db.save_data_bus_to_db(context)
-                            context = {**context, **dict_faters_new}
-                            if flag_mutter:
-                                dict_mutter = self.__manager_db.get_data_for_animal(
-                                    number_mutter,
-                                    ProfilsCows
-                                )
-                                context = {**context, **dict_mutter}
-                            context['conclusion'] = self.check_conclusion(
-                                context
-                            )
-                            context = self.data_verification(context)
-                            doc.render(context)
-                            doc.save(str(i) + ' generated_doc.docx')
-                            title = str(i) + ' generated_doc.docx'
-                            files_list.append(title)
-
-                        else:
-                            context = {
-                                'number_animal': number_animal,
-                                'name_animal': name_animal,
-                                'hosbut': farm,
-                                'number_proba': number_proba,
-                                'number_father': number_father,
-                                'name_father': name_father,
-                                'animal': animal,
-                                'father': fater,
-                                'mutter': mutter,
-                                'date': date
-                            }
-                            context = {**context, **dict_profil_only}
-                            self.__manager_db.save_data_bus_to_db(
-                                context,
-                                ProfilsCows
-                            )
-                            if flag_mutter:
-                                dict_mutter = (self.__manager_db
-                                    .get_data_for_animal(
-                                        number_mutter,
-                                        ProfilsCows
-                                    )
-                                )
-                                context = {**context, **dict_mutter}
-                            context['conclusion'] = self.check_conclusion(
-                                context
-                            )
-                            context = self.data_verification(context)
-                            doc.render(context)
-                            doc.save(str(i) + ' generated_doc.docx')
-                            title = str(i) + ' generated_doc.docx'
-                            files_list.append(title)
-                            self.__list_father_not.append(str(number_father))
-                            dict_error['not_father'].append(number_father)
-                            print(f'Нет быка: {number_father}, страница: {i+1}')
-                    else:
-                        dict_error['not_animal'].append(series_num[i])
-                        print(
-                            f'Нет животного: проба {series_num[i]},' +
-                            f' номер {series_num[i]}, страница: {i+1}'
-                        )
-            except Exception as e:
-                logger.error(e)
-                QMessageBox.critical(
-                    None,
-                    'Ошибка ввода',
-                    f'{answer_error()} Подробности:\n {e}'
-                )
-            logger.debug("end cycle create password")
-            non_father = pd.DataFrame(
-                {
-                    'Отцы': list(
-                        set(self.__list_father_not)
-                    )
-                }
-            )
-            non_father.to_csv(
-                dict_paths.get("not_father"),
-                sep=";",
-                decimal=',',
-                encoding="cp1251"
-            )
-            filename_master = files_list.pop(0)
-            logger.debug("start cycle create word doc")
-            self.combine_all_docx(filename_master, files_list, adres, date)
-            files_list.append(filename_master)
-            for i in range(len(files_list)):
-                if os.path.isfile(files_list[i]):
-                    os.remove(files_list[i])
+                if number_father in list_number_faters:
+                    father = (dataset_faters.query(
+                        'number == @number_father'
+                    ).reset_index(drop=True))
+                    father = father.loc[0, :].to_dict()
+                    dict_fater = {}
+                    for key, val in father.items():
+                        dict_fater[key+"_father"] = val
+                    context = {**context, **dict_fater}
                 else:
-                    print("File doesn't exists!")
-            logger.debug("end cycle create word doc. Return")
+                    dict_error['not_father'].append(number_father)
+            else:
+                dict_error['not_animal'].append(num_sample)
 
-            # Сохраняем данные об ошибках в файл в логе.
-            self.save_text_to_file(self.get_summary_data_error(dict_error))
-            return res_err
-        except Exception as e:
-            logger.error(e)
-            QMessageBox.critical(
-                None,
-                'Ошибка ввода',
-                (f'{answer_error()} Подробности:\n {e}')
-            )
+            if flag_mutter:
+                mutter = (
+                    self.__manager_db.get_data_for_animal(
+                        number_mutter,
+                        model_mutter
+                    )
+                )
+                dict_mutter = {}
+                for key, val in mutter.items():
+                    dict_mutter[key+"_mutter"] = val
+
+                context = {**context, **dict_mutter}
+            context = self.data_verification(context)
+            doc.render(context)
+            doc.save(str(i) + ' generated_doc.docx')
+            title = str(i) + ' generated_doc.docx'
+            files_list.append(title)
+
+        logger.debug("start cycle create word doc")
+        filename_master = files_list.pop(0)
+        self.combine_all_docx(filename_master, files_list, adres, date)
+        files_list.append(filename_master)
+        for i in range(len(files_list)):
+            if os.path.isfile(files_list[i]):
+                os.remove(files_list[i])
+            else:
+                print("File doesn't exists!")
+        logger.debug("end cycle create word doc. Return")
+
+        # Сохраняем данные об ошибках в файл в логе.
+        self.save_text_to_file(self.get_summary_data_error(dict_error))
 
 
 class ManagerDataISSR(Manager):
@@ -1411,7 +1110,10 @@ class ParserData:
                 return True
         return False
 
-    def add_missing_bull(self, df: pd.DataFrame, farm: str) -> None:
+    def add_missing_father(
+            self,
+            df: pd.DataFrame,
+            farm: str) -> None:
         """
         Возращает датасет с быками.
         Проверяет наличие быков в базе. При необходимости добавляет.
@@ -1437,7 +1139,7 @@ class ParserData:
         df = df.dropna(subset=["number_father"])
         try:
             data_father: dict = (
-                self.__manager_db.get_data_for_animals(BullFather)
+                self.__manager_db.get_data_for_animals(model)
             )
             list_father_numbers: list = pd.DataFrame.from_dict(
                 data_father
@@ -1809,11 +1511,12 @@ class ConfigMeneger(Manager):
 class ManagerDB(Manager):
     def __init__(self) -> None:
         self.__farms_set: set = None
-        self.__dict_data_animals: dict = {}
+        self.__dict_data_animal: dict = None
+        self.__dict_data_animals: dict = None
 
     def get_farms(
             self,
-            model: BaseModelAnimal = ProfilsCows
+            model: models.BaseModelAnimal = models.Cow
             ) -> set:
         """Возвращает инвентарные номера отцов."""
         if self.__farms_set is None:
@@ -1822,26 +1525,27 @@ class ManagerDB(Manager):
 
     def get_data_for_animals(
             self,
-            model: BaseModelAnimal = ProfilsCows
+            model: models.BaseModelAnimal = models.Cow
             ) -> dict:
         """Возвращает данные по животным из базы."""
         name_model_data: str = str(model)
         if self.__dict_data_animals.get(name_model_data, None) is None:
-            self.upload_data_for_animals(model)
+            self.donwload_data_for_animals(model)
         return self.__dict_data_animals.get(name_model_data)
 
     def get_data_for_animal(
             self,
             number: int,
-            model: BaseModelAnimal = ProfilsCows
+            model: models.BaseModelAnimal = models.Cow
             ) -> dict:
         """Возвращает данные по животному из базы."""
-        return self.upload_data_for_animal(number, model)
+        self.donwload_data_for_animal(number, model)
+        return self.__dict_data_animal
 
-    def save_data_bus_to_db(
+    def save_data_animal_to_db(
             self,
             data: dict,
-            model: BaseModelAnimal = ProfilsCows
+            model: models.BaseModelAnimal = models.Cow
             ) -> None:
         """
         Сохраняет данные по коровам в базу.
@@ -1860,16 +1564,16 @@ class ManagerDB(Manager):
         """
         logger.debug("Start save_data_bus_to_db")
         query = model.select().where(
-            model.number == data.get("number_animal"),
+            model.number == data.get("number"),
             model.farm == data.get("farm"),
         )
         try:
             if query.exists():
-                print(data.get("number_animal"), 'существует.')
+                print(data.get("number"), 'существует.')
             else:
                 model_data = model(
-                    name=data.get("name_animal", '-'),
-                    number=data.get("number_animal", '-'),
+                    name=data.get("name", '-'),
+                    number=data.get("number", '-'),
                     farm=data.get("farm", '-'),
                     BM1818=data.get("BM1818", '-'),
                     BM1824=data.get("BM1824", '-'),
@@ -1904,7 +1608,7 @@ class ManagerDB(Manager):
 
     def donwload_data_farmers(
             self,
-            model: BaseModelAnimal = BullFather
+            model: models.BaseModelAnimal = models.Bull
             ) -> None:
         """
         Загружает список хозяйств из базы данных.
@@ -1918,21 +1622,21 @@ class ManagerDB(Manager):
         """
         logger.debug("Start upload_data_farmers")
 
-        self.__farms_set: set = {}
+        self.__farms_set: list = []
         buses = model.select()
         for bus in buses:
             if bus.farm in self.__farms_set:
                 pass
             else:
-                self.__farms_set.add(bus.farm)
-
+                self.__farms_set.append(bus.farm)
+        self.__farms_set = set(self.__farms_set)
         logger.debug("End upload_data_farmers")
 
     def donwload_data_for_animal(
             self,
             number: int,
-            model: BaseModelAnimal = ProfilsCows
-            ) -> dict:
+            model: models.BaseModelAnimal = models.Cow
+            ) -> None:
         """
         Загружает данные по животному из базы.
         ----------------------
@@ -1942,39 +1646,20 @@ class ManagerDB(Manager):
         Возвращаемое значение:
             res (dict): словарь с данными по животному.
         """
-        logger.debug("Start upload_data_for_animal")
+        logger.debug("Start donwload_data_for_animal")
         query = model.select().where(
             model.number == number
         )
         if query.exists():
-            bus = model.select().where(
+            self.__dict_data_animal = model.select().where(
                 model.number == number
-            ).get()
-            res = {
-                "BM1818": bus.BM1818,
-                "BM1824": bus.BM1824,
-                "BM2113": bus.BM2113,
-                "CSRM60": bus.CSRM60,
-                "CSSM66": bus.CSSM66,
-                "CYP21": bus.CYP21,
-                "ETH10": bus.ETH10,
-                "ETH225": bus.ETH225,
-                "ETH3": bus.ETH3,
-                "ILSTS6": bus.ILSTS6,
-                "INRA023": bus.INRA023,
-                "RM067": bus.RM067,
-                "SPS115": bus.SPS115,
-                "TGLA122": bus.TGLA122,
-                "TGLA126": bus.TGLA126,
-                "TGLA227": bus.TGLA227,
-                "TGLA53": bus.TGLA53,
-                "MGTG4B": bus.MGTG4B,
-                "SPS113": bus.SPS113,
-            }
-            logger.debug("End upload_data_for_animal")
-            return res
+            ).dicts().get()
+            logger.debug("End donwload_data_for_animal")
         else:
-            res = {
+            self.__dict_data_animal = {
+                "name": "-",
+                "number": "-",
+                "farm": "-",
                 "BM1818": '-',
                 "BM1824": '-',
                 "BM2113": '-',
@@ -1995,12 +1680,11 @@ class ManagerDB(Manager):
                 "MGTG4B": '-',
                 "SPS113": '-',
             }
-            logger.debug("End upload_data_for_animal")
-            return res
+            logger.debug("End donwload_data_for_animal")
 
     def donwload_data_for_animals(
             self,
-            model: BaseModelAnimal = ProfilsCows
+            model: models.BaseModelAnimal = models.Cow
             ) -> None:
         """
         Загружает данные по животным из базы для поиска.

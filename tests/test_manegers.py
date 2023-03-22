@@ -1,10 +1,10 @@
 import pandas as pd
 import unittest
-from code.managers import (
+from code_app.managers import (
     ManagerDataISSR, ManagerUtilities, ConfigMeneger,
     ManagerDB, ManagerDataMS, ParserData, ManagerFile
 )
-from models.models import BullFather, ProfilsCows
+from code_app.models import BullFather, ProfilsCows, Logs
 from setting import DB_TEST
 
 
@@ -15,32 +15,153 @@ class TestManagerDB(unittest.TestCase):
         Создает фикстуры для теста.
         Вызывается однажды перед запуском всех тестов класса.
         """
-        DB_TEST.create_tables([BullFather, ProfilsCows])
         cls.object_test: ManagerDB = ManagerDB()
-        test_data_father = (
-            (
-                'Test_1', 1, "Farm_1", "100/100", "100/100", "100/100",
-                "100/100", "100/100", "100/100", "100/100", "100/100",
-                "100/100", "100/100", "100/100", "100/100", "100/100",
-                "100/100", "100/100", "100/100", "100/100", "100/100"
-            )
+        test_data_father: tuple = (
+            {
+                "name": 'Test_1', "number": 1, "farm": "Farm_1",
+                "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+                "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+                "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+                "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+                "SPS115": "100/100", "TGLA122": "100/100",
+                "TGLA126": "100/100", "TGLA227": "100/100",
+                "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            },
+            {
+                "name": 'Test_2', "number": 2, "farm": "Farm_1",
+                "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+                "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+                "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+                "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+                "SPS115": "100/100", "TGLA122": "100/100",
+                "TGLA126": "100/100", "TGLA227": "100/100",
+                "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            },
+            {
+                "name": 'Test_3', "number": 3, "farm": "Farm_2",
+                "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+                "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+                "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+                "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+                "SPS115": "100/100", "TGLA122": "100/100",
+                "TGLA126": "100/100", "TGLA227": "100/100",
+                "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            },
+            {
+                "name": 'Test_4', "number": 4, "farm": "Farm_2",
+                "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+                "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+                "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+                "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+                "SPS115": "100/100", "TGLA122": "100/100",
+                "TGLA126": "100/100", "TGLA227": "100/100",
+                "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            },
+            {
+                "name": 'Test_5', "number": 5, "farm": "Farm_3",
+                "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+                "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+                "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+                "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+                "SPS115": "100/100", "TGLA122": "100/100",
+                "TGLA126": "100/100", "TGLA227": "100/100",
+                "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            },
         )
-        for bull in test_data_father:
-            BullFather.create(
-                пше bull
-            )
+        for data in test_data_father:
+            BullFather.create(**data)
 
     def test_get_farms(self) -> None:
-        pass
+        """Тестируется загрузка названий хозяйств."""
+        farms: set = TestManagerDB.object_test.get_farms(
+            BullFather
+        )
+        test: list = ["Farm_1", "Farm_2", "Farm_3"]
+        for farm in test:
+            with self.subTest(title=f"Test {farm}"):
+                self.assertTrue(farm in list(farms))
 
     def test_get_data_for_animals(self) -> None:
         pass
 
-    def test_data_for_animal(self) -> None:
-        pass
+    def test_get_data_for_animal(self) -> None:
+        """Тестирование загрузки данных по животному"""
+        test_data: dict = {
+            "name": 'Test_1', "number": 1, "farm": "Farm_1",
+            "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+            "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+            "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+            "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+            "SPS115": "100/100", "TGLA122": "100/100",
+            "TGLA126": "100/100", "TGLA227": "100/100",
+            "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+        }
+        data: dict = (
+            TestManagerDB.object_test.get_data_for_animal(
+                1,
+                BullFather
+            )
+        )
+        for key, label in test_data.items():
+            with self.subTest(title=f"Test {key} - {label}"):
+                answer = data.get(key)
+                self.assertEqual(answer, label)
+
+        data_2: dict = (
+            TestManagerDB.object_test.get_data_for_animal(
+                132423,
+                BullFather
+            )
+        )
+        for key in test_data.keys():
+            with self.subTest(title=f"Test {key}"):
+                answer = data_2.get(key)
+                self.assertEqual(answer, "-")
 
     def test_save_data_bus_to_db(self) -> None:
-        pass
+        """Проверка сохранения данных в базу данных."""
+        number: int = 7586
+        data: dict = {
+            "number": number,
+            "name": "Test",
+            "farm": "Test_farm",
+            "BM1818": "158/186",
+            "BM1824": "158/186",
+            "BM2113": "158/186",
+            "CSRM60": "158/196",
+            "CSSM66": "154/186",
+            "CYP21": "158/186",
+            "ETH10": "152/186",
+            "ETH225": "-",
+            "ETH3": "158/186",
+            "ILSTS6": "154/186",
+            "INRA023": "158/156",
+            "RM067": "151/186",
+            "SPS115": "158/186",
+            "TGLA122": "158/136",
+            "TGLA126": "153/186",
+            "TGLA227": "158/186",
+            "TGLA53": "158/181",
+            "MGTG4B": "108/186",
+            "SPS113": "-",
+        }
+
+        TestManagerDB.object_test.save_data_bus_to_db(
+            data,
+            ProfilsCows
+        )
+        query = ProfilsCows.select().where(
+            ProfilsCows.number == 1413
+        )
+        self.assertFalse(query.exists())
+        query = ProfilsCows.select().where(
+            ProfilsCows.number == number
+        )
+        self.assertTrue(query.exists())
+        for key, label in data.items():
+            with self.subTest(title=f"Test {key} - {label}"):
+                answer = query.dicts().get().get(key)
+                self.assertEqual(answer, label)
 
     def test_donwload_data_farmers(self) -> None:
         pass
@@ -126,7 +247,7 @@ class TestManagerMS(unittest.TestCase):
 
     def test_transform_data_for_database(self) -> None:
         pass
-    
+
     def test_save_text_to_file(self) -> None:
         pass
 
@@ -141,7 +262,7 @@ class TestManagerMS(unittest.TestCase):
 
     def test_combine_all_docx(self) -> None:
         pass
-    
+
     def test_creat_doc_pas_gen(self) -> None:
         pass
 
@@ -383,4 +504,13 @@ class TestManagerISSR(unittest.TestCase):
 
 
 if __name__ == "__main__":
+    DB_TEST.connect()
+    ProfilsCows.bind(DB_TEST)
+    BullFather.bind(DB_TEST)
+    Logs.bind(DB_TEST)
+    databases = [BullFather, ProfilsCows, Logs]
+    DB_TEST.create_tables(databases)
+
     unittest.main()
+
+    #DB_TEST.drop_tables(databases)

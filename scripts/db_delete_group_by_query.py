@@ -1,4 +1,4 @@
-from models.models import BullFather
+from code_app.models import BullFather
 
 
 def delete_rows(number: int):

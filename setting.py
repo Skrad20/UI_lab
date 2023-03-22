@@ -22,14 +22,24 @@ log_file: str = "./logs/log_preprocessor_ms_data.log"
 # Путь для сохранения config
 config_file: str = "./func/settings.ini"
 
-BASE_PATH = r"func/data"
+BASE_PATH = r"data"
 
 # Пути для загрузки и сохранения атефактов
 dict_paths: dict = {
-    "temp_doc_file": os.path.join(
-        BASE_PATH,
-        r'\creat_pass_doc\gen_pass_2.docx'
-    ),
+    "templates_pass": {
+        "deer": os.path.join(
+            BASE_PATH,
+            r'\templates\template_deer.docx'
+        ),
+        "cow": os.path.join(
+            BASE_PATH,
+            r'\templates\template_cow.docx'
+        ),
+        "sheep": os.path.join(
+            BASE_PATH,
+            r'\templates\template_sheep.docx'
+        ),
+    },
     "not_father": os.path.join(
         BASE_PATH,
         r'\creat_pass_doc\not_father.csv'

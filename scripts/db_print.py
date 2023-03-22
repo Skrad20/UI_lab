@@ -1,4 +1,4 @@
-from models.models import ProfilsCows
+from code_app.models import ProfilsCows
 
 res = (ProfilsCows
        .select()
