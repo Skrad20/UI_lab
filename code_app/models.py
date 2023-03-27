@@ -22,7 +22,7 @@ class Farm(pw.Model):
     farm = pw.CharField(
         verbose_name='Название хозяйства',
         max_length=100,
-        null=False,
+        null=False
     )
     species = pw.CharField(
         verbose_name='Вид',
@@ -31,13 +31,19 @@ class Farm(pw.Model):
         default="Cow"
     )
 
+    def __str__(self) -> str:
+        return f"{self.id}: {self.farm}"
+
+    def __repr__(self) -> str:
+        return f"{self.farm}"
+
     class Meta:
         database = db
+        verbose_name = 'Хозяйства'
+        table_name = 'Farms'
 
 
 class BaseModelAnimal(pw.Model):
-    
-
     id = pw.AutoField()
     name = pw.CharField(
         verbose_name='Кличка животного',
@@ -48,7 +54,7 @@ class BaseModelAnimal(pw.Model):
         null=False,
         verbose_name='Инвертарный номер животного',
     )
-    farm = pw.ForeignKeyField(Farm)
+    farm = pw.ForeignKeyField(Farm, backref='Animals')
 
     @classmethod
     def get_filds(cls) -> list:
@@ -58,9 +64,21 @@ class BaseModelAnimal(pw.Model):
     def get_title(cls) -> str:
         return cls._meta.species
 
+    def get_data(self) -> dict:
+        return self.complement_data()
+
+    def complement_data(self) -> dict:
+        contex = self.__data__
+        id_farm = contex.get("farm")
+        name_farm = Farm.select().where(Farm.id == id_farm).get()
+        name_farm = name_farm.farm
+        contex["farm"] = name_farm
+        return contex
+
     class Meta:
         database = db
         species = "animal"
+        verbose_name = 'Животные'
 
 
 class ISSR(pw.Model):
@@ -374,7 +392,7 @@ class CowMS(pw.Model):
     )
 
     class Meta:
-        species = "cow"
+        species = "bos taurus"
 
 
 class DeerMS(pw.Model):
@@ -517,7 +535,7 @@ class Cow(BaseModelAnimal, CowMS):
     class Meta:
         verbose_name = 'Коровы'
         table_name = 'Cows'
-        species = "cow"
+        species = "bos taurus"
 
 
 class Bull(BaseModelAnimal, CowMS):
@@ -526,7 +544,7 @@ class Bull(BaseModelAnimal, CowMS):
     class Meta:
         verbose_name = 'Быки'
         table_name = 'Bull'
-        species = "cow"
+        species = "bos taurus"
 
 
 class Deer(BaseModelAnimal, DeerMS):
@@ -600,7 +618,7 @@ class BullIssr(CowIssr, ISSR):
         database = db
         verbose_name = 'Быки ISSR'
         table_name = 'BullISSR'
-        species = "cow"
+        species = "bos taurus"
 
 
 class DeerIssr(BaseModelAnimal, ISSR):
@@ -634,3 +652,4 @@ DeerIssr.create_table()
 DeerFemaleIssr.create_table()
 SheepIssr.create_table()
 RamIssr.create_table()
+Farm.create_table()

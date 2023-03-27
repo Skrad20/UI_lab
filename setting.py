@@ -20,7 +20,8 @@ path_save: str = r"C:\Users\Пользователь\Desktop"
 log_file: str = "./logs/log_preprocessor_ms_data.log"
 
 # Путь для сохранения config
-config_file: str = "./func/settings.ini"
+config_file: str = "./data/settings.ini"
+config_file_test: str = "./data/settings_test.ini"
 
 BASE_PATH = r"data"
 
@@ -31,7 +32,7 @@ dict_paths: dict = {
             BASE_PATH,
             r'\templates\template_deer.docx'
         ),
-        "cow": os.path.join(
+        "bos taurus": os.path.join(
             BASE_PATH,
             r'\templates\template_cow.docx'
         ),

@@ -1,0 +1,64 @@
+test_create_config (tests.test_manegers.TestConfigMeneger)
+Проверяет наличие файла конфига. ... ok
+test_get_path (tests.test_manegers.TestConfigMeneger)
+Тестирует верное получение адреса. ... ok
+test_set_path (tests.test_manegers.TestConfigMeneger)
+Тестирует верное сохранение адреса. ... ok
+test_donwload_data_farmers (tests.test_manegers.TestManagerDB)
+Тестируется загрузка названий хозяйств из базы. ... ok
+test_donwload_data_for_animal (tests.test_manegers.TestManagerDB)
+Тестирование загрузки данных по животному из базы. ... ok
+test_donwload_data_for_animals (tests.test_manegers.TestManagerDB) ... ok
+test_get_data_for_animal (tests.test_manegers.TestManagerDB)
+Тестирование загрузки данных по животному. ... ok
+test_get_data_for_animals (tests.test_manegers.TestManagerDB) ... ok
+test_get_farms (tests.test_manegers.TestManagerDB)
+Тестируется загрузка названий хозяйств. ... ok
+test_save_data_animal_to_db (tests.test_manegers.TestManagerDB)
+Проверка сохранения данных в базу данных. ... ok
+test_binary_search (tests.test_manegers.TestManagerISSR)
+Проверяет работу измененого бинарного поиска. ... ok
+test_create_indexes (tests.test_manegers.TestManagerISSR)
+Проверяет присваивание индекса. ... ok
+test_data_to_db (tests.test_manegers.TestManagerISSR) ... ok
+test_data_transpose (tests.test_manegers.TestManagerISSR)
+Проверяет транспонирование матриц таблиц. ... ok
+test_genotype_issr (tests.test_manegers.TestManagerISSR)
+Проверяет работу с структурой данных. ... ok
+test_get_allel_label (tests.test_manegers.TestManagerISSR)
+Проверяет точность оценки аллели. ... ok
+test_pipline_issr_analis (tests.test_manegers.TestManagerISSR)
+Проверяет результаты анализа данных. ... D:\UI_lab\code_app\managers.py:1028: SettingWithCopyWarning: 
+A value is trying to be set on a copy of a slice from a DataFrame.
+Try using .loc[row_indexer,col_indexer] = value instead
+
+See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
+  self.merge_data["animal"] = self.merge_data["animal"].round(0)
+ok
+test_check_conclusion (tests.test_manegers.TestManagerMS) ... ok
+test_check_error_ms (tests.test_manegers.TestManagerMS) ... ok
+test_combine_all_docx (tests.test_manegers.TestManagerMS) ... ok
+test_creat_doc_pas_gen (tests.test_manegers.TestManagerMS) ... ok
+test_data_verification (tests.test_manegers.TestManagerMS) ... ok
+test_filter_father (tests.test_manegers.TestManagerMS) ... ok
+test_get_summary_data_error (tests.test_manegers.TestManagerMS) ... ok
+test_ms_from_word (tests.test_manegers.TestManagerMS) ... ok
+test_ms_join (tests.test_manegers.TestManagerMS) ... ok
+test_ms_select (tests.test_manegers.TestManagerMS) ... ok
+test_name_select (tests.test_manegers.TestManagerMS) ... ok
+test_save_text_to_file (tests.test_manegers.TestManagerMS) ... ok
+test_search_father (tests.test_manegers.TestManagerMS) ... ok
+test_split__ (tests.test_manegers.TestManagerMS) ... ok
+test_split_data_from_row (tests.test_manegers.TestManagerMS) ... ok
+test_split_locus (tests.test_manegers.TestManagerMS) ... ok
+test_transform_data_for_database (tests.test_manegers.TestManagerMS) ... ok
+test_verification_ms (tests.test_manegers.TestManagerMS) ... ok
+test_delit (tests.test_manegers.TestManagerUtilities)
+Проверяет правильность разделения данных ... ok
+test_is_float (tests.test_manegers.TestManagerUtilities)
+Проверяет тест на число с плавующей точкой ... ok
+
+----------------------------------------------------------------------
+Ran 37 tests in 0.553s
+
+OK
