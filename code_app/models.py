@@ -626,7 +626,7 @@ class DeerIssr(BaseModelAnimal, ISSR):
     class Meta:
         database = db
         verbose_name = 'Олени ISSR'
-        table_name = 'Deer ISSR'
+        table_name = 'DeerISSR'
         species = "deer"
 
 

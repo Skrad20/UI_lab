@@ -9,6 +9,9 @@ from setting import DB_TEST, config_file_test
 import os
 
 
+DB_TEST.connect()
+
+
 class Utility:
     @staticmethod
     def compare_str_data(left, right):
@@ -21,8 +24,9 @@ class Utility:
                 print(f"Not equals: {left[i]} - {right[i]} = {i}")
 
 
-# Complited
-class TestManagerDB(unittest.TestCase):
+class Test(unittest.TestCase):
+    databases: list = []
+
     @classmethod
     def setUpClass(cls) -> None:
         """
@@ -30,6 +34,24 @@ class TestManagerDB(unittest.TestCase):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls.create_db()
+
+    @classmethod
+    def create_db(cls) -> None:
+        for table in cls.databases:
+            table.bind(DB_TEST)
+        DB_TEST.create_tables(cls.databases)
+
+
+# Complited
+class TestManagerDB(Test):
+    @classmethod
+    def setUpClass(cls) -> None:
+        """
+        Создает фикстуры для теста.
+        Вызывается однажды перед запуском всех тестов класса.
+        """
+        cls.databases = [Deer, Bull, Cow, Logs, Farm]
+        super().setUpClass()
         cls.object_test: ManagerDB = ManagerDB()
         data_farm: tuple = (
             {"farm": "Farm_1", "species": "bos taurus"},
@@ -124,16 +146,6 @@ class TestManagerDB(unittest.TestCase):
         )
         for data in test_data_father:
             Deer.create(**data)
-
-    @classmethod
-    def create_db(cls) -> None:
-        databases = [Deer, Bull, Cow, Logs, Farm]
-        DB_TEST.connect()
-        Cow.bind(DB_TEST)
-        Bull.bind(DB_TEST)
-        Logs.bind(DB_TEST)
-        Farm.bind(DB_TEST)
-        DB_TEST.create_tables(databases)
 
     def test_get_farms(self) -> None:
         """Тестируется загрузка названий хозяйств."""
@@ -394,7 +406,7 @@ class TestManagerDB(unittest.TestCase):
 
 
 # Complited
-class TestConfigMeneger(unittest.TestCase):
+class TestConfigMeneger(Test):
     @classmethod
     def setUpClass(cls) -> None:
         """
@@ -402,6 +414,7 @@ class TestConfigMeneger(unittest.TestCase):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls._object_test: ConfigMeneger = ConfigMeneger(config_file_test)
+        super().setUpClass()
 
     def test_create_config(self):
         """Проверяет наличие файла конфига."""
@@ -436,8 +449,8 @@ class TestConfigMeneger(unittest.TestCase):
             self.assertTrue(answer == "Tutututututut")
 
 
-# Dev
-class TestManagerFile(unittest.TestCase):
+# Complited
+class TestManagerFile(Test):
     @classmethod
     def setUpClass(cls) -> None:
         """
@@ -445,10 +458,24 @@ class TestManagerFile(unittest.TestCase):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls.object_test: ManagerFile = ManagerFile()
+        super().setUpClass()
+
+    def test_read_file(self) -> None:
+        list_path = [
+            r"tests\test_data\test_data_open.csv",
+            r"tests\test_data\test_data_open.xlsx",
+            r"tests\test_data\test_data_open.txt",
+        ]
+        for path in list_path:
+            self.object_test.set_path_for_file_to_open(path)
+            temp = self.object_test.read_file()
+            col = temp.columns[0]
+            with self.subTest(title=f"Test - {path}"):
+                self.assertEqual(col, "animal")
 
 
 # Dev
-class TestParserData(unittest.TestCase):
+class TestParserData(Test):
     @classmethod
     def setUpClass(cls) -> None:
         """
@@ -456,17 +483,21 @@ class TestParserData(unittest.TestCase):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls.object_test: ParserData = ParserData()
+        super().setUpClass()
 
 
 # Dev
-class TestManagerMS(unittest.TestCase):
+class TestManagerMS(Test):
     @classmethod
     def setUpClass(cls) -> None:
         """
         Создает фикстуры для теста.
         Вызывается однажды перед запуском всех тестов класса.
         """
-        #cls.create_db()
+        cls.databases = [Deer, Bull, Cow, Logs, Farm]
+        super().setUpClass()
+        # cls._object_test: ManagerDataMS = ManagerDataMS()
+
         data_farm: tuple = (
             {"farm": "Farm_1", "species": "bos taurus"},
             {"farm": "Farm_2", "species": "bos taurus"},
@@ -530,16 +561,6 @@ class TestManagerMS(unittest.TestCase):
             },
         )
 
-    @classmethod
-    def create_db(cls) -> None:
-        databases = [Deer, Bull, Cow, Logs, Farm]
-        DB_TEST.connect()
-        Cow.bind(DB_TEST)
-        Bull.bind(DB_TEST)
-        Logs.bind(DB_TEST)
-        Farm.bind(DB_TEST)
-        DB_TEST.create_tables(databases)
-
     def test_filter_father(self) -> None:
         pass
 
@@ -595,8 +616,8 @@ class TestManagerMS(unittest.TestCase):
         pass
 
 
-# Dev
-class TestManagerUtilities(unittest.TestCase):
+# Complited
+class TestManagerUtilities(Test):
     @classmethod
     def setUpClass(cls) -> None:
         """
@@ -604,6 +625,8 @@ class TestManagerUtilities(unittest.TestCase):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls.object_test: ManagerUtilities = ManagerUtilities()
+        cls.databases = [Deer, Bull, Cow, Logs, Farm]
+        super().setUpClass()
 
     def test_is_float(self) -> None:
         """Проверяет тест на число с плавующей точкой"""
@@ -667,15 +690,18 @@ class TestManagerUtilities(unittest.TestCase):
                 self.assertEqual(answer, excepted)
 
 
-# Dev
-class TestManagerISSR(unittest.TestCase):
+# Complited
+class TestManagerISSR(Test):
     @classmethod
     def setUpClass(cls):
         """
         Создает фикстуры для теста.
         Вызывается однажды перед запуском всех тестов класса.
         """
+        cls.databases = [DeerIssr]
+        super().setUpClass()
         cls.calc: ManagerDataISSR = ManagerDataISSR()
+        cls._manager_db: ManagerDB = ManagerDB()
         data_farm: tuple = (
             {"farm": "Farm_1", "species": "bos taurus"},
             {"farm": "Farm_2", "species": "bos taurus"},
@@ -860,13 +886,118 @@ class TestManagerISSR(unittest.TestCase):
                 }
             }
         )
+        """
+           animal AG_genotype GA_genotype
+        0       1          A1          G1
+        1       1           -         G10
+        2       1           -         G36
+        3       2          A2          G1
+        4       2          A9          G9
+        5       2         A31         G14
+        """
+        dict_data = {}
+        for i in range(2):
+            number = i + 1
+            query = self.calc.merge_data.query("animal == @number")
+            dict_data[i] = list(pd.melt(
+                query[["AG_genotype", "GA_genotype"]]
+            )['value'])
         self.calc.data_to_db(DeerIssr, farm_1)
-        with self.subTest(title=f"Test size - {1}"):
-            self.assertEqual(1, 1)
+
+        genotype = {
+            "A": "AG",
+            "G": "GA",
+            "-": "-"
+        }
+
+        data: dict = self._manager_db.get_data_for_animals(DeerIssr)
+        for key, item in data.items():
+            # Получаем данные по животным
+            animal = dict_data.get(key)
+            for val in animal:
+                # Получаем ключ по данным
+                key_in = genotype.get(val[0]) + val[1:]
+                if key_in != '-':
+                    # Получаем ответ
+                    answer = item.get(key_in)
+                    with self.subTest(
+                        title=f"{key+1}: {key_in} - {answer}"
+                    ):
+                        self.assertTrue(answer)
+
+    def test_data_from_db(self) -> None:
+
+        farm_1 = Farm.get(Farm.farm == "Farm_1")
+        self.calc.merge_data = pd.DataFrame().from_dict(
+            {
+                'animal': {0: 1, 1: 1, 2: 1, 3: 2, 4: 2, 5: 2},
+                'AG_genotype': {
+                    0: 'A1', 1: '-', 2: '-',
+                    3: 'A2', 4: 'A9', 5: 'A31'
+                },
+                'GA_genotype': {
+                    0: 'G1', 1: 'G10', 2: 'G36',
+                    3: 'G1', 4: 'G9', 5: 'G14'
+                }
+            }
+        )
+        """
+           animal AG_genotype GA_genotype
+        0       1          A1          G1
+        1       1           -         G10
+        2       1           -         G36
+        3       2          A2          G1
+        4       2          A9          G9
+        5       2         A31         G14
+        """
+        dict_data = {}
+        for i in range(2):
+            number = i + 1
+            query = self.calc.merge_data.query("animal == @number")
+            dict_data[i] = list(pd.melt(
+                query[["AG_genotype", "GA_genotype"]]
+            )['value'])
+        self.calc.data_to_db(DeerIssr, farm_1)
+
+        genotype = {
+            "A": "AG",
+            "G": "GA",
+            "-": "-"
+        }
+
+        data = self.calc.data_from_db(DeerIssr)
+        for key, item in data.items():
+            # Получаем данные по животным
+            animal = dict_data.get(key)
+            for val in animal:
+                # Получаем ключ по данным
+                key_in = genotype.get(val[0]) + val[1:]
+                if key_in != '-':
+                    # Получаем ответ
+                    answer = item.get(key_in)
+                    with self.subTest(
+                        title=f"{key+1}: {key_in} - {answer}"
+                    ):
+                        self.assertTrue(answer)
 
 
-if __name__ == "__main__":
-    databases = [Deer, Bull, Cow, Logs, Farm]
+class Closer:
+    '''Менеджер контекста для автоматического закрытия объекта вызовом метода close
+    в with-выражении.'''
 
-    unittest.main()
-    DB_TEST.drop_tables(databases)
+    def __init__(self, db_name, tables):
+        self.db_name = db_name
+        self.tables = tables
+
+    def __enter__(self):
+        self.db_name.connect()
+        print("test")
+
+        for table in self.tables:
+            table.bind(self.db_name)
+        self.db_name.create_tables(self.tables)
+        return self.db_name
+
+    def __exit__(self, exception_type, exception_val, trace):
+        self.obj.drop_tables(self.tables)
+        self.obj.close()

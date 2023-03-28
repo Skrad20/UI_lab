@@ -16,10 +16,12 @@ test_get_farms (tests.test_manegers.TestManagerDB)
 “естируетс€ загрузка названий хоз€йств. ... ok
 test_save_data_animal_to_db (tests.test_manegers.TestManagerDB)
 ѕроверка сохранени€ данных в базу данных. ... ok
+test_read_file (tests.test_manegers.TestManagerFile) ... ok
 test_binary_search (tests.test_manegers.TestManagerISSR)
 ѕровер€ет работу измененого бинарного поиска. ... ok
 test_create_indexes (tests.test_manegers.TestManagerISSR)
 ѕровер€ет присваивание индекса. ... ok
+test_data_from_db (tests.test_manegers.TestManagerISSR) ... ok
 test_data_to_db (tests.test_manegers.TestManagerISSR) ... ok
 test_data_transpose (tests.test_manegers.TestManagerISSR)
 ѕровер€ет транспонирование матриц таблиц. ... ok
@@ -59,6 +61,6 @@ test_is_float (tests.test_manegers.TestManagerUtilities)
 ѕровер€ет тест на число с плавующей точкой ... ok
 
 ----------------------------------------------------------------------
-Ran 37 tests in 0.553s
+Ran 39 tests in 1.034s
 
 OK

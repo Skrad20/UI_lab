@@ -444,7 +444,7 @@ class ManagerDataMS(Manager):
     def name_select(
         self,
         data_in: pd.DataFrame,
-        data_out: pd.DataFrame) -> None:
+            data_out: pd.DataFrame) -> None:
 
         """
         Отбор кличек и номеров.
@@ -739,7 +739,7 @@ class ManagerDataMS(Manager):
         filename_master: str,
         files_list: list,
         adres: str,
-        ) -> None:
+            ) -> None:
         '''
         Сбор документа для Word.
         Параметры:
@@ -1169,9 +1169,16 @@ class ManagerDataISSR(Manager):
             *["GA" + str(x) for x in range(1, 39, 1)]
         ]
 
+    def data_from_db(
+            self,
+            model: models.ISSR,
+            ):
+        self.data_from_database = self._manager_db.get_data_for_animals(model)
+        return self.data_from_database
+
     def data_to_db(
             self,
-            model: models.BaseModelAnimal,
+            model: models.ISSR,
             farm: models.Farm):
         """Сохранение данных в базу данных."""
         """
@@ -1186,13 +1193,15 @@ class ManagerDataISSR(Manager):
         dict_val = {
             "A": "AG",
             "G": "GA",
+            "-": "-",
         }
         self.create_name_field()
-        res_dict = {}
-        for item in self.list_field:
-            res_dict[item] = False
+        
         list_number = self.merge_data['animal'].unique()
         for number in list_number:
+            res_dict = {}
+            for item in self.list_field:
+                res_dict[item] = False
             query = self.merge_data.query("animal == @number")
             res_dict['number'] = number
             res_dict['name'] = "-"
@@ -1200,8 +1209,12 @@ class ManagerDataISSR(Manager):
             for col in ["AG_genotype", "GA_genotype"]:
                 list_data = query[col]
                 for gen in list_data:
-                    res_dict[dict_val.get(gen)] = True
-        print(res_dict)
+                    type_gen = gen[0]
+                    number_type = gen[1:]
+                    new_type_gen = dict_val.get(type_gen)
+                    if new_type_gen != "-":
+                        res_dict[new_type_gen + number_type] = True
+            self._manager_db.save_data_animal_to_db(res_dict, model)
         """
         {'number': 2, 'name': '-',
         'farm': Farm_1, None: True, 'AG1': False, 'AG2': False,
@@ -1225,7 +1238,6 @@ class ManagerDataISSR(Manager):
         'GA33': False, 'GA34': False, 'GA35': False, 'GA36': False,
         'GA37': False, 'GA38': False}
         """
-        # self._manager_db.save_data_animal_to_db(self.data, model)
 
 
 class ParserData:
@@ -1258,7 +1270,7 @@ class ParserData:
 
     def add_missing_father(
             self,
-            df: pd.DataFrame,
+            list_number_father: list,
             model: models.BaseModelAnimal,
             farm: models.Farm) -> None:
         """
