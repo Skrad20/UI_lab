@@ -70,9 +70,13 @@ class BaseModelAnimal(pw.Model):
     def complement_data(self) -> dict:
         contex = self.__data__
         id_farm = contex.get("farm")
-        name_farm = Farm.select().where(Farm.id == id_farm).get()
-        name_farm = name_farm.farm
-        contex["farm"] = name_farm
+        query: pw.Model = Farm.select().where(Farm.id == id_farm)
+        if query.exists():
+            name_farm = Farm.select().where(Farm.id == id_farm).get()
+            name_farm = name_farm.farm
+            contex["farm"] = name_farm
+        else:
+            print("Not data farm", contex)
         return contex
 
     class Meta:
@@ -637,6 +641,13 @@ class DeerFemaleIssr(DeerIssr, ISSR):
         verbose_name = 'Важенкам ISSR'
         table_name = 'DeerFemaleISSR'
         species = "deer"
+
+
+DICT_MODEL_FATHER_BY_SPECIES = {
+        "deer": Deer,
+        "bos taurus": Bull,
+        "sheep": Ram,
+    },
 
 
 Logs.create_table()

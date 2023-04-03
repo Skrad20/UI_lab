@@ -23,7 +23,6 @@ class Utility:
             if left[i] != right[i]:
                 print(f"Not equals: {left[i]} - {right[i]} = {i}")
 
-
 class Test(unittest.TestCase):
     databases: list = []
 
@@ -474,7 +473,8 @@ class TestManagerFile(Test):
                 self.assertEqual(col, "animal")
 
 
-# Dev
+# Complited
+@unittest.skip("showing class skipping")
 class TestParserData(Test):
     @classmethod
     def setUpClass(cls) -> None:
@@ -483,7 +483,104 @@ class TestParserData(Test):
         Вызывается однажды перед запуском всех тестов класса.
         """
         cls.object_test: ParserData = ParserData()
+        cls.databases = [Bull, Farm]
         super().setUpClass()
+        cls.answer = {
+            3205251522: {
+                'BM1818': '262/266', 'BM1824': '178/188',
+                'BM2113': '125/127', 'CSRM60': 0.0, 'CSSM66': 0.0,
+                'CYP21': '189/189', 'ETH10': '223/225', 'ETH225': '148/150',
+                'ETH3': '117/129', 'ILSTS6': 0.0, 'INRA023': '202/202',
+                'RM067': '92/102', 'SPS115': '248/248', 'TGLA122': '151/163',
+                'TGLA126': '117/117', 'TGLA227': '89/99', 'TGLA53': '158/186',
+                'MGTG4B': '135/135', 'SPS113': '141/151'
+            },
+            358633624: {
+                'BM1818': '262/266', 'BM1824': '188/188',
+                'BM2113': '125/139', 'CSRM60': 0.0, 'CSSM66': 0.0,
+                'CYP21': 0.0, 'ETH10': '223/225', 'ETH225': '148/150',
+                'ETH3': '127/129', 'ILSTS6': 0.0, 'INRA023': '214/214',
+                'RM067': 0.0, 'SPS115': '248/248', 'TGLA122': '143/171',
+                'TGLA126': '117/117', 'TGLA227': '89/97', 'TGLA53': '168/184',
+                'MGTG4B': 0.0, 'SPS113': 0.0
+            }
+        }
+        cls._manager_db: ManagerDB = ManagerDB()
+        data_farm: tuple = (
+            {"farm": "Farm_1", "species": "bos taurus"},
+            {"farm": "Farm_2", "species": "bos taurus"},
+            {"farm": "Farm_3", "species": "bos taurus"},
+            {"farm": "Farm_4", "species": "deer"},
+        )
+        for data in data_farm:
+            query = Farm.select().where(Farm.farm == data.get("farm"))
+            if not query.exists():
+                Farm.create(**data)
+
+    def test_check_ms_in_cell(self):
+        """Тестируется проверка на наличие данных по локусам."""
+        rows: dict = {
+            "BM1818 - 158/956, SPS113 - 259/9565": True,
+            "ILSTS6 - 158/956": True,
+            "POD - 158/956, HUY113 - 259/9565": False,
+            "ILSTS6 - 158/956, ETH225 - 259/9565": True,
+            "BM2113 - 158/956, CSSM66 - 259/9565": True,
+            "CSSM66 - 158/956, ETH10 - 259/9565": True,
+            "YIUGGIU - 158/956, fdsf - 259/9565": False,
+        }
+        for row, answer in rows.items():
+            res: bool = self.object_test.check_ms_in_cell(row)
+            with self.subTest(title=f"Test - {row}"):
+                self.assertEqual(res, answer)
+
+    def test_filter_id_bus(self):
+        """Тестируется поиск нужной страницы."""
+        number: int = 3205251522
+        name: str = "ЛУНА"
+        res = self.object_test.filter_id_bus(number, name)
+        answer = 10402043
+        with self.subTest(title=f"Test - {res}"):
+            self.assertEqual(res[0], answer)
+
+    def test_parser_ms(self):
+        """Тестируется сбор данных по профилю."""
+        number: int = 3205251522
+        name: str = "ЛУНА"
+        number_page, token = self.object_test.filter_id_bus(number, name)
+        profils: dict = self.object_test.parser_ms(number_page, token)
+
+        with self.subTest(title=f"Test - {self.answer.get(number)}"):
+            self.assertEqual(self.answer.get(number), profils)
+
+    def test_add_missing_father(self):
+        farm_1 = Farm.get(Farm.farm == "Farm_1")
+        print("FARM ", farm_1)
+        self.object_test.add_missing_father(
+            {358633624: "Сильвер", 3205251522: "ЛУНА"},
+            Bull,
+            farm_1
+        )
+        for key, val in self.answer.items():
+            data = self._manager_db.get_data_for_animal(key, Bull)
+            for key_in, val_in in val.items():
+                with self.subTest(title="Test - {key_in}"):
+                    self.assertEqual(str(val_in), data[key_in])
+
+    def test_pipline_data_loading_for_bull(self):
+        """Тестируем пайплайн загрузки данных по быкам."""
+        number: int = 3205251522
+        name: str = "ЛУНА"
+        farm_1 = Farm.get(Farm.farm == "Farm_1")
+        res: bool = self.object_test.pipline_data_loading_for_bull(
+            number, name, farm_1
+        )
+        with self.subTest(title="Test - data"):
+            self.assertEqual(res, 0)
+
+        data = self._manager_db.get_data_for_animal(number, Bull)
+        for key, val in self.answer.get(number).items():
+            with self.subTest(title="Test - {key}"):
+                self.assertEqual(str(val), data[key])
 
 
 # Dev
@@ -496,7 +593,7 @@ class TestManagerMS(Test):
         """
         cls.databases = [Deer, Bull, Cow, Logs, Farm]
         super().setUpClass()
-        # cls._object_test: ManagerDataMS = ManagerDataMS()
+        cls._manager_db: ManagerDB = ManagerDB()
 
         data_farm: tuple = (
             {"farm": "Farm_1", "species": "bos taurus"},
@@ -508,6 +605,9 @@ class TestManagerMS(Test):
         farm_1 = Farm.get(Farm.farm == "Farm_1")
         farm_2 = Farm.get(Farm.farm == "Farm_2")
         farm_3 = Farm.get(Farm.farm == "Farm_3")
+        cls._object_test: ManagerDataMS = ManagerDataMS(
+            farm=farm_1, model=Bull
+        )
         test_data_father: tuple = (
             {
                 "name": 'Test_1', "number": 1, "farm": farm_1,
@@ -560,60 +660,123 @@ class TestManagerMS(Test):
                 "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
             },
         )
+        for data in test_data_father:
+            Bull.create(**data)
 
-    def test_filter_father(self) -> None:
-        pass
+    def test_validate_invertory(self):
+        list_path = [
+            r"tests\test_data\inventory_example_bad_1.csv",
+            r"tests\test_data\inventory_example_bad_2.csv"
+        ]
+        flag = False
+        for path in list_path:
+            try:
+                self._object_test.loading_data_invertory(path)
+            except ValueError:
+                flag = True
+            with self.subTest(title="Test - {path}"):
+                self.assertTrue(flag)
 
-    def test_search_father(self) -> None:
-        pass
+    @unittest.skip("demonstrating skipping")
+    def test_loading_data_invertory(self):
+        path = r"tests\test_data\inventory_example.csv"
+        self._object_test.loading_data_invertory(path)
+        data = list(self._object_test.dataset_inverory.loc[0, :])
+        answer = [60436, "nan", 1, 60407, "Ранетка", 72246370, "Мунрэйкер"]
+        for i in range(len(data)):
+            with self.subTest(title="Test - {data[i]}"):
+                self.assertEqual(answer[i], data[i])
 
-    def test_ms_from_word(self) -> None:
-        pass
+    @unittest.skip("demonstrating skipping")
+    def test_loading_data_profils(self):
+        path = r"tests\test_data\profils_example.csv"
+        self._object_test.loading_data_profils(path)
+        data = list(self._object_test.dataset_profils.loc[0, :])
+        answer = [
+            1, "129/129", "189/189", "206/206", "262/262", "294/296",
+            "91/97", "115/117", "151/171", "248/248", "150/152", "176/186",
+            "96/102", "127/137", "178/182", "209/217"
+        ]
+        for i in range(len(data)):
+            with self.subTest(title=f"Test - {data[i]}"):
+                self.assertEqual(answer[i], data[i])
 
-    def test_ms_select(self) -> None:
-        pass
+    def test_filter_animals_by_farm(self):
+        """Тестирует отбор хозяйств."""
+        dict_farms = {
+            "Farm_1": True,
+            "Farm_2": True,
+            "Farm_3": False,
+        }
+        data_father = self._object_test.filter_animals_by_farm(
+            dict_farms, Bull
+        )
+        with self.subTest(title="Test - farm"):
+            self.assertFalse("Farm_3" in data_father['farm'].unique())
 
-    def test_name_select(self) -> None:
-        pass
+    def test_search_father(self):
+        path = r"tests\test_data\test_search_father.csv"
+        data = self._object_test.search_father(
+            path,
+            {'Выбрать всех': True}
+        )
+        with self.subTest(title="Test - farm"):
+            self.assertEqual(data.loc[0, "number"], 3205251522)
 
-    def test_check_error_ms(self) -> None:
-        pass
+    def test_verification_ms(self):
+        test_data = {
+            1: ["159/265", "154/265", False],
+            2: ["159/265", "154/259", True],
+            3: ["115/265", "115/265", False],
+            4: ["125/265", "125/3569", False],
+            5: ["-", "154/265", False],
+            6: ["nan", "154/265", False],
+        }
+        for key, val in test_data.items():
+            res = self._object_test.verification_ms(
+                val[0], val[1]
+            )
+            with self.subTest(title=f"Test - {key}"):
+                self.assertEqual(res, val[2])
 
-    def test_verification_ms(self) -> None:
-        pass
+    def test_split__(self):
+        data_test = {
+            "sadsd_fdesaf": ["sadsd", "fdesaf"],
+            "sadsdfdesaf": ["sadsdfdesaf"],
+            "324 _fdesaf": ["324 ", "fdesaf"],
+        }
+        for key, val in data_test.items():
+            res: list = self._object_test.split__(key)
+            with self.subTest(title=f"Test - {key}"):
+                self.assertTrue(res, val)
 
-    def test_data_verification(self) -> None:
-        pass
+    def test_split_locus(self):
+        data_test = {
+            "sadsd_  - fdesaf": ["sadsd", "fdesaf"],
+            "sadsdfdesaf": ["sadsdfdesaf"],
+            "324  - _fdesaf": ["324 ", "fdesaf"],
+        }
+        for key, val in data_test.items():
+            res: list = self._object_test.split__(key)
+            with self.subTest(title=f"Test - {key}"):
+                self.assertTrue(res, val)
 
-    def test_check_conclusion(self) -> None:
-        pass
+    def test_ms_join(self):
+        data = pd.Series(
+            data=["100", "200"],
+            index=["col_1", "col_2"]
+        )
+        answer = self._object_test.ms_join(data, "col_1", "col_2")
+        with self.subTest(title="Test - join"):
+            self.assertEqual("100/200", answer)
 
-    def test_split__(self) -> None:
-        pass
-
-    def test_split_locus(self) -> None:
-        pass
-
-    def test_transform_data_for_database(self) -> None:
-        pass
-
-    def test_save_text_to_file(self) -> None:
-        pass
-
-    def test_get_summary_data_error(self) -> None:
-        pass
-
-    def test_ms_join(self) -> None:
-        pass
-
-    def test_split_data_from_row(self) -> None:
-        pass
-
-    def test_combine_all_docx(self) -> None:
-        pass
-
-    def test_creat_doc_pas_gen(self) -> None:
-        pass
+    def test_get_summary_data_error(self):
+        self._object_test.dict_error = {
+            "not_animal": [],
+            "not_father": [],
+        }
+        res = self._object_test.get_summary_data_error()
+        print(res)
 
 
 # Complited

@@ -30,37 +30,38 @@ test_genotype_issr (tests.test_manegers.TestManagerISSR)
 test_get_allel_label (tests.test_manegers.TestManagerISSR)
 Проверяет точность оценки аллели. ... ok
 test_pipline_issr_analis (tests.test_manegers.TestManagerISSR)
-Проверяет результаты анализа данных. ... D:\UI_lab\code_app\managers.py:1028: SettingWithCopyWarning: 
+Проверяет результаты анализа данных. ... D:\UI_lab\code_app\managers.py:1056: SettingWithCopyWarning: 
 A value is trying to be set on a copy of a slice from a DataFrame.
 Try using .loc[row_indexer,col_indexer] = value instead
 
 See the caveats in the documentation: https://pandas.pydata.org/pandas-docs/stable/user_guide/indexing.html#returning-a-view-versus-a-copy
   self.merge_data["animal"] = self.merge_data["animal"].round(0)
 ok
-test_check_conclusion (tests.test_manegers.TestManagerMS) ... ok
-test_check_error_ms (tests.test_manegers.TestManagerMS) ... ok
-test_combine_all_docx (tests.test_manegers.TestManagerMS) ... ok
-test_creat_doc_pas_gen (tests.test_manegers.TestManagerMS) ... ok
-test_data_verification (tests.test_manegers.TestManagerMS) ... ok
-test_filter_father (tests.test_manegers.TestManagerMS) ... ok
-test_get_summary_data_error (tests.test_manegers.TestManagerMS) ... ok
-test_ms_from_word (tests.test_manegers.TestManagerMS) ... ok
+test_filter_animals_by_farm (tests.test_manegers.TestManagerMS)
+Тестирует отбор хозяйств. ... ok
+test_loading_data_invertory (tests.test_manegers.TestManagerMS) ... skipped 'demonstrating skipping'
+test_loading_data_profils (tests.test_manegers.TestManagerMS) ... skipped 'demonstrating skipping'
 test_ms_join (tests.test_manegers.TestManagerMS) ... ok
-test_ms_select (tests.test_manegers.TestManagerMS) ... ok
-test_name_select (tests.test_manegers.TestManagerMS) ... ok
-test_save_text_to_file (tests.test_manegers.TestManagerMS) ... ok
 test_search_father (tests.test_manegers.TestManagerMS) ... ok
 test_split__ (tests.test_manegers.TestManagerMS) ... ok
-test_split_data_from_row (tests.test_manegers.TestManagerMS) ... ok
 test_split_locus (tests.test_manegers.TestManagerMS) ... ok
-test_transform_data_for_database (tests.test_manegers.TestManagerMS) ... ok
+test_validate_invertory (tests.test_manegers.TestManagerMS) ... ok
 test_verification_ms (tests.test_manegers.TestManagerMS) ... ok
 test_delit (tests.test_manegers.TestManagerUtilities)
 Проверяет правильность разделения данных ... ok
 test_is_float (tests.test_manegers.TestManagerUtilities)
 Проверяет тест на число с плавующей точкой ... ok
+test_add_missing_father (tests.test_manegers.TestParserData) ... skipped 'showing class skipping'
+test_check_ms_in_cell (tests.test_manegers.TestParserData)
+Тестируется проверка на наличие данных по локусам. ... skipped 'showing class skipping'
+test_filter_id_bus (tests.test_manegers.TestParserData)
+Тестируется поиск нужной страницы. ... skipped 'showing class skipping'
+test_parser_ms (tests.test_manegers.TestParserData)
+Тестируется сбор данных по профилю. ... skipped 'showing class skipping'
+test_pipline_data_loading_for_bull (tests.test_manegers.TestParserData)
+Тестируем пайплайн загрузки данных по быкам. ... skipped 'showing class skipping'
 
 ----------------------------------------------------------------------
-Ran 39 tests in 1.034s
+Ran 35 tests in 2.899s
 
-OK
+OK (skipped=7)
