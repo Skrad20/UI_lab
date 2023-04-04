@@ -2,11 +2,12 @@ import pandas as pd
 import unittest
 from code_app.managers import (
     ManagerDataISSR, ManagerUtilities, ConfigMeneger,
-    ManagerDB, ManagerDataMS, ParserData, ManagerFile
+    ManagerDB, ManagerDataMS, ParserData, ManagerFile, DataForContext
 )
-from code_app.models import Bull, Cow, Logs, Farm, Deer, DeerIssr
+from code_app.models import Bull, Cow, Logs, Farm, Deer, DeerIssr, CowMS
 from setting import DB_TEST, config_file_test
 import os
+import datetime
 
 
 DB_TEST.connect()
@@ -22,6 +23,7 @@ class Utility:
         for i in range(len(left)):
             if left[i] != right[i]:
                 print(f"Not equals: {left[i]} - {right[i]} = {i}")
+
 
 class Test(unittest.TestCase):
     databases: list = []
@@ -583,7 +585,7 @@ class TestParserData(Test):
                 self.assertEqual(str(val), data[key])
 
 
-# Dev
+# Complited
 class TestManagerMS(Test):
     @classmethod
     def setUpClass(cls) -> None:
@@ -591,7 +593,7 @@ class TestManagerMS(Test):
         Создает фикстуры для теста.
         Вызывается однажды перед запуском всех тестов класса.
         """
-        cls.databases = [Deer, Bull, Cow, Logs, Farm]
+        cls.databases = [Deer, Bull, Cow, Logs, Farm, CowMS]
         super().setUpClass()
         cls._manager_db: ManagerDB = ManagerDB()
 
@@ -659,6 +661,16 @@ class TestManagerMS(Test):
                 "TGLA126": "100/100", "TGLA227": "100/100",
                 "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
             },
+            {
+                "name": 'Test_5', "number": 6, "farm": farm_3,
+                "BM1818": "262/266", "BM1824": "178/188", "BM2113": "125/127",
+                "CSRM60": "-", "CSSM66": "-", "CYP21": "189/189",
+                "ETH10": "223/225", "ETH225": "148/150", "ETH3": "117/129",
+                "ILSTS6": "-", "INRA023": "202/202", "RM067": "92/102",
+                "SPS115": "248/248", "TGLA122": "151/163",
+                "TGLA126": "117/117", "TGLA227": "89/99",
+                "TGLA53": "158/186", "MGTG4B": "135/135", "SPS113": "141/151",
+            },
         )
         for data in test_data_father:
             Bull.create(**data)
@@ -714,14 +726,23 @@ class TestManagerMS(Test):
         with self.subTest(title="Test - farm"):
             self.assertFalse("Farm_3" in data_father['farm'].unique())
 
-    def test_search_father(self):
+    def test_pipline_search_father(self):
         path = r"tests\test_data\test_search_father.csv"
-        data = self._object_test.search_father(
+        data = self._object_test.pipline_search_father(
             path,
             {'Выбрать всех': True}
         )
-        with self.subTest(title="Test - farm"):
-            self.assertEqual(data.loc[0, "number"], 3205251522)
+        test_data = pd.read_csv(path, sep=';', encoding="cp1251")
+        test_data.set_index("name", inplace=True)
+        test_data = test_data.to_dict().get("Gegrf")
+        data = data.T.to_dict().get(0)
+        for key in Bull.get_filds()[4:]:
+            with self.subTest(
+                title=f"{key}: {test_data.get(key)} - {data.get(key)}"
+                    ):
+                self.assertFalse(self._object_test.verification_ms(
+                    test_data.get(key), data.get(key)
+                ))
 
     def test_verification_ms(self):
         test_data = {
@@ -770,13 +791,254 @@ class TestManagerMS(Test):
         with self.subTest(title="Test - join"):
             self.assertEqual("100/200", answer)
 
-    def test_get_summary_data_error(self):
-        self._object_test.dict_error = {
-            "not_animal": [],
-            "not_father": [],
+    def test_create_conclusion(self):
+        """Тестирует заключение по паспорту."""
+        # flag_father, flag_mutter, flag_null_mutter, flag_null_father
+        test_data = (
+            ((True, True, True, True), "Родители не найдены"),
+            ((True, False, True, True), "Родители не найдены"),
+            ((True, True, False, True), "Родители не соответствуют"),
+            ((True, True, True, False), "Родители не соответствуют"),
+            ((False, False, True, True), "Родители не найдены"),
+            ((True, False, False, True), "Отец не соответствует"),
+            ((True, True, False, False), "Родители не соответствуют"),
+            ((False, True, True, False), "Мать не соответствует"),
+            ((False, True, False, True), "Отец соответствует"),
+            ((True, False, True, False), "Мать соответствует"),
+            ((False, False, False, True), "Отец соответствует"),
+            ((True, False, False, False), "Отец не соответствует"),
+            ((False, True, False, False), "Отец соответствует"),
+            ((False, False, True, False), "Мать соответствует"),
+            ((False, False, False, False), "Родители соответствуют"),
+        )
+        for elem in test_data:
+            res = self._object_test.create_conclusion(*elem[0])
+            with self.subTest(title=f"Test {elem[0]}"):
+                self.assertEqual(res, elem[1])
+
+    def test_transform_data_for_database(self):
+        test_data = pd.read_excel(
+            r"tests\test_data\test_data_for_transform_for_db.xlsx"
+        )
+        self._object_test.transform_data_for_database(test_data)
+        res = self._manager_db.get_data_for_animal(
+            number=3711503747,
+            model=Bull
+        )
+        with self.subTest(Title="Test number"):
+            self.assertEqual(3711503747, res.get("number"))
+
+    def test_data_verification(self):
+        """Тестируем проверку данных."""
+        farm_1 = Farm.get(Farm.farm == "Farm_1")
+        self._object_test.context = {
+            "name": 'Test_1', "number": 1, "farm": farm_1,
+            "BM1818": "100/100", "BM1824": "100/100", "BM2113": "100/100",
+            "CSRM60": "100/100", "CSSM66": "100/100", "CYP21": "100/100",
+            "ETH10": "100/100", "ETH225": "100/100", "ETH3": "100/100",
+            "ILSTS6": "100/100", "INRA023": "100/100", "RM067": "100/100",
+            "SPS115": "100/100", "TGLA122": "100/100",
+            "TGLA126": "100/100", "TGLA227": "100/100",
+            "TGLA53": "100/100", "MGTG4B": "100/100", "SPS113": "100/100",
+            "name_father": 'Test_1_father', "number_father": 12,
+            "farm_father": farm_1,
+            "BM1818_father": "100/100", "BM1824_father": "100/100",
+            "BM2113_father": "100/100",
+            "CSRM60_father": "100/100", "CSSM66_father": "100/100",
+            "CYP21_father": "100/100",
+            "ETH10_father": "100/100", "ETH225_father": "100/100",
+            "ETH3_father": "100/100",
+            "ILSTS6_father": "100/100", "INRA023_father": "100/100",
+            "RM067_father": "100/100",
+            "SPS115_father": "100/100", "TGLA122_father": "100/100",
+            "TGLA126_father": "100/100", "TGLA227_father": "131465/5646",
+            "TGLA53_father": "100/100", "MGTG4B_father": "100/100",
+            "SPS113_father": "100/100",
+            "name_mutter": 'Test_1_mutter', "number_mutter": 1123,
+            "farm_mutter": farm_1,
+            "BM1818_mutter": "100/100", "BM1824_mutter": "100/100",
+            "BM2113_mutter": "100/100",
+            "CSRM60_mutter": "100/100", "CSSM66_mutter": "100/100",
+            "CYP21_mutter": "100/100",
+            "ETH10_mutter": "153/01231635", "ETH225_mutter": "100/100",
+            "ETH3_mutter": "100/100",
+            "ILSTS6_mutter": "100/100", "INRA023_mutter": "100/100",
+            "RM067_mutter": "100/100",
+            "SPS115_mutter": "100/100", "TGLA122_mutter": "100/100",
+            "TGLA126_mutter": "100/100", "TGLA227_mutter": "100/100",
+            "TGLA53_mutter": "21/456", "MGTG4B_mutter": "100/100",
+            "SPS113_mutter": "100/100",
         }
+        self._object_test.data_verification()
+        with self.subTest(title="Father"):
+            self.assertEqual(
+                self._object_test.dict_error.get("father").loc[0, "parent"], 12
+            )
+        with self.subTest(title="Father"):
+            self.assertEqual(
+                self._object_test.dict_error.get("mutter").loc[0, "parent"],
+                1123
+            )
+
+        self._object_test.context = {}
+        self._object_test.dict_error = {}
+        self._object_test.data_context = None
+        self._object_test.dataset_inverory = None
+        self._object_test.dataset_profils = None
+
+    def test_get_summary_data_error(self):
+        data: dict = {}
+        data['not_father'] = [1, 453, 567, 7898, 234]
+        data['not_animal'] = [1, 213, 435, 7]
+        data['father'] = pd.DataFrame(
+            columns=("locus", "parent", "animal", "male"),
+            data=[
+                ["TGLA227", 12, 1, "male"]
+            ]
+        )
+        data['mutter'] = pd.DataFrame(
+            columns=("locus", "parent", "animal", "male"),
+            data=[
+                ["ETH10", 1123, 1, "female"],
+                ["TGLA53", 1123, 13, "female"],
+            ]
+        )
+        self._object_test.dict_error = data
         res = self._object_test.get_summary_data_error()
-        print(res)
+        with self.subTest(title="father"):
+            self.assertEqual(res.get("father")[0], 12)
+        with self.subTest(title="mutter"):
+            self.assertEqual(res.get("mutter")[0], 1123)
+
+    def test_save_text_to_file(self):
+        data: dict = {}
+        data['not_father'] = [1, 453, 567, 7898, 234]
+        data['not_animal'] = [1, 213, 435, 7]
+        data['father'] = pd.DataFrame(
+            columns=("locus", "parent", "animal", "male"),
+            data=[
+                ["TGLA227", 12, 1, "male"]
+            ]
+        )
+        data['mutter'] = pd.DataFrame(
+            columns=("locus", "parent", "animal", "male"),
+            data=[
+                ["ETH10", 1123, 1, "female"],
+                ["TGLA53", 1123, 13, "female"],
+            ]
+        )
+        self._object_test.dict_error = data
+        res = self._object_test.get_summary_data_error()
+        self._object_test.save_text_to_file(res)
+        list_res = [
+            "not_animal: [1, 435, 213, 7]",
+            "not_father: [1, 453, 234, 567, 7898]",
+            "father: [12]",
+            "animal_father: [1]",
+            "mutter: [1123]",
+            "animal_mutter: [1, 13]",
+        ]
+        with open(r"data\logs\log_error_profils.txt", "r") as f:
+            answer = f.readlines()
+            for i in range(len(answer)):
+                with self.subTest(title=i):
+                    self.assertTrue(list_res[i], answer[i].strip())
+
+    def test_pipline_creat_doc_pas_gen(self):
+        path_invertory = r"tests\test_data\test_invetory_for_pipline.csv"
+        path_profils = r"tests\test_data\test_profils_for_pipline.csv"
+        path = r"tests\test_data\test_profils.docx"
+        self._object_test.pipline_creat_doc_pas_gen(
+            path_invertory,
+            path_profils,
+            path,
+            Bull,
+            Cow,
+            Cow,
+            True
+        )
+
+    def test_create_context(self):
+        """Тестируется сбор данных для документов"""
+        data = {
+            'number': 1, 'name': 'Test_1', 'farm': 'Farm_1', 'number_father': 2,
+            'name_father': 'Test_2', 'animal': 'Test_1 1',
+            'father': 'Test_1_father 2',
+            'mutter': 'Test_1_mutter 123',
+            'date': datetime.datetime(2023, 4, 4, 12, 51, 41, 777875),
+            'index': 0, 'num': 1, 'ETH3': '100/100', 'CSSM66': '100/100',
+            'INRA23': '100/100', 'BM1818': '100/100', 'ILSTS6': '100/100',
+            'TGLA227': '100/100', 'TGLA126': '100/100', 'TGLA122': '100/100',
+            'SPS115': '100/100', 'ETH225': '100/100', 'TGLA53': '100/100',
+            'CSRM60': '100/100', 'BM2113': '100/100', 'BM1824': '100/100',
+            'ETH10': '100/100', 'id_father': 2, 'farm_father': 'Farm_1',
+            'BM1818_father': '100/100', 'BM1824_father': '100/100',
+            'BM2113_father': '100/100', 'CSRM60_father': '100/100',
+            'CSSM66_father': '100/100', 'CYP21_father': '100/100',
+            'ETH10_father': '100/100', 'ETH225_father': '100/100',
+            'ETH3_father': '100/100', 'ILSTS6_father': '100/100',
+            'INRA023_father': '100/100', 'RM067_father': '100/100',
+            'SPS115_father': '100/100', 'TGLA122_father': '100/100',
+            'TGLA126_father': '100/100', 'TGLA227_father': '100/100',
+            'TGLA53_father': '100/100', 'MGTG4B_father': '100/100',
+            'SPS113_father': '100/100', 'id_mutter': '-',
+            'name_mutter': 'Test_1_mutter', 'number_mutter': 123,
+            'farm_mutter': '-',
+            'BM1818_mutter': '-', 'BM1824_mutter': '-', 'BM2113_mutter': '-',
+            'CSRM60_mutter': '-', 'CSSM66_mutter': '-', 'CYP21_mutter': '-',
+            'ETH10_mutter': '-', 'ETH225_mutter': '-', 'ETH3_mutter': '-',
+            'ILSTS6_mutter': '-', 'INRA023_mutter': '-', 'RM067_mutter': '-',
+            'SPS115_mutter': '-', 'TGLA122_mutter': '-', 'TGLA126_mutter': '-',
+            'TGLA227_mutter': '-', 'TGLA53_mutter': '-', 'MGTG4B_mutter': '-',
+            'SPS113_mutter': '-', 'conclusion': 'Отец соответствует'
+        }
+        self._object_test.context = {}
+        self._object_test.dataset_inverory = pd.DataFrame(
+            columns=(
+                'number_animal',
+                'name_animal',
+                'number_sample',
+                'number_mutter',
+                'name_mutter',
+                'number_father',
+                'name_father'
+            ),
+            data=[
+                [1, "Test_1", 1, 123, 'Test_1_mutter', 2, "Test_1_father"]
+            ]
+         )
+        self._object_test.dataset_profils = pd.DataFrame(
+            columns=(
+                "Sample Name", "Eth3 1", "Eth3 2", "Cssm66 1", "Cssm66 2",
+                "inra23 1", "inra23 2", "BM1818 1", "BM1818 2", "ilsts6 1",
+                "ilsts6 2", "Tgla227 1", "Tgla227 2", "Tgla126 1", "Tgla126 2",
+                "Tgla122 1", "Tgla122 2", "Sps115 1", "Sps115 2", "Eth225 1",
+                "Eth225 2", "Tgla53 1", "Tgla53 2", "Csrm60 1", "Csrm60 2",
+                "Bm2113 1", "Bm2113 2", "Bm1824 1", "Bm1824 2", "Eth10 1",
+                "Eth10 2"
+            ),
+            data=[
+                ["kpc-40-1"] + [100 for x in range(30)]
+            ]
+        )
+        self._object_test.preprocessing_profils()
+        self._object_test.data_context = DataForContext(
+                [1],
+                [1],
+                datetime.datetime.now(),
+                Cow,
+                Cow,
+                [2],
+                pd.DataFrame.from_dict(
+                    self._manager_db.get_data_for_animals(Bull)
+                ).T,
+                True
+            )
+        self._object_test.create_context(0)
+        for key, val in data.items():
+            if key not in ["date"]:
+                with self.subTest(title=key):
+                    self.assertEqual(val, self._object_test.context.get(key))
 
 
 # Complited

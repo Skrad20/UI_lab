@@ -28,18 +28,9 @@ BASE_PATH = r"data"
 # Пути для загрузки и сохранения атефактов
 dict_paths: dict = {
     "templates_pass": {
-        "deer": os.path.join(
-            BASE_PATH,
-            r'\templates\template_deer.docx'
-        ),
-        "bos taurus": os.path.join(
-            BASE_PATH,
-            r'\templates\template_cow.docx'
-        ),
-        "sheep": os.path.join(
-            BASE_PATH,
-            r'\templates\template_sheep.docx'
-        ),
+        "deer": r'\templates\template_deer.docx',
+        "bos taurus": r'\templates\template_cow.docx',
+        "sheep": r'\templates\template_sheep.docx',
     },
     "not_father": os.path.join(
         BASE_PATH,

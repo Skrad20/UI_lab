@@ -1,0 +1,6 @@
+not_animal: [1, 435, 213, 7]
+not_father: [1, 453, 234, 567, 7898]
+father: [12]
+animal_father: [1]
+mutter: [1123]
+animal_mutter: [1, 13]

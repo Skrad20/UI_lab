@@ -76,7 +76,8 @@ class BaseModelAnimal(pw.Model):
             name_farm = name_farm.farm
             contex["farm"] = name_farm
         else:
-            print("Not data farm", contex)
+            pass
+            # print("Not data farm", contex)
         return contex
 
     class Meta:
@@ -644,10 +645,10 @@ class DeerFemaleIssr(DeerIssr, ISSR):
 
 
 DICT_MODEL_FATHER_BY_SPECIES = {
-        "deer": Deer,
-        "bos taurus": Bull,
-        "sheep": Ram,
-    },
+    "deer": Deer,
+    "bos taurus": Bull,
+    "sheep": Ram,
+}
 
 
 Logs.create_table()
