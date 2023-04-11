@@ -1040,6 +1040,51 @@ class TestManagerMS(Test):
                 with self.subTest(title=key):
                     self.assertEqual(val, self._object_test.context.get(key))
 
+    def test_pipline_ms_from_word(self):
+        self._object_test.pipline_ms_from_word(
+            r"tests\test_data\data_test_ms_from_word.xlsx"
+        )
+        data = pd.read_excel("data/data.xlsx")
+        self.assertEqual("РУДАВА 6142", data.iloc[0, 1])
+
+    def test_verification_ms_family(self) -> None:
+        """Паравильность семеного соотношения микросателлитов"""
+        data = (
+            ("1/1", "1/1", "1/1", False),
+            ("1/1", "2/1", "2/1", False),
+            ("1/1", "2/1", "1/2", False),
+            ("1/1", "1/2", "2/1", False),
+            ("1/1", "1/2", "1/2", False),
+            ("-", "1/1", "1/1", False),
+            ("-", "2/2", "1/2", False),
+            ("-", "1/2", "1/2", False),
+            ("-", "1/1", "2/2", False),
+
+            ("1/1", "-", "-", False),
+            ("1/1", "-", "2/1", False),
+            ("1/1", "-", "1/2", False),
+            ("1/1", "-", "2/2", True),
+
+            ("1/1", "2/1", "-", False),
+            ("1/1", "1/2", "-", False),
+            ("1/1", "2/2", "-", True),
+            ("1/1", "2/2", "1/2", True),
+            ("1/1", "2/2", "2/2", True),
+            ("1/1", "1/2", "2/2", True),
+
+            ("1/2", "-", "2/1", False),
+            ("1/2", "3/4", "5/6", True),
+            ("1/2", "2/4", "1/6", False),
+            ("1/2", "1/1", "2/6", False),
+
+            ('200/206', '202/214', "-", True),
+            ('125/135', '127/139', "-", True)
+        )
+        for test in data:
+            with self.subTest(title=test[:3]):
+                answer = self._object_test.verification_ms_family(*test[:3])
+                self.assertEqual(answer, test[3])
+
 
 # Complited
 class TestManagerUtilities(Test):

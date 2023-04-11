@@ -8,5 +8,14 @@
             "database": "${workspaceFolder:UI_lab}/db.sqlite3",
             "name": "й"
         }
-    ]
+    ],
+    "python.testing.unittestArgs": [
+        "-v",
+        "-s",
+        "./tests",
+        "-p",
+        "test_*.py"
+    ],
+    "python.testing.pytestEnabled": false,
+    "python.testing.unittestEnabled": true
 }

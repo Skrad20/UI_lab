@@ -2,7 +2,7 @@ from PyQt5.QtCore import Qt, QTimer
 from PyQt5.QtGui import QIcon, QPixmap
 from PyQt5.QtWidgets import (
     QWidget, QToolBar, QGridLayout, QHBoxLayout, QMenuBar, QMenu, QFileDialog,
-    QLabel, QMainWindow, QMessageBox,
+    QLabel, QMainWindow, QMessageBox, QLineEdit, QTextEdit,
     QSplashScreen, QTableWidget, QPushButton,QAction
 )
 
@@ -81,17 +81,17 @@ class BaseWindow(QWidget):
     def __init__(self, statusbar=None, *args, **kwargs):
         super(BaseWindow, self).__init__(*args, **kwargs)
         self.statusbar = statusbar
-        self.dict_widget = {}
+        self.dict_widgets = {}
+        self.list_actions = []
+        self.list_labels = []
+        self.list_tool_bar = []
         self._create_actions()
         self._create_labels()
         self._create_tool_bar()
         self._create_layout()
 
     def _create_layout(self):
-        layout = QHBoxLayout(self)
-        for key, val in self.dict_widget:
-            layout.addWidget(key, *val)
-        self.setLayout(layout)
+        pass
 
     def _create_tool_bar(self):
         pass
@@ -106,52 +106,90 @@ class BaseWindow(QWidget):
 class WidgetMS(BaseWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
-        self.dict_widget = {
-            self.tool_bar: []
-        }
+
+    def _create_layout(self):
+        self.grid = QGridLayout()
+        self.grid.setSpacing(10)
+        self.grid.addWidget(self.tool_bar, 0, 0)
+        self.setLayout(self.grid)
+        self.show()
 
     def _create_tool_bar(self):
-        self.tool_bar = QToolBar("Work", self)
+        self.tool_bar = QToolBar("Gene", self)
         self.tool_bar.setMovable(True)
-        for action in self.list_action:
-            self.tool_bar.addAction(action)
+        for ation in self.list_action:
+            self.tool_bar.addAction(ation)
 
     def _create_actions(self):
         self.list_action = []
         dict_actions = {
-            "Генетические паспорта": self.gen_password,
-            "Подбор отцов": self.search_father
+            "Создание поспартов": self.gen_password,
+            "Подбор отца": self.search_father,
         }
         for text, func in dict_actions.items():
             action = QAction(text, self)
             action.triggered.connect(func)
+            action.setStatusTip("Будет подсказка")
+            action.setToolTip("Будет подсказка")
             self.list_action.append(action)
+
+    def _create_labels(self):
+        pass
 
     def gen_password(self):
         self.statusbar.showMessage("Идёт анализ", 3000)
-        WidgetGenPass(self)
-        
+        window = WidgetGenPass(self)        
+        self.grid.addWidget(window)
+
         self.statusbar.showMessage("Анализ окончен", 3000)
 
     def search_father(self):
-        print("test")
+        self.statusbar.showMessage("Идёт анализ", 3000)
+        window = WidgetSarchFather(self)
+        self.grid.
+        self.grid.addWidget(window)
+
+        self.statusbar.showMessage("Анализ окончен", 3000)
 
 
 class WidgetGenPass(BaseWindow):
     def __init__(self, statusbar=None, *args, **kwargs):
         super().__init__(statusbar, *args, **kwargs)
-        self.dict_widget = {
-            self.list_label[0]: []
-        }
+        title = QLabel('Title')
+        author = QLabel('Author')
+        review = QLabel('Review')
+        titleEdit = QLineEdit()
+        authorEdit = QLineEdit()
+        reviewEdit = QTextEdit()
+        grid = QGridLayout()
+        grid.setSpacing(10)
+        grid.addWidget(title, 1, 0)
+        grid.addWidget(titleEdit, 1, 1)
+        grid.addWidget(author, 2, 0)
+        grid.addWidget(authorEdit, 2, 1)
+        grid.addWidget(review, 3, 0)
+        grid.addWidget(reviewEdit, 3, 1, 5, 1)
+        self.setLayout(grid)
 
-    def _create_labels(self):
-        self.list_label = []
-        lebels = [
-            "Генетические паспорта"
-        ]
-        for text in lebels:
-            label = QLabel(text, self)
-            self.list_label.append(label)
+
+class WidgetSarchFather(BaseWindow):
+    def __init__(self, statusbar=None, *args, **kwargs):
+        super().__init__(statusbar, *args, **kwargs)
+        title = QLabel('Tama')
+        author = QLabel('Tuta')
+        review = QLabel('Kuka')
+        titleEdit = QLineEdit()
+        authorEdit = QLineEdit()
+        reviewEdit = QTextEdit()
+        grid = QGridLayout()
+        grid.setSpacing(10)
+        grid.addWidget(title, 1, 0)
+        grid.addWidget(titleEdit, 1, 1)
+        grid.addWidget(author, 2, 0)
+        grid.addWidget(authorEdit, 2, 1)
+        grid.addWidget(review, 3, 0)
+        grid.addWidget(reviewEdit, 3, 1, 5, 1)
+        self.setLayout(grid)
 
 
 class WidgetISSR(BaseWindow):

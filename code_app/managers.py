@@ -119,6 +119,8 @@ class ManagerUtilities(Manager):
             return True
         except ValueError:
             return False
+        except TypeError:
+            return False
 
     @staticmethod
     def result_to_table(df_res: pd.DataFrame) -> QTableWidget:
@@ -237,6 +239,7 @@ class ManagerDataMS(Manager):
             'number_mutter',
             'number_father',
         ]
+        self.animals_type = ('animal', 'father', "mutter")
 
         self.dict_error: dict = {}
         self.dict_error['not_father'] = []
@@ -486,8 +489,7 @@ class ManagerDataMS(Manager):
 
         return df
 
-# Not tested - deprecated
-    def pipline_ms_from_word(self, adres: str) -> pd.DataFrame:
+    def pipline_ms_from_word(self, path: str) -> pd.DataFrame:
         """
         Возвращает распарсинные данные по генетическим паспортам
         из документов Word.
@@ -499,96 +501,114 @@ class ManagerDataMS(Manager):
         ----------
             result: pd.DataFrame - Результат парсинга.
         """
-        doc: pd.DataFrame = self._manager_files.read_file(adres)
-        doc.columns = ['ms', 'ms_size', 'vater', 'mom']
-        msatle: list = (
-            [
-                'name_animal',
-                'numer_animal',
-                'name_father',
-                'number_vater'
-            ] + self.__list_locus
+        self._manager_files.set_path_for_file_to_open(path)
+        self.doc: pd.DataFrame = (
+            self._manager_files.read_file()
         )
-        result = pd.DataFrame(columns=msatle)
-        for j in range(4, len(msatle)):
-            ms_r = msatle[j]
-            self.ms_select(doc, result, ms_r, j)
-        result = result.reset_index()
-        self.name_select(doc, result)
-        result = result.transpose()
-        result.to_csv(
-            r'func\data\ms_word\data_ms_from_word.csv',
-            sep=";",
-            decimal=',',
-            encoding="cp1251"
-        )
-        return result
+        self.doc: pd.DataFrame = self._manager_files.read_file()
+        self.doc.columns = ['ms', 'animal', 'father', 'mutter']
+        self.preprocessor_data_ms_from_word()
+        self.result = {}
+        self.extract_data_from_ms()
+        data = pd.DataFrame().from_dict(self.result)
+        self.verification_ms_from_word()
+        self._manager_files.set_path_for_file_to_save("data/data.xlsx")
+        self._manager_files.save_file(data, "xlsx")
 
-# Not tested - deprecated
-    def ms_select(
-        self,
-        data_in: pd.DataFrame,
-        data_out: pd.DataFrame,
-        ms: str,
-        no: int
-    ) -> None:
-        """
-        Собирает данные по МС.
+# Not tested
+    def preprocessor_data_ms_from_word(self):
+        list_map = [" ", "  ", "   ", "    "]
+        self.doc = self.doc.applymap(lambda x: None if x in list_map else x)
+        self.doc.dropna(how='all', inplace=True)
+        self.doc.reset_index(drop=True, inplace=True)
+        self.doc.to_csv("dsfse.csv", sep=";", encoding="cp1251")
 
-        Параметры:
-        ----------
-            data_in: pd.DataFrame - Входной датасет.
-            data_out: pd.DataFrame - Выходной датасет.
-            ms: str - Название МС.
-            no: int - Номер МС в списке.
+# Not tested
+    def extract_data_from_ms(self) -> None:
+        for i in range(0, len(self.doc), 34):
+            dict_result = {}
+            index_end_window: int = i + 15 + len(self._locus_list)
+            window: pd.DataFrame = (
+                self.doc.loc[i:index_end_window, :].reset_index(drop=True)
+            )
+            dict_result["info_animal"] = window.loc[10, 'animal']
+            dict_result["info_father"] = window.loc[10, 'father']
+            dict_result["info_mutter"] = window.loc[10, 'mutter']
+            for col in self._locus_list:
+                query = window.query("ms == @col").reset_index()
+                for type_animal in self.animals_type:
+                    dict_result[col + "_" + type_animal] = query.loc[
+                        0, type_animal
+                    ]
+            self.result[i] = dict_result
 
-        Возвращает:
-        -----------
-            None
-        """
-        for i in range(len(data_in)):
-            if data_in.loc[i, 'ms'] == ms:
-                res = data_in.loc[i, 'ms_size']
-                nom_date_out = i - no + 4
-                data_out.loc[nom_date_out, ms] = res
+# Not tested
+    def verification_ms_from_word(self) -> None:
+        self.dict_error_ms_from_word = {}
+        for key, data in self.result.items():
+            for locus in self._locus_list:
+                ms_animal = data.get(locus, "-")
+                ms_father = data.get(locus + "_father", "-")
+                ms_mutter = data.get(locus + "_mutter", "-")
+                if self.verification_ms_family(ms_animal, ms_father, ms_mutter):
+                    self.dict_error_ms_from_word[key] = (
+                        data.get("info_animal") + locus
+                    )
 
-# Not tested - deprecated
-    def name_select(
-        self,
-        data_in: pd.DataFrame,
-            data_out: pd.DataFrame) -> None:
+        self.error_to_file()
 
-        """
-        Отбор кличек и номеров.
+    def error_to_file(self):
+        with open("logs/error_ms_from_word.txt", "w") as f:
+            for key, val in self.dict_error_ms_from_word.items():
+                f.write(" - ".join([key, val]))
 
-        Параметры:
-        ----------
-            data_in: pd.DataFrame - Входной датасет.
-            data_out: pd.DataFrame - Выходной датасет.
-        Возвращает:
-        -----------
-            None
-        """
-        count = 0
-        for i in range(len(data_in)):
-            if data_in.loc[i, 'ms'] == 'Локус':
-                count += 1
-                a = i + 1
-                res_name = data_in.loc[a, 'ms_size'].split(' ')
-                res_vater = data_in.loc[a, 'vater'].split(' ')
-                nom_date_out = count - 1
-                try:
-                    data_out.loc[nom_date_out, 'numer'] = res_name[1]
-                    data_out.loc[nom_date_out, 'name'] = res_name[0]
-                except Exception as e:
-                    logger.error(e)
-                    data_out.loc[nom_date_out, 'numer'] = res_name[0]
-                try:
-                    data_out.loc[nom_date_out, 'vater'] = res_vater[0]
-                    data_out.loc[nom_date_out, 'number_vater'] = res_vater[1]
-                except Exception as e:
-                    logger.error(e)
-                    data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
+    def verification_ms_family(self, ms_animal, ms_father, ms_mutter):
+        if ms_animal == "-":
+            return False
+        elif ms_father == "-" and ms_mutter == "-":
+            return False
+        elif ms_father == "-":
+            ms_animal = ms_animal.split("/")
+            ms_mutter = ms_mutter.split("/")
+            if (
+                (
+                    ms_animal[1] == ms_mutter[0] or ms_animal[1] == ms_mutter[1] and
+                    ms_animal[0] == ms_mutter[0] or ms_animal[0] == ms_mutter[1]
+                )
+            ):
+                return False
+            else:
+                return True
+        elif ms_mutter == "-":
+            ms_animal = ms_animal.split("/")
+            ms_father = ms_father.split("/")
+            if (
+                (
+                    ms_animal[0] == ms_father[0] or ms_animal[0] == ms_father[1] and
+                    ms_animal[1] == ms_father[0] or ms_animal[1] == ms_father[1]
+                )
+            ):
+                return False
+            else:
+                return True
+
+        elif ms_animal != "-" and ms_father != "-" and ms_mutter != "-":
+            ms_animal = ms_animal.split("/")
+            ms_mutter = ms_mutter.split("/")
+            ms_father = ms_father.split("/")
+            if ms_animal[0] == ms_father[0] or ms_animal[0] == ms_father[1]:
+                if ms_animal[1] == ms_mutter[0] or ms_animal[1] == ms_mutter[1]:
+                    return False
+                else:
+                    return True
+            elif ms_animal[1] == ms_father[0] or ms_animal[1] == ms_father[1]:
+                if ms_animal[0] == ms_mutter[0] or ms_animal[0] == ms_mutter[1]:
+                    return False
+                else:
+                    return True
+            else:
+                return True
+        return False
 
     def verification_ms(self, one_ms: str, second_ms: str) -> bool:
         """Возращает True, если данные МС неподходят
@@ -1619,6 +1639,10 @@ class ManagerFile(Manager):
         """Устанавливает пут для открытия файлов"""
         self._config_manager.set_path(path, "open")
 
+    def set_path_for_file_to_save(self, path: str) -> None:
+        """Устанавливает пут для охранения файлов"""
+        self._config_manager.set_path(path, "save")
+
     def save_path_for_file_to_open(self, name_str: str = 'Open File') -> None:
         """
         Сохраняет в конфиг адрес файла из диалогового окна открытия.
@@ -1696,6 +1720,36 @@ class ManagerFile(Manager):
             df_doc = pd.read_excel(path)
 
         return df_doc
+
+    def save_file(self, data, mode: str) -> None:
+        '''
+        Возращает датасет, прочитанный из файла по полученному адресу.
+        Параметры:
+        ----------
+            data: pd.DataFrame - Датасет.
+            mode: str - спомоб сохранения: txt, csv, xlsx.
+        Возвращает:
+        -----------
+            Ничего
+        '''
+        path = self._config_manager.get_path("save")
+        if mode == 'csv':
+            data.to_csv(
+                path,
+                sep=';',
+                decimal=',',
+                encoding='cp1251'
+            )
+        elif mode == 'txt':
+            data.to_csv(
+                path,
+                sep='\t',
+                decimal=',',
+                encoding='utf-8'
+            )
+        elif mode == 'xlsx':
+            with pd.ExcelWriter(path) as w:
+                data.to_excel(w, sheet_name="Data")
 
 
 class ConfigMeneger(Manager):
