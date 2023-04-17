@@ -32,7 +32,7 @@ class Farm(pw.Model):
     )
 
     def __str__(self) -> str:
-        return f"{self.id}: {self.farm}"
+        return f"{self.farm}"
 
     def __repr__(self) -> str:
         return f"{self.farm}"

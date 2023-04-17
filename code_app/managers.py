@@ -1021,7 +1021,6 @@ class ManagerDataMS(Manager):
 
         self.data_verification()
 
-# Not tested
     def pipline_creat_doc_pas_gen(
         self,
         path_invertory: str,
@@ -1823,7 +1822,7 @@ class ManagerDB(Manager):
             self,
             model: models.BaseModelAnimal = models.Cow
             ) -> set:
-        """Возвращает инвентарные номера отцов."""
+        """Возвращает список хозяйств по виду животных."""
         if self.__farms_set is None:
             self.donwload_data_farmers(model)
         elif model != self.old_model:
@@ -1896,19 +1895,11 @@ class ManagerDB(Manager):
         Возвращаемое значение:
             res_set (set): список номеров отцов.
         """
-        logger.debug("Start upload_data_farmers")
 
         self.__farms_set: list = []
-        logger.debug("Start select")
-        animals = model.select(model, models.Farm).join(models.Farm)
-        logger.debug("Start cycle")
-        for animal in animals:
-            if animal.farm.farm in self.__farms_set:
-                pass
-            else:
-                self.__farms_set.append(animal.farm.farm)
-        self.__farms_set = set(self.__farms_set)
-        logger.debug("End upload_data_farmers")
+        species = model.get_title()
+        farms = models.Farm.select().where(models.Farm.species==species)
+        self.__farms_set = set(farms)
 
     def donwload_data_for_animal(
             self,
