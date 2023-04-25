@@ -1,11 +1,13 @@
-from PyQt5.QtCore import Qt, QTimer
-from PyQt5.QtGui import QIcon, QPixmap, QStandardItemModel
+from PyQt5.QtCore import Qt, QTimer, QObject, QThread, pyqtSignal, QEvent
+from PyQt5.QtGui import QIcon, QPixmap, QStandardItemModel, QKeySequence
 from PyQt5.QtWidgets import (
     QWidget, QToolBar, QGridLayout, QDialog, QMenuBar, QMenu, QFileDialog,
     QLabel, QMainWindow, QMessageBox, QLineEdit, QTextEdit, QTableView,
     QSplashScreen, QTableWidget, QPushButton, QAction, QComboBox,
-    QVBoxLayout, QRadioButton, QButtonGroup, QCheckBox
+    QVBoxLayout, QRadioButton, QButtonGroup, QCheckBox, QApplication
 )
+import pandas as pd
+import threading
 from .managers import ManagerDataMS, ManagerDB
 from .models import  Cow, Deer, Sheep
 from setting import IS_TEST as is_test
@@ -14,6 +16,17 @@ adres_job = ''
 data_job = ''
 adres_job_search_father = ''
 stop_thread = False
+
+class Worker(QObject):
+    finished = pyqtSignal()
+    progress = pyqtSignal(int)
+
+    def run(self):
+        """Long-running task."""
+        for i in range(5):
+            sleep(1)
+            self.progress.emit(i + 1)
+        self.finished.emit()
 
 
 class GeneralWindow(QMainWindow):
@@ -82,7 +95,6 @@ class GeneralWindow(QMainWindow):
 class BaseWindow(QWidget):
     def __init__(self, statusbar=None, *args, **kwargs):
         super(BaseWindow, self).__init__(*args, **kwargs)
-        
         self.manager_db = ManagerDB()
         self.statusbar = statusbar
         self.dict_widgets = {}
@@ -98,7 +110,7 @@ class BaseWindow(QWidget):
         self._create_text_edit()
         self._create_combo_box()
         self._create_layout()
-    
+
     def _create_combo_box(self):
         pass
 
@@ -260,7 +272,7 @@ class WidgetGenPass(BaseWindow):
 
     def get_farms(self):
         set_farms = self.manager_db.get_farms(
-            self.select_model(self.species_animal)
+            self.select_model()
         )
         self.list_farms = list(map(str, set_farms))
 
@@ -287,72 +299,238 @@ class WidgetGenPass(BaseWindow):
         )[0]
 
     def open_table_invertory(self):
-        self.table = TableInputData(self)
+        model = self.select_model()
+        fields_to_header = model.get_filds()
+        self.table = TableInputData(self, fields_to_header)
         self.table.show()
 
     def open_table_profils(self):
-        model = self.select_model(self.species_animal)
-        self.table = TableInputData(self)
+        model = self.select_model()
+        fields_to_header = model.get_filds()
+        self.table = TableInputData(self, fields_to_header, None, False)
         self.table.show()
 
-    def select_model(self, species: str):
+    def select_model(self):
         dict_models = {
             "bos taurus": Cow,
             "deer": Deer,
             "sheep": Sheep,
         }
-        return dict_models.get(species, Cow)
+        return dict_models.get(self.species_animal, Cow)
 
     def set_farm(self, text):
         print(text)
         self.farm = text
 
     def start_pipline_gen_password(self):
-        model = self.select_model(self.species_animal)
+        model = self.select_model()
+        farm = 
         print()
         print(self.list_check_box[0].isChecked())
         self.manager_ms = ManagerDataMS(model)
+        self.manager_ms.set
 
 
 class TableInputData(QDialog):
     """Окно для для ввода данных по потомку."""
-    """
-        Описание
-
-        Параметры:
-        ----------
-        Возвращает:
-        -------
-        """
-    def __init__(self, parent):
+    def __init__(
+            self, parent, header_labels: list = None,
+            index_labels: list = None, is_invertory: bool = True,
+            is_ms_prof: bool = True
+            ):
         super().__init__(parent=parent)
-        self.model = QStandardItemModel(19, 1)
-        self.tableView = QTableView()
-        header_labels = ['Потомок']
-        self.model.setHorizontalHeaderLabels(header_labels)
-        self.header_labels_vertical = ["x" for _ in range(19)]
-        self.model.setVerticalHeaderLabels(self.header_labels_vertical)
-        self.tableView.setModel(self.model)
-        self.tableView.installEventFilter(self)
-        self.vl = QVBoxLayout(self)
-        self.vl.addWidget(self.tableView)
+        self.header_labels: list = header_labels
+        self.index_labels: list = index_labels
+        self.is_invertory: bool = is_invertory
+        self.is_ms_prof: bool = is_ms_prof
+        self.index = []
+        self.columns = []
+        self.clipboard = []
+        self._create_layout()
 
-        self.pushButton = QPushButton(self)
-        self.pushButton.clicked.connect(self._close)
+    def _create_layout(self):
+        self._create_button()
+        self._create_table()
+        self.vl = QVBoxLayout(self)
+        self.vl.addWidget(self.table_wiew)
+        self.vl.addWidget(self.save_button)
+        self.vl.addWidget(self.close_button)
+
+    def _create_table(self):
+        self.model = QStandardItemModel(19, 1)
+        self.table_wiew = QTableView()
+        if self.is_invertory:
+            self.columns = [
+                "Инвентарный номер", "Кличка", "Номер пробы",
+                "Инв. № предка - М", "Кличка предка - М",
+                "Инв. № предка - О", "Кличка предка - О",
+            ]
+            self.model.setHorizontalHeaderLabels(
+                self.columns
+            )
+        elif self.is_ms_prof and self.header_labels is None:
+            self.columns = [str(x) for x in range(300)] 
+            self.model.setHorizontalHeaderLabels(self.columns)
+        elif self.is_ms_prof and self.header_labels is not None:
+            locus_1 = list(map(lambda x: x + "_1", self.header_labels[4:]))
+            locus_2 = list(map(lambda x: x + "_2", self.header_labels[4:]))
+            header = ["Sample Name"]
+            for i in range(len(locus_1)):
+                header.append(locus_1[i])
+                header.append(locus_2[i])
+            self.columns = header
+            self.model.setHorizontalHeaderLabels(self.columns)
+        else:
+            self.columns = ["Потомок"]
+            self.model.setHorizontalHeaderLabels(self.columns)
+
+        if self.is_ms_prof and self.index_labels is None:
+            self.index = [str(x) for x in range(300)]
+            self.model.setVerticalHeaderLabels(self.index)
+        elif self.is_ms_prof and self.index_labels is not None:
+            self.index = self.index_labels
+            self.model.setVerticalHeaderLabels(self.index)
+        else:
+            self.index = self.index_labels
+            self.model.setVerticalHeaderLabels(self.header_labels[4:])
+        self.table_wiew.setModel(self.model)
+        self.table_wiew.installEventFilter(self)
+
+    def _create_button(self):
+        self.close_button = QPushButton("Закрыть окно", self)
+        self.close_button.clicked.connect(self._close)
         self.save_button = QPushButton("Сохранить", self)
         self.save_button.clicked.connect(self._save_data)
-        self.pushButton.setText("Закрыть окно")
 
-        self.vl.addWidget(self.save_button)
-        self.vl.addWidget(self.pushButton)
-
-        self.table_wiew = None
+    def get_data_from_table(self, rows, cols):
+        for row in range(rows):
+            for col in range(cols):
+                try:
+                    self.data.iloc[row, col] = self.model.item(row, col).text()
+                except AttributeError:
+                    pass
 
     def _save_data(self):
-        pass
+        rows = self.model.rowCount()
+        cols = self.model.columnCount()
+        self.data = pd.DataFrame(
+            columns=self.columns,
+            index=self.index
+        )
+        thred = threading.Thread(
+            target=self.get_data_from_table, args=(rows, cols)
+        )
+        thred.start()
+
+    def _copy(self):
+        self.clipboard.clear()
+        selected = self.table_wiew.selectedIndexes()
+        rows = []
+        columns = []
+        for index in selected:
+            rows.append(index.row())
+            columns.append(index.column())
+        min_row = min(rows)
+        min_col = min(columns)
+        max_col = max(columns)
+        data = []
+        res_clipboard = []
+        for index in selected:
+            if index.column() == max_col:
+                res_clipboard.append(
+                    (
+                        index.row() - min_row,
+                        index.column() - min_col,
+                        index.data()
+                    )
+                )
+                data.append(res_clipboard)
+                res_clipboard = []
+            else:
+                res_clipboard.append(
+                    (
+                        index.row() - min_row,
+                        index.column() - min_col,
+                        index.data()
+                    )
+                )
+        res_str = ''
+        for value_row in data:
+            flag = True
+            for val in value_row:
+                value = " " if val[2] is None else val[2]
+                if flag:
+                    res_str += f'{value}'
+                    flag = False
+                else:
+                    res_str += f'\t{value}'
+            res_str += "\n"
+        clipboard = QApplication.clipboard()
+        clipboard.setText(res_str)
+
+    def _paste(self):
+        table = QApplication.clipboard()
+        mime = table.mimeData()
+        data = mime.data('text/plain')
+
+        data = str(data.data(), 'cp1251')[0:]
+        data = data.split('\n')
+        columns = data[0].split(';')
+        columns[0] = columns[0].replace("'", "")
+        self.data_paste = pd.DataFrame(
+            columns=columns,
+            index=[x for x in range(len(data))]
+        )
+        for i in range(0, len(data)-1):
+            data_in = data[i].split(';')
+            for j in range(len(data_in)):
+                self.data_paste.iloc[i, j] = data_in[j]
+        self.data_paste = self.data_paste.dropna(how='all')
+        self.data_paste = self.data_paste.dropna(how='all', axis='columns')
+        current = self.table_wiew.currentIndex()
+        if not current.isValid():
+            current = self.model.index(0, 0)
+
+        first_row = current.row()
+        first_column = current.column()
+        selection = self.table_wiew.selectionModel()
+
+        for row in range(len(self.df)):
+            for column in range(len(self.data_paste.columns)):
+                data_o = self.data_paste.iloc[row, column]
+                index = self.model.index(
+                    first_row + row, first_column + column
+                )
+                self.model.setData(index, data_o, Qt.DisplayRole)
+                selection.select(index, selection.Select)
+        self.table_wiew.setSelectionModel(selection)
 
     def _close(self):
-        pass
+        self.close()
+
+    def eventFilter(self, source: QObject, event: QEvent) -> bool:
+        if event.type() == QEvent.KeyPress:
+            if event == QKeySequence.Copy:
+                self._copy()
+                return True
+            elif event == QKeySequence.Paste:
+                self._paste()
+                return True
+        elif event.type() == QEvent.ContextMenu:
+            menu = QMenu()
+            copy_action = menu.addAction('Copy')
+            copy_action.triggered.connect(self._copy)
+            paste_action = menu.addAction('Paste')
+            paste_action.triggered.connect(self._paste)
+
+            if not self.table_wiew.selectedIndexes():
+                copy_action.setEnabled(False)
+                paste_action.setEnabled(False)
+            if not self.clipboard:
+                paste_action.setEnabled(False)
+            menu.exec(event.globalPos())
+            return True
+        return super(TableInputData, self).eventFilter(source, event)
 
 
 class WidgetSarchFather(BaseWindow):
