@@ -8,25 +8,14 @@ from PyQt5.QtWidgets import (
 )
 import pandas as pd
 import threading
-from .managers import ManagerDataMS, ManagerDB
-from .models import  Cow, Deer, Sheep
+from .managers import ManagerDataMS, ManagerDB, ManagerFile
+from .models import  Cow, Deer, Sheep, Farm
 from setting import IS_TEST as is_test
 
 adres_job = ''
 data_job = ''
 adres_job_search_father = ''
 stop_thread = False
-
-class Worker(QObject):
-    finished = pyqtSignal()
-    progress = pyqtSignal(int)
-
-    def run(self):
-        """Long-running task."""
-        for i in range(5):
-            sleep(1)
-            self.progress.emit(i + 1)
-        self.finished.emit()
 
 
 class GeneralWindow(QMainWindow):
@@ -207,7 +196,14 @@ class WidgetGenPass(BaseWindow):
     def __init__(self, statusbar=None, *args, **kwargs):
         self.manager_ms = None
         self.species_animal = "bos_taurus"
+        self.manager_file = ManagerFile()
+        self.data_invertory = None
+        self.data_profils = None
+        self.link_to_data = {"invertory": None, "profils": None}
+
         super().__init__(statusbar, *args, **kwargs)
+
+        self.set_farm()
 
     def _create_layout(self):
         title = QLabel('Создание генетических паспортов')
@@ -283,32 +279,32 @@ class WidgetGenPass(BaseWindow):
         self.combobox.currentTextChanged.connect(self.set_farm)
 
     def open_file_invertory(self):
-        self.path_invertory = QFileDialog.getOpenFileName(
-            None,
-            "Открыть опись",
-            "",
-            'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)'
-        )[0]
+        self.path_invertory = self.manager_file.save_path_for_file_to_open(
+            "Открыть данные по описи"
+        )
+        self.link_to_data["invertory"] = self.manager_file.read_file()
 
     def open_file_profils(self):
-        self.path_profils = QFileDialog.getOpenFileName(
-            None,
-            "Открыть данные по генотипам",
-            "",
-            'CSV (*.csv);; Text Files (*.txt);; Excel (*.xlsx)'
-        )[0]
+        self.path_profils = self.manager_file.save_path_for_file_to_open(
+            "Открыть данные по генотипам"
+        )
+        self.link_to_data["profils"] = self.manager_file.read_file()
 
     def open_table_invertory(self):
         model = self.select_model()
         fields_to_header = model.get_filds()
-        self.table = TableInputData(self, fields_to_header)
-        self.table.show()
+        self.table_invertory = TableInputData(
+            self, "invertory", fields_to_header
+        )
+        self.table_invertory.show()
 
     def open_table_profils(self):
         model = self.select_model()
         fields_to_header = model.get_filds()
-        self.table = TableInputData(self, fields_to_header, None, False)
-        self.table.show()
+        self.table_profils = TableInputData(
+            self, "profils", fields_to_header, None, False
+        )
+        self.table_profils.show()
 
     def select_model(self):
         dict_models = {
@@ -318,27 +314,31 @@ class WidgetGenPass(BaseWindow):
         }
         return dict_models.get(self.species_animal, Cow)
 
-    def set_farm(self, text):
-        print(text)
-        self.farm = text
+    def set_farm(self, text=None):
+        if text is None:
+            text = self.combobox.textActivated
+        self.farm = self.manager_db.get_farm(text, self.species_animal)
 
     def start_pipline_gen_password(self):
         model = self.select_model()
-        farm = 
-        print()
-        print(self.list_check_box[0].isChecked())
-        self.manager_ms = ManagerDataMS(model)
-        self.manager_ms.set
+        self.manager_ms = ManagerDataMS(self.farm, model)
+        self.manager_ms.set_data_invertory(self.link_to_data["invertory"])
+        self.manager_ms.set_data_profils(self.link_to_data["profils"])
+        path = self.manager_file.save_path_file_for_pass()
+        self.manager_ms.pipline_creat_doc_pas_gen(path)
 
 
 class TableInputData(QDialog):
     """Окно для для ввода данных по потомку."""
     def __init__(
-            self, parent, header_labels: list = None,
+            self, parent, link,
+            header_labels: list = None,
             index_labels: list = None, is_invertory: bool = True,
             is_ms_prof: bool = True
             ):
         super().__init__(parent=parent)
+        self.link = link
+        self.parent_out = parent
         self.header_labels: list = header_labels
         self.index_labels: list = index_labels
         self.is_invertory: bool = is_invertory
@@ -347,6 +347,9 @@ class TableInputData(QDialog):
         self.columns = []
         self.clipboard = []
         self._create_layout()
+
+    def get_data(self):
+        return self.data
 
     def _create_layout(self):
         self._create_button()
@@ -409,6 +412,7 @@ class TableInputData(QDialog):
                     self.data.iloc[row, col] = self.model.item(row, col).text()
                 except AttributeError:
                     pass
+        self.parent_out.link_to_data[self.link] = self.data
 
     def _save_data(self):
         rows = self.model.rowCount()
@@ -571,3 +575,4 @@ class WidgetTest(BaseWindow):
 class WidgetAbout(BaseWindow):
     def __init__(self, *args, **kwargs):
         super().__init__(*args, **kwargs)
+

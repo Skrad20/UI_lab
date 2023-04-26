@@ -252,14 +252,11 @@ class ManagerDataMS(Manager):
         )
         self.context = {}
 
-    def loading_data_invertory(self, address: str) -> None:
+    # No tested
+    def set_data_invertory(self, data: pd.DataFrame) -> None:
         """Загружает данные по описи в self.dataset_inverory."""
-        self._manager_files.set_path_for_file_to_open(address)
-        self.dataset_inverory: pd.DataFrame = (
-            self._manager_files.read_file()
-        )
+        self.dataset_inverory: pd.DataFrame = data
         self.validate_invertory()
-
         self.preprocessing_invertory()
 
     def validate_invertory(self):
@@ -360,12 +357,10 @@ class ManagerDataMS(Manager):
                 model_father
             )
 
-    def loading_data_profils(self, address: str) -> None:
+    # No tested
+    def set_data_profils(self, data: pd.DataFrame) -> None:
         """Загружает данные по профилю в self.dataset_profils."""
-        self._manager_files.set_path_for_file_to_open(address)
-        self.dataset_profils: pd.DataFrame = (
-            self._manager_files.read_file()
-        )
+        self.dataset_profils: pd.DataFrame = data
         self.validate_profils()
         self.preprocessing_profils()
 
@@ -1023,8 +1018,6 @@ class ManagerDataMS(Manager):
 
     def pipline_creat_doc_pas_gen(
         self,
-        path_invertory: str,
-        path_profils: str,
         path: str,
         model_fater: models.BaseModelAnimal = models.Bull,
         model_mutter: models.BaseModelAnimal = models.Cow,
@@ -1056,8 +1049,6 @@ class ManagerDataMS(Manager):
         species: str = model_descendant.get_title()
         now = datetime.datetime.now()
         date: str = now.strftime("%d-%m-%Y")
-        self.loading_data_invertory(path_invertory)
-        self.loading_data_profils(path_profils)
         dataset_faters: pd.DataFrame = (
             pd.DataFrame().from_dict(
                 self._manager_db.get_data_for_animals(model_fater)
@@ -1831,6 +1822,13 @@ class ManagerDB(Manager):
         self.old_model = model
         return self.__farms_set
 
+    # No tested
+    def get_farm(self, name_farm: str, species: str):
+        return models.Farm.select().where(
+            models.Farm.farm == name_farm,
+            models.Farm.species == species
+        )
+
     def get_data_for_animals(
             self,
             model: models.BaseModelAnimal = models.Cow
@@ -1898,7 +1896,7 @@ class ManagerDB(Manager):
 
         self.__farms_set: list = []
         species = model.get_title()
-        farms = models.Farm.select().where(models.Farm.species==species)
+        farms = models.Farm.select().where(models.Farm.species == species)
         self.__farms_set = set(farms)
 
     def donwload_data_for_animal(
