@@ -114,7 +114,7 @@ def update_db(path: str) -> None:
      query = ProfilsCows.delete()
      query.execute()
      print(path)
-     df = pd.read_excel(path, engine='openpyxl')
+     df = pd.read_excel(path, engine='openpyxl', usecols=range(22))
      df = df.reset_index(drop=True)
      for i in range(len(df)):
           query = BullFather.select().where(

@@ -1,4 +1,4 @@
 not_animal: []
-not_father: [3146923016, 0]
+not_father: [0]
 father: []
 mutter: []

@@ -828,6 +828,7 @@ def check_conclusion(context: dict) -> str:
     flag_null_mutter = False
     flag_null_father = False
     for key in list_keys:
+        print(key)
         child = context.get(key)
         father = context.get(key+'_father')
         mutter = context.get(key+'_mutter')
@@ -847,7 +848,6 @@ def check_conclusion(context: dict) -> str:
         ):
             if verification_ms(child, father):
                 flag_father = True
-                break
         else:
             number_null_father += 1
             if number_null_father > 10:
@@ -864,22 +864,32 @@ def check_conclusion(context: dict) -> str:
         ):
             if verification_ms(child, mutter):
                 flag_mutter = True
-                break
         else:
             number_null_mutter += 1
             if number_null_mutter > 10:
                 flag_null_mutter = True
-
+        if flag_father and flag_mutter:
+            break
     if flag_father and flag_mutter:
         res = 'Родители не соответствуют'
-    elif flag_father and not flag_null_father:
+    elif flag_father and not flag_mutter:
         res = 'Отец не соответствует; Мать соответствует'
-    elif not flag_mutter and flag_null_mutter:
+    elif not flag_father and flag_mutter:
         res = 'Отец соответствует; Мать не соответствует'
-    elif not flag_null_mutter and not flag_null_father:
+    elif not flag_father and flag_null_mutter:
+        res = 'Отец соответствует'
+    elif flag_father and flag_null_mutter:
+        res = 'Отец не соответствует'
+    elif flag_null_father and not flag_mutter:
+        res = 'Мать соответствует'
+    elif flag_null_father and flag_mutter:
+        res = 'Мать не соответствует'
+    elif not flag_father and not flag_mutter:
         res = 'Родители соответствуют'
     else:
         res = ''
+
+    print(flag_father, flag_mutter, flag_null_father, flag_null_mutter, res)
     logger.debug("end check_conclusion")
     return res
 
@@ -1128,10 +1138,10 @@ def creat_doc_pas_gen(
                         'num == @num_anim'
                     ).reset_index()
 
-                    number_animal = df_info.loc[0, 'number_animal']
+                    number_animal = int(df_info.loc[0, 'number_animal'])
                     name_animal = df_info.loc[0, 'name_animal']
                     number_proba = df_info.loc[0, 'number_proba']
-                    number_father = df_info.loc[0, 'number_father']
+                    number_father = int(df_info.loc[0, 'number_father'])
                     name_father = df_info.loc[0, 'name_father']
                     number_mutter = int(df_info.loc[0, 'number_mutter'])
                     name_mutter = df_info.loc[0, 'name_mutter']
