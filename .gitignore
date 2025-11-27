@@ -36,10 +36,14 @@ MANIFEST
 *build*
 /build_windows
 /build_windows/
-
+/build_windows/*
+build_windows/*
+*.zip
 # Installer logs
 pip-log.txt
 pip-delete-this-directory.txt
+github
+github.pub
 
 # Unit test / coverage reports
 htmlcov/

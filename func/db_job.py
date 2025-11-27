@@ -7,20 +7,27 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-logFile = "./logs/log_preprocessor_ms_data.log"
-logging.basicConfig(
-    filename=logFile,
-    level=logging.DEBUG,
-    filemode='w',
-)
+log_file = "./logs/log_preprocessor_ms_data.log"
+
 my_handler = RotatingFileHandler(
-    logFile, mode='a', maxBytes=5*1024*1024,
-    backupCount=2, encoding="cp1251", delay=0
+    log_file,
+    mode='a',
+    maxBytes=5*1024*1024,
+    backupCount=2,
+    encoding="cp1251",
+    delay=0
 )
+my_handler.setLevel(logging.DEBUG)
+
+# Создаём форматтер
+formatter = logging.Formatter(
+    fmt='%(asctime)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(funcName)s() | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+my_handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(my_handler)
-
 
 def upload_data_farmers_father() -> set:
     """
@@ -305,8 +312,10 @@ def upload_bus_data(number: int) -> dict:
 
 
 def create_columns_name(row):
+    logger.debug("Start create_columns_name")
     name = row['name']
     number = row['number']
+    logger.debug("End create_columns_name")
     return f"{name} {number}"
 
 
@@ -399,6 +408,8 @@ def upload_data_db_for_creat_pass() -> pd.DataFrame:
         df.loc[i, "MGTG4B"] = bus.MGTG4B
         df.loc[i, "SPS113"] = bus.SPS113
         i += 1
+    logger.debug(df.head())
+    logger.debug("Start aplly")
     df.name_number = df.apply(create_columns_name, axis=1)
     df.index = df.number
     df.number = df.number.astype('float')

@@ -11,16 +11,24 @@ import logging
 from logging.handlers import RotatingFileHandler
 
 
-logFile = "./logs/log_preprocessor_ms_data.log"
-logging.basicConfig(
-    filename=logFile,
-    level=logging.DEBUG,
-    filemode='w',
-)
+log_file = "./logs/log_preprocessor_ms_data.log"
+
 my_handler = RotatingFileHandler(
-    logFile, mode='a', maxBytes=5*1024*1024,
-    backupCount=2, encoding="cp1251", delay=0
+    log_file,
+    mode='a',
+    maxBytes=5*1024*1024,
+    backupCount=2,
+    encoding="cp1251",
+    delay=0
 )
+my_handler.setLevel(logging.DEBUG)
+
+# Создаём форматтер
+formatter = logging.Formatter(
+    fmt='%(asctime)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(funcName)s() | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+my_handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(my_handler)
@@ -65,11 +73,13 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
     """
     logger.debug("Start add_missing")
     logger.debug(df.head())
-    df = df.dropna(subset=[df.columns[5]])
+    df = df.dropna(subset=["number_father"])
+    logger.debug("After dropna")
+    logger.debug(df.head())
     try:
         df_dad = upload_data_db_for_creat_pass()
         list_father_db = df_dad.number
-        list_father_invert = df[df.columns[5]]
+        list_father_invert = df["number_father"]
         for number in set(list_father_invert):
             if number in list_father_db:
                 pass
@@ -78,7 +88,7 @@ def add_missing(df: pd.DataFrame, farm: str) -> pd.DataFrame:
                     f"Number father {number}"
                 )
                 name = (
-                    df[df[df.columns[5]] == number][df.columns[6]]
+                    df[df["number_father"] == number]["name_father"]
                     .reset_index(drop=True)[0]
                 )
                 if 1 == parser_ms_dad(number, name, farm):

@@ -2,7 +2,7 @@ import pandas as pd
 
 from models.models import ProfilsCows
 
-df = pd.read_csv("data/profils_mutter_split.csv", sep=';', encoding='cp1251')
+df = pd.read_excel("data/profils_mutter_split.xlsx")
 df = df.drop_duplicates(subset=['number']).reset_index(drop=True)
 for i in range(len(df)):
     query = ProfilsCows.select().where(ProfilsCows.number == df.loc[i, 'number'])

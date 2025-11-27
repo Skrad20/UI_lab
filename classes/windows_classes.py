@@ -31,19 +31,28 @@ from classes.ui.gui import Ui_MainWindow
 import random
 import string
 
-logFile = "./logs/log_preprocessor_ms_data.log"
-logging.basicConfig(
-    filename=logFile,
-    level=logging.DEBUG,
-    filemode='w',
-)
+
+log_file = "./logs/log_preprocessor_ms_data.log"
 my_handler = RotatingFileHandler(
-    logFile, mode='a', maxBytes=5*1024*1024,
-    backupCount=2, encoding="cp1251", delay=0
+    log_file,
+    mode='a',
+    maxBytes=5*1024*1024,
+    backupCount=2,
+    encoding="cp1251",
+    delay=0
 )
+my_handler.setLevel(logging.DEBUG)
+
+# Создаём форматтер
+formatter = logging.Formatter(
+    fmt='%(asctime)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(funcName)s() | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+my_handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(my_handler)
+
 
 
 adres_job = ''

@@ -22,11 +22,6 @@ from .config_pars import ConfigMeneger
 from .parser_def import add_missing
 from setting import log_file
 
-logging.basicConfig(
-    filename=log_file,
-    level=logging.DEBUG,
-    filemode='w',
-)
 my_handler = RotatingFileHandler(
     log_file,
     mode='a',
@@ -35,6 +30,14 @@ my_handler = RotatingFileHandler(
     encoding="cp1251",
     delay=0
 )
+my_handler.setLevel(logging.DEBUG)
+
+# Создаём форматтер
+formatter = logging.Formatter(
+    fmt='%(asctime)s | %(levelname)-8s | %(filename)s:%(lineno)d | %(funcName)s() | %(message)s',
+    datefmt='%Y-%m-%d %H:%M:%S'
+)
+my_handler.setFormatter(formatter)
 
 logger = logging.getLogger(__name__)
 logger.addHandler(my_handler)
@@ -112,7 +115,7 @@ def delit(row: pd.Series, delitel: str, col: str) -> str:
         num = num.split(delitel)
         return num[-1]
     except Exception as e:
-        logger.error(e)
+        logger.error(e, exc_info=True)
         logger.error(col)
         logger.error(str(row[col]))
 
@@ -204,7 +207,7 @@ def ResOut(df_res: pd.DataFrame) -> QTableWidget:
         columns = df_res.columns
         table.setHorizontalHeaderLabels(columns)
     except Exception as e:
-        logger.error(e)
+        logger.error(e, exc_info=True)
     for column in range(len(df_res.columns)):
         for row in range(len(df_res)):
             item = QTableWidgetItem(str(df_res.iloc[row, column]))
@@ -241,7 +244,6 @@ def save_file_for_word(name_str: str = 'Save File') -> None:
     after_path = '/'.join(adres.split('/')[:-1])
     ConfigMeneger.set_path_save(after_path)
     return adres
-
 
 
 def is_float(s: str) -> bool:
@@ -337,20 +339,24 @@ def search_father(adres: str, filter_farms: dict) -> pd.DataFrame:
                 logger.debug(
                     f"Cycle search: col - {col}, j - {j}," +
                     f" len df_s_col - {len(df_search.columns)}," +
-                    f"  len df_r - {len(df_res)}"
+                    f"  len df_ref - {len(df_res)}"
                 )
-
                 if df_search.loc[0, col] != '-':
                     logger.debug("Comparison, level 1")
                     locus = df_search.loc[0, col].strip().split('/')
                     if (
-                        df_res.loc[j, col] != '-' and
-                        str(df_res.loc[j, col]) != 'nan'
+                        df_res.loc[j, col].strip() != '-' and
+                        str(df_res.loc[j, col]).strip() != 'nan' and
+                        df_res.loc[j, col] is not None
                     ):
                         locus_base = df_res.loc[j, col].strip().split('/')
                         logger.debug("Comparison search_father")
                         logger.debug("locus" + str(locus))
-                        logger.debug("locus_base" + str(locus_base))
+                        logger.debug(
+                            "locus_base" + str(locus_base) + ' ' +
+                            str(df_res.loc[j, 'number'])
+                        )
+                        
                         if (
                             locus[0] != locus_base[0] and
                             locus[1] != locus_base[0] and
@@ -373,7 +379,7 @@ def search_father(adres: str, filter_farms: dict) -> pd.DataFrame:
 
     except Exception as e:
         logger.error("Error search_father")
-        logger.error(e)
+        logger.error(e, exc_info=True)
         name = 'search_father'
         QMessageBox.critical(
             None,
@@ -464,13 +470,13 @@ def ms_out_word(adres: str) -> pd.DataFrame:
                     data_out.loc[nom_date_out, 'numer'] = res_name[1]
                     data_out.loc[nom_date_out, 'name'] = res_name[0]
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(e, exc_info=True)
                     data_out.loc[nom_date_out, 'numer'] = res_name[0]
                 try:
                     data_out.loc[nom_date_out, 'vater'] = res_vater[0]
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[1]
                 except Exception as e:
-                    logger.error(e)
+                    logger.error(e, exc_info=True)
                     data_out.loc[nom_date_out, 'number_vater'] = res_vater[0]
 
     name_select(doc, result)
@@ -612,7 +618,7 @@ def check_error_ms(
         logger.debug("End check_error_ms")
         return {"father": res_error_father, "mutter": res_error_mutter}
     except Exception as e:
-        logger.error(e)
+        logger.error(e, exc_info=True)
         name = "\nfunc_ms.py | check_error_ms\n"
         QMessageBox.critical(
             None,
@@ -653,7 +659,7 @@ def verification_ms(one_ms: str, second_ms: str) -> bool:
         return res
 
     except Exception as e:
-        logger.error(e)
+        logger.error(e, exc_info=True)
         logger.error(
             f"data error {one_split}, {second_split}"
         )
@@ -765,7 +771,7 @@ def data_verification(context: dict) -> dict:
 
     except Exception as e:
         name = '\nfunc_ms.py\\data_verification\n'
-        logger.error(e)
+        logger.error(e, exc_info=True)
         logger.error(
             f"Value keys {key}. Child: {child}," +
             f" Father: {father}, Mutter: {mutter}"
@@ -866,10 +872,10 @@ def check_conclusion(context: dict) -> str:
 
     if flag_father and flag_mutter:
         res = 'Родители не соответствуют'
-    elif flag_father:
-        res = 'Отец не соответствует'
-    elif flag_mutter or flag_null_mutter:
-        res = 'Отец соответствует'
+    elif flag_father and not flag_null_father:
+        res = 'Отец не соответствует; Мать соответствует'
+    elif not flag_mutter and flag_null_mutter:
+        res = 'Отец соответствует; Мать не соответствует'
     elif not flag_null_mutter and not flag_null_father:
         res = 'Родители соответствуют'
     else:
@@ -1015,9 +1021,10 @@ def creat_doc_pas_gen(
         df: pd.DataFrame = read_file(adres_invertory)
         df: pd.DataFrame = df.iloc[:, :8]
         df_data_bull: pd.DataFrame = df.iloc[:, 5:8]
-        if len(df_data_bull) == 3:
+        logger.debug("star select data bull " + str(len(df_data_bull)))
+        if df_data_bull is not None and len(df_data_bull.columns) == 3:
             tarasform_data_for_database(df_data_bull, farm)
-
+        logger.debug("star select data invertory")
         df: pd.DataFrame = df.iloc[:, :7]
         df.columns = [
             'number_animal',
@@ -1039,7 +1046,7 @@ def creat_doc_pas_gen(
                 axis=1
             )
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             name = "\nfunc_ms.py|delit in creat_doc_pas_gen\n"
             QMessageBox.critical(
                 None,
@@ -1190,6 +1197,8 @@ def creat_doc_pas_gen(
                             context = {**context, **dict_mutter}
                         context['conclusion'] = check_conclusion(context)
                         context = data_verification(context)
+                        logger.debug(context)
+                        print(context)
                         doc.render(context)
                         doc.save(str(i) + ' generated_doc.docx')
                         title = str(i) + ' generated_doc.docx'
@@ -1204,7 +1213,7 @@ def creat_doc_pas_gen(
                         f' номер {series_num[i]}, страница: {i+1}'
                     )
         except Exception as e:
-            logger.error(e)
+            logger.error(e, exc_info=True)
             name = '\nfunc_ms.py\ncreat_doc_pas_gen\ngenerate password\n'
             QMessageBox.critical(
                 None,
@@ -1235,7 +1244,7 @@ def creat_doc_pas_gen(
         return res_err
     except Exception as e:
         name = '\nfunc_ms.py\ncreat_doc_pas_gen\n '
-        logger.error(e)
+        logger.error(e, exc_info=True)
         QMessageBox.critical(
             None,
             'Ошибка ввода',
